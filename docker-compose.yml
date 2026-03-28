@@ -1,0 +1,14 @@
+services:
+  n8n:
+    image: n8nio/n8n
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    volumes:
+      - ~/.n8n:/home/node/.n8n
+    env_file:
+      - .env
+    environment:
+      # Staat $env.VARIABLE toe in n8n nodes
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false

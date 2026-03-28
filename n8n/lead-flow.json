@@ -1,0 +1,303 @@
+{
+  "name": "Lead Opvolging Automatisering",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-intake",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "node-webhook",
+      "name": "Webhook: Lead Intake",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "lead-intake"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leads",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_ANON_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "naam", "value": "={{ $json.body.naam }}" },
+            { "name": "email", "value": "={{ $json.body.email }}" },
+            { "name": "bedrijf", "value": "={{ $json.body.bedrijf }}" },
+            { "name": "bericht", "value": "={{ $json.body.bericht }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-supabase-insert",
+      "name": "Supabase: Lead Opslaan",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"success\": true, \"message\": \"Bedankt! We nemen zo snel mogelijk contact met je op.\" }",
+        "options": {}
+      },
+      "id": "node-respond",
+      "name": "Webhook: Bevestig Ontvangst",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [460, 480]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.RESEND_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "from", "value": "={{ $env.BEDRIJF_EMAIL }}" },
+            { "name": "to", "value": "={{ $('Webhook: Lead Intake').first().json.body.email }}" },
+            { "name": "subject", "value": "Bedankt voor je bericht!" },
+            { "name": "html", "value": "=<h2>Hallo {{ $('Webhook: Lead Intake').first().json.body.naam }},</h2><p>Bedankt voor je bericht! We hebben je aanvraag ontvangen en nemen zo snel mogelijk contact met je op.</p><p>Je bericht:</p><blockquote>{{ $('Webhook: Lead Intake').first().json.body.bericht }}</blockquote><p>Met vriendelijke groet,<br>Het team</p>" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-resend-lead",
+      "name": "Resend: Bevestigingsmail naar Lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.RESEND_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "from", "value": "={{ $env.BEDRIJF_EMAIL }}" },
+            { "name": "to", "value": "={{ $env.EIGENAAR_EMAIL }}" },
+            { "name": "subject", "value": "=Nieuwe lead: {{ $('Webhook: Lead Intake').first().json.body.naam }}" },
+            { "name": "html", "value": "=<h2>Nieuwe lead ontvangen!</h2><table cellpadding='8' style='border-collapse:collapse'><tr><td><strong>Naam</strong></td><td>{{ $('Webhook: Lead Intake').first().json.body.naam }}</td></tr><tr><td><strong>E-mail</strong></td><td>{{ $('Webhook: Lead Intake').first().json.body.email }}</td></tr><tr><td><strong>Bedrijf</strong></td><td>{{ $('Webhook: Lead Intake').first().json.body.bedrijf }}</td></tr><tr><td><strong>Bericht</strong></td><td>{{ $('Webhook: Lead Intake').first().json.body.bericht }}</td></tr></table>" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-resend-eigenaar",
+      "name": "Resend: Notificatie naar Eigenaar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "lead_id",
+              "name": "lead_id",
+              "value": "={{ $('Supabase: Lead Opslaan').first().json[0].id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-set-lead-id",
+      "name": "Set: Bewaar Lead ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "unit": "days",
+        "amount": 3
+      },
+      "id": "node-wait",
+      "name": "Wacht: 3 Dagen",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [1340, 300],
+      "webhookId": "wait-3-days"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leads?email=eq.{{ $('Webhook: Lead Intake').first().json.body.email }}&follow_up_verstuurd=eq.false&order=aangemaakt_op.desc&limit=1&select=*",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_ANON_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-supabase-get",
+      "name": "Supabase: Haal Lead Op",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.follow_up_verstuurd }}",
+              "value2": false
+            }
+          ]
+        }
+      },
+      "id": "node-if",
+      "name": "IF: Follow-up Nog Niet Verstuurd?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1560, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.RESEND_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "from", "value": "={{ $env.BEDRIJF_EMAIL }}" },
+            { "name": "to", "value": "={{ $('Supabase: Haal Lead Op').first().json.email }}" },
+            { "name": "subject", "value": "Heb je nog vragen?" },
+            { "name": "html", "value": "=<h2>Hallo {{ $('Supabase: Haal Lead Op').first().json.naam }},</h2><p>Een paar dagen geleden nam je contact met ons op. We wilden graag weten of je nog vragen hebt of dat we je ergens mee kunnen helpen.</p><p>We staan voor je klaar!</p><p>Met vriendelijke groet,<br>Het team</p>" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-resend-followup",
+      "name": "Resend: Follow-up Mail",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1780, 200]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leads?email=eq.{{ $('Webhook: Lead Intake').first().json.body.email }}&order=aangemaakt_op.desc&limit=1",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_ANON_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "follow_up_verstuurd", "value": true },
+            { "name": "status", "value": "follow_up_verstuurd" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-supabase-update",
+      "name": "Supabase: Markeer Follow-up Verstuurd",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2000, 200]
+    }
+  ],
+  "connections": {
+    "Webhook: Lead Intake": {
+      "main": [
+        [
+          { "node": "Supabase: Lead Opslaan", "type": "main", "index": 0 },
+          { "node": "Webhook: Bevestig Ontvangst", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Supabase: Lead Opslaan": {
+      "main": [
+        [{ "node": "Resend: Bevestigingsmail naar Lead", "type": "main", "index": 0 }]
+      ]
+    },
+    "Resend: Bevestigingsmail naar Lead": {
+      "main": [
+        [{ "node": "Resend: Notificatie naar Eigenaar", "type": "main", "index": 0 }]
+      ]
+    },
+    "Resend: Notificatie naar Eigenaar": {
+      "main": [
+        [{ "node": "Set: Bewaar Lead ID", "type": "main", "index": 0 }]
+      ]
+    },
+    "Set: Bewaar Lead ID": {
+      "main": [
+        [{ "node": "Wacht: 3 Dagen", "type": "main", "index": 0 }]
+      ]
+    },
+    "Wacht: 3 Dagen": {
+      "main": [
+        [{ "node": "Supabase: Haal Lead Op", "type": "main", "index": 0 }]
+      ]
+    },
+    "Supabase: Haal Lead Op": {
+      "main": [
+        [{ "node": "IF: Follow-up Nog Niet Verstuurd?", "type": "main", "index": 0 }]
+      ]
+    },
+    "IF: Follow-up Nog Niet Verstuurd?": {
+      "main": [
+        [{ "node": "Resend: Follow-up Mail", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Resend: Follow-up Mail": {
+      "main": [
+        [{ "node": "Supabase: Markeer Follow-up Verstuurd", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": ["leads", "automatisering", "resend", "supabase"],
+  "triggerCount": 1,
+  "updatedAt": "2026-03-28T00:00:00.000Z",
+  "versionId": "1"
+}
