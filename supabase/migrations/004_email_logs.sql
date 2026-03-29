@@ -1,0 +1,2 @@
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS email_bevestiging TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS email_followup    TEXT;

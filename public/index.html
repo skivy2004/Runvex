@@ -27,41 +27,16 @@
       max-width: 520px;
     }
 
-    .card-header {
-      margin-bottom: 2rem;
-    }
+    .card-header { margin-bottom: 2rem; }
+    .card-header h1 { font-size: 1.75rem; font-weight: 700; color: #1a1a2e; margin-bottom: 0.5rem; }
+    .card-header p { color: #6b7280; font-size: 0.95rem; line-height: 1.5; }
 
-    .card-header h1 {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: #1a1a2e;
-      margin-bottom: 0.5rem;
-    }
+    .form-group { margin-bottom: 1.25rem; }
 
-    .card-header p {
-      color: #6b7280;
-      font-size: 0.95rem;
-      line-height: 1.5;
-    }
+    label { display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.4rem; }
+    .required { color: #ef4444; margin-left: 2px; }
 
-    .form-group {
-      margin-bottom: 1.25rem;
-    }
-
-    label {
-      display: block;
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #374151;
-      margin-bottom: 0.4rem;
-    }
-
-    .required {
-      color: #ef4444;
-      margin-left: 2px;
-    }
-
-    input, textarea {
+    input, textarea, select {
       width: 100%;
       padding: 0.7rem 1rem;
       border: 1.5px solid #e5e7eb;
@@ -72,33 +47,28 @@
       background: #fafafa;
       transition: border-color 0.2s, box-shadow 0.2s;
       outline: none;
+      appearance: none;
     }
 
-    input:focus, textarea:focus {
+    input:focus, textarea:focus, select:focus {
       border-color: #6366f1;
       box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
       background: #ffffff;
     }
 
-    input.error, textarea.error {
-      border-color: #ef4444;
+    input.error, textarea.error, select.error { border-color: #ef4444; }
+
+    textarea { resize: vertical; min-height: 120px; }
+
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      padding-right: 2.5rem;
     }
 
-    textarea {
-      resize: vertical;
-      min-height: 120px;
-    }
-
-    .field-error {
-      font-size: 0.8rem;
-      color: #ef4444;
-      margin-top: 0.3rem;
-      display: none;
-    }
-
-    .field-error.visible {
-      display: block;
-    }
+    .field-error { font-size: 0.8rem; color: #ef4444; margin-top: 0.3rem; display: none; }
+    .field-error.visible { display: block; }
 
     button[type="submit"] {
       width: 100%;
@@ -119,22 +89,12 @@
       gap: 0.5rem;
     }
 
-    button[type="submit"]:hover:not(:disabled) {
-      background: #4f46e5;
-    }
-
-    button[type="submit"]:active:not(:disabled) {
-      transform: scale(0.99);
-    }
-
-    button[type="submit"]:disabled {
-      background: #a5b4fc;
-      cursor: not-allowed;
-    }
+    button[type="submit"]:hover:not(:disabled) { background: #4f46e5; }
+    button[type="submit"]:active:not(:disabled) { transform: scale(0.99); }
+    button[type="submit"]:disabled { background: #a5b4fc; cursor: not-allowed; }
 
     .spinner {
-      width: 18px;
-      height: 18px;
+      width: 18px; height: 18px;
       border: 2.5px solid rgba(255,255,255,0.4);
       border-top-color: #ffffff;
       border-radius: 50%;
@@ -153,26 +113,10 @@
       display: none;
     }
 
-    .alert.visible {
-      display: block;
-    }
-
-    .alert-success {
-      background: #ecfdf5;
-      border: 1.5px solid #6ee7b7;
-      color: #065f46;
-    }
-
-    .alert-error {
-      background: #fef2f2;
-      border: 1.5px solid #fca5a5;
-      color: #991b1b;
-    }
-
-    .alert strong {
-      display: block;
-      margin-bottom: 0.25rem;
-    }
+    .alert.visible { display: block; }
+    .alert-success { background: #ecfdf5; border: 1.5px solid #6ee7b7; color: #065f46; }
+    .alert-error { background: #fef2f2; border: 1.5px solid #fca5a5; color: #991b1b; }
+    .alert strong { display: block; margin-bottom: 0.25rem; }
   </style>
 </head>
 <body>
@@ -197,8 +141,26 @@
     </div>
 
     <div class="form-group">
+      <label for="telefoon">Telefoonnummer</label>
+      <input type="tel" id="telefoon" name="telefoon" placeholder="+31 6 12345678" autocomplete="tel" />
+    </div>
+
+    <div class="form-group">
       <label for="bedrijf">Bedrijf</label>
       <input type="text" id="bedrijf" name="bedrijf" placeholder="Bedrijf B.V." autocomplete="organization" />
+    </div>
+
+    <div class="form-group">
+      <label for="bron">Hoe heeft u ons gevonden? <span class="required">*</span></label>
+      <select id="bron" name="bron">
+        <option value="" disabled selected>Selecteer een optie</option>
+        <option value="Google / Zoekmachine">Google / Zoekmachine</option>
+        <option value="LinkedIn">LinkedIn</option>
+        <option value="Aanbeveling">Aanbeveling</option>
+        <option value="Social media">Social media</option>
+        <option value="Anders">Anders</option>
+      </select>
+      <div class="field-error" id="bron-error">Selecteer hoe u ons heeft gevonden.</div>
     </div>
 
     <div class="form-group">
@@ -250,32 +212,33 @@
     const errorEl = document.getElementById(fieldId + '-error');
     if (show) {
       field.classList.add('error');
-      errorEl.classList.add('visible');
+      if (errorEl) errorEl.classList.add('visible');
     } else {
       field.classList.remove('error');
-      errorEl.classList.remove('visible');
+      if (errorEl) errorEl.classList.remove('visible');
     }
     return !show;
   }
 
   function validateForm() {
-    const naam = document.getElementById('naam').value.trim();
-    const email = document.getElementById('email').value.trim();
+    const naam    = document.getElementById('naam').value.trim();
+    const email   = document.getElementById('email').value.trim();
+    const bron    = document.getElementById('bron').value;
     const bericht = document.getElementById('bericht').value.trim();
 
     const naamOk    = setFieldError('naam',    naam.length < 2);
     const emailOk   = setFieldError('email',   !validateEmail(email));
+    const bronOk    = setFieldError('bron',    !bron);
     const berichtOk = setFieldError('bericht', bericht.length < 5);
 
-    return naamOk && emailOk && berichtOk;
+    return naamOk && emailOk && bronOk && berichtOk;
   }
 
-  // Live validatie bij verlaten veld
-  ['naam', 'email', 'bericht'].forEach(id => {
+  ['naam', 'email', 'bron', 'bericht'].forEach(id => {
     document.getElementById(id).addEventListener('blur', () => validateForm());
   });
 
-  const RATE_LIMIT_MS = 60 * 1000; // 60 seconden
+  const RATE_LIMIT_MS = 60 * 1000;
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -283,10 +246,8 @@
     successMsg.classList.remove('visible');
     errorMsg.classList.remove('visible');
 
-    // Honeypot check
     if (document.getElementById('website').value) return;
 
-    // Rate limiting
     const lastSubmit = parseInt(localStorage.getItem('last_submit') || '0');
     const now = Date.now();
     if (now - lastSubmit < RATE_LIMIT_MS) {
@@ -299,13 +260,15 @@
     if (!validateForm()) return;
 
     const payload = {
-      naam:    document.getElementById('naam').value.trim(),
-      email:   document.getElementById('email').value.trim(),
-      bedrijf: document.getElementById('bedrijf').value.trim(),
-      bericht: document.getElementById('bericht').value.trim(),
+      naam:      document.getElementById('naam').value.trim(),
+      email:     document.getElementById('email').value.trim(),
+      telefoon:  document.getElementById('telefoon').value.trim(),
+      bedrijf:   document.getElementById('bedrijf').value.trim(),
+      bron:      document.getElementById('bron').value,
+      bericht:   document.getElementById('bericht').value.trim(),
+      timestamp: new Date().toISOString(),
     };
 
-    // Loading state
     submitBtn.disabled = true;
     btnText.textContent = 'Verzenden...';
     spinner.style.display = 'block';
@@ -321,7 +284,6 @@
         throw new Error(`Server antwoordde met status ${res.status}`);
       }
 
-      // Succes
       localStorage.setItem('last_submit', Date.now().toString());
       form.reset();
       form.style.display = 'none';

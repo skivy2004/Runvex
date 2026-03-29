@@ -5,14 +5,18 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "lead-intake",
-        "responseMode": "responseNode",
+        "responseMode": "onReceived",
+        "responseData": "firstEntryJson",
         "options": {}
       },
       "id": "node-webhook",
       "name": "Webhook: Lead Intake",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
-      "position": [240, 300],
+      "position": [
+        240,
+        300
+      ],
       "webhookId": "lead-intake"
     },
     {
@@ -22,19 +26,55 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey", "value": "={{ $env.SUPABASE_ANON_KEY }}" },
-            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}" },
-            { "name": "Content-Type", "value": "application/json" },
-            { "name": "Prefer", "value": "return=representation" }
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_ANON_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
           ]
         },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "naam", "value": "={{ $json.body.naam }}" },
-            { "name": "email", "value": "={{ $json.body.email }}" },
-            { "name": "bedrijf", "value": "={{ $json.body.bedrijf }}" },
-            { "name": "bericht", "value": "={{ $json.body.bericht }}" }
+            {
+              "name": "naam",
+              "value": "={{ $json.body.naam }}"
+            },
+            {
+              "name": "email",
+              "value": "={{ $json.body.email }}"
+            },
+            {
+              "name": "bedrijf",
+              "value": "={{ $json.body.bedrijf }}"
+            },
+            {
+              "name": "bericht",
+              "value": "={{ $json.body.bericht }}"
+            },
+            {
+              "name": "bron",
+              "value": "={{ $json.body.bron }}"
+            },
+            {
+              "name": "telefoon",
+              "value": "={{ $json.body.telefoon }}"
+            },
+            {
+              "name": "form_token",
+              "value": "={{ $json.body.form_token }}"
+            }
           ]
         },
         "options": {}
@@ -43,19 +83,159 @@
       "name": "Supabase: Lead Opslaan",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [460, 300]
+      "position": [
+        480,
+        300
+      ]
     },
     {
       "parameters": {
-        "respondWith": "json",
-        "responseBody": "={ \"success\": true, \"message\": \"Bedankt! We nemen zo snel mogelijk contact met je op.\" }",
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-opus-4-5', max_tokens: 300, messages: [{ role: 'user', content: 'Analyseer deze lead en geef een JSON terug met deze exacte velden:\\n{\\n  \"score\": \"hoog\" of \"middel\" of \"laag\",\\n  \"sector\": \"string (bijv. IT, Bouw, Marketing, etc.)\",\\n  \"samenvatting\": \"1 zin over de lead\",\\n  \"prioriteit\": getal van 1 tot 10\\n}\\n\\nLead data:\\nNaam: ' + $('Webhook: Lead Intake').first().json.body.naam + '\\nBedrijf: ' + ($('Webhook: Lead Intake').first().json.body.bedrijf || 'Niet opgegeven') + '\\nBericht: ' + $('Webhook: Lead Intake').first().json.body.bericht + '\\nBron: ' + ($('Webhook: Lead Intake').first().json.body.bron || 'Onbekend') + '\\n\\nGeef ALLEEN de JSON terug, geen uitleg.' }] }) }}",
         "options": {}
       },
-      "id": "node-respond",
-      "name": "Webhook: Bevestig Ontvangst",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [460, 480]
+      "id": "node-claude-score",
+      "name": "Claude AI: Score Lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        720,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nlet ai = { score: 'middel', sector: 'Onbekend', samenvatting: 'Geen samenvatting beschikbaar', prioriteit: 5 };\ntry {\n  const text = response.content[0].text;\n  const cleaned = text.replace(/```json\\n?/g, '').replace(/```/g, '').trim();\n  ai = JSON.parse(cleaned);\n} catch(e) {}\nreturn [{ json: { ai_score: ai.score || 'middel', ai_sector: ai.sector || 'Onbekend', ai_samenvatting: ai.samenvatting || '', ai_prioriteit: parseInt(ai.prioriteit) || 5 } }];"
+      },
+      "id": "node-parse-score",
+      "name": "Code: Parse AI Score",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leads?email=eq.{{ $('Webhook: Lead Intake').first().json.body.email }}&order=aangemaakt_op.desc&limit=1",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_ANON_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ai_score",
+              "value": "={{ $json.ai_score }}"
+            },
+            {
+              "name": "ai_sector",
+              "value": "={{ $json.ai_sector }}"
+            },
+            {
+              "name": "ai_samenvatting",
+              "value": "={{ $json.ai_samenvatting }}"
+            },
+            {
+              "name": "ai_prioriteit",
+              "value": "={{ $json.ai_prioriteit }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-supabase-ai-update",
+      "name": "Supabase: Sla AI Score Op",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-opus-4-5', max_tokens: 400, messages: [{ role: 'user', content: 'Schrijf een professionele maar persoonlijke bevestigingsmail in het Nederlands voor een lead die contact heeft opgenomen.\\n\\nLead info:\\n- Naam: ' + $('Webhook: Lead Intake').first().json.body.naam + '\\n- Bedrijf: ' + ($('Webhook: Lead Intake').first().json.body.bedrijf || 'Niet opgegeven') + '\\n- Bericht: ' + $('Webhook: Lead Intake').first().json.body.bericht + '\\n- Sector: ' + $('Code: Parse AI Score').first().json.ai_sector + '\\n\\nEisen:\\n- Max 3 alineas\\n- Verwijs specifiek naar hun bericht\\n- Sluit af met: we nemen binnen 1 werkdag contact op\\n- Toon: professioneel, direct, no-nonsense\\n- Begin met Hoi ' + $('Webhook: Lead Intake').first().json.body.naam.split(' ')[0] + ',\\n- Geef ALLEEN de emailtekst terug in plain text, geen subject' }] }) }}",
+        "options": {}
+      },
+      "id": "node-claude-bevestiging",
+      "name": "Claude AI: Bevestigingsmail",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nlet tekst = 'Bedankt voor je bericht. We nemen zo snel mogelijk contact met je op.';\ntry {\n  tekst = response.content[0].text;\n} catch(e) {}\nreturn [{ json: { email_tekst: tekst } }];"
+      },
+      "id": "node-parse-bevestiging",
+      "name": "Code: Haal Email Tekst Op",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        300
+      ]
     },
     {
       "parameters": {
@@ -64,17 +244,35 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $env.RESEND_API_KEY }}" },
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.RESEND_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "from", "value": "={{ $env.BEDRIJF_EMAIL }}" },
-            { "name": "to", "value": "={{ $('Webhook: Lead Intake').first().json.body.email }}" },
-            { "name": "subject", "value": "Bedankt voor je bericht!" },
-            { "name": "html", "value": "=<h2>Hallo {{ $('Webhook: Lead Intake').first().json.body.naam }},</h2><p>Bedankt voor je bericht! We hebben je aanvraag ontvangen en nemen zo snel mogelijk contact met je op.</p><p>Je bericht:</p><blockquote>{{ $('Webhook: Lead Intake').first().json.body.bericht }}</blockquote><p>Met vriendelijke groet,<br>Het team</p>" }
+            {
+              "name": "from",
+              "value": "={{ $env.BEDRIJF_EMAIL }}"
+            },
+            {
+              "name": "to",
+              "value": "={{ $('Webhook: Lead Intake').first().json.body.email }}"
+            },
+            {
+              "name": "subject",
+              "value": "Bedankt voor je bericht!"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.email_tekst }}"
+            }
           ]
         },
         "options": {}
@@ -83,7 +281,10 @@
       "name": "Resend: Bevestigingsmail naar Lead",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [680, 300]
+      "position": [
+        1920,
+        300
+      ]
     },
     {
       "parameters": {
@@ -92,17 +293,35 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $env.RESEND_API_KEY }}" },
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.RESEND_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "from", "value": "={{ $env.BEDRIJF_EMAIL }}" },
-            { "name": "to", "value": "={{ $env.EIGENAAR_EMAIL }}" },
-            { "name": "subject", "value": "=Nieuwe lead: {{ $('Webhook: Lead Intake').first().json.body.naam }}" },
-            { "name": "html", "value": "=<h2>Nieuwe lead ontvangen!</h2><table cellpadding='8' style='border-collapse:collapse'><tr><td><strong>Naam</strong></td><td>{{ $('Webhook: Lead Intake').first().json.body.naam }}</td></tr><tr><td><strong>E-mail</strong></td><td>{{ $('Webhook: Lead Intake').first().json.body.email }}</td></tr><tr><td><strong>Bedrijf</strong></td><td>{{ $('Webhook: Lead Intake').first().json.body.bedrijf }}</td></tr><tr><td><strong>Bericht</strong></td><td>{{ $('Webhook: Lead Intake').first().json.body.bericht }}</td></tr></table>" }
+            {
+              "name": "from",
+              "value": "={{ $env.BEDRIJF_EMAIL }}"
+            },
+            {
+              "name": "to",
+              "value": "={{ $env.EIGENAAR_EMAIL }}"
+            },
+            {
+              "name": "subject",
+              "value": "=Nieuwe lead: {{ $('Webhook: Lead Intake').first().json.body.naam }} ({{ $('Code: Parse AI Score').first().json.ai_score }} \u2014 {{ $('Code: Parse AI Score').first().json.ai_prioriteit }}/10)"
+            },
+            {
+              "name": "text",
+              "value": "=Nieuwe lead ontvangen!\n\nNaam: {{ $('Webhook: Lead Intake').first().json.body.naam }}\nBedrijf: {{ $('Webhook: Lead Intake').first().json.body.bedrijf || 'Niet opgegeven' }}\nEmail: {{ $('Webhook: Lead Intake').first().json.body.email }}\nTelefoon: {{ $('Webhook: Lead Intake').first().json.body.telefoon || 'Niet opgegeven' }}\nBron: {{ $('Webhook: Lead Intake').first().json.body.bron }}\n\nScore: {{ $('Code: Parse AI Score').first().json.ai_score }} (prioriteit: {{ $('Code: Parse AI Score').first().json.ai_prioriteit }}/10)\nSector: {{ $('Code: Parse AI Score').first().json.ai_sector }}\nSamenvatting: {{ $('Code: Parse AI Score').first().json.ai_samenvatting }}\n\nOrigineel bericht:\n{{ $('Webhook: Lead Intake').first().json.body.bericht }}"
+            }
           ]
         },
         "options": {}
@@ -111,16 +330,19 @@
       "name": "Resend: Notificatie naar Eigenaar",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [900, 300]
+      "position": [
+        2160,
+        300
+      ]
     },
     {
       "parameters": {
         "assignments": {
           "assignments": [
             {
-              "id": "lead_id",
-              "name": "lead_id",
-              "value": "={{ $('Supabase: Lead Opslaan').first().json[0].id }}",
+              "id": "lead_email",
+              "name": "lead_email",
+              "value": "={{ $('Webhook: Lead Intake').first().json.body.email }}",
               "type": "string"
             }
           ]
@@ -128,10 +350,13 @@
         "options": {}
       },
       "id": "node-set-lead-id",
-      "name": "Set: Bewaar Lead ID",
+      "name": "Set: Bewaar Lead Email",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3,
-      "position": [1120, 300]
+      "position": [
+        2400,
+        300
+      ]
     },
     {
       "parameters": {
@@ -142,7 +367,10 @@
       "name": "Wacht: 3 Dagen",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1,
-      "position": [1340, 300],
+      "position": [
+        2640,
+        300
+      ],
       "webhookId": "wait-3-days"
     },
     {
@@ -152,8 +380,14 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey", "value": "={{ $env.SUPABASE_ANON_KEY }}" },
-            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}" }
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_ANON_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}"
+            }
           ]
         },
         "options": {}
@@ -162,7 +396,10 @@
       "name": "Supabase: Haal Lead Op",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1340, 300]
+      "position": [
+        2880,
+        300
+      ]
     },
     {
       "parameters": {
@@ -179,7 +416,58 @@
       "name": "IF: Follow-up Nog Niet Verstuurd?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
-      "position": [1560, 300]
+      "position": [
+        3120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-opus-4-5', max_tokens: 300, messages: [{ role: 'user', content: 'Schrijf een korte follow-up email in het Nederlands voor een lead die 3 dagen geleden contact opnam maar nog geen reactie heeft gegeven.\\n\\nLead info:\\n- Naam: ' + $json.naam + '\\n- Bedrijf: ' + ($json.bedrijf || 'Niet opgegeven') + '\\n- Origineel bericht: ' + $json.bericht + '\\n- Score: ' + ($json.ai_score || 'onbekend') + '\\n\\nEisen:\\n- Max 2 alineas\\n- Verwijs naar hun originele vraag\\n- Niet opdringerig, wel duidelijk\\n- Eindig met een simpele vraag of ze nog interesse hebben\\n- Toon: casual maar professioneel\\n- Begin met Hoi ' + $json.naam.split(' ')[0] + ',\\n- Geef ALLEEN de emailtekst terug, geen subject' }] }) }}",
+        "options": {}
+      },
+      "id": "node-claude-followup",
+      "name": "Claude AI: Follow-up Mail",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        3360,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nlet tekst = 'Hoi, we wilden even checken of je nog vragen hebt naar aanleiding van je eerdere bericht. Laat het ons weten!';\ntry {\n  tekst = response.content[0].text;\n} catch(e) {}\nreturn [{ json: { followup_tekst: tekst } }];"
+      },
+      "id": "node-parse-followup",
+      "name": "Code: Haal Follow-up Tekst Op",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3600,
+        160
+      ]
     },
     {
       "parameters": {
@@ -188,18 +476,35 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $env.RESEND_API_KEY }}" },
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.RESEND_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
-        "bodyContentType": "json",
         "bodyParameters": {
           "parameters": [
-            { "name": "from", "value": "={{ $env.BEDRIJF_EMAIL }}" },
-            { "name": "to", "value": "={{ $('Supabase: Haal Lead Op').first().json.email }}" },
-            { "name": "subject", "value": "Heb je nog vragen?" },
-            { "name": "html", "value": "=<h2>Hallo {{ $('Supabase: Haal Lead Op').first().json.naam }},</h2><p>Een paar dagen geleden nam je contact met ons op. We wilden graag weten of je nog vragen hebt of dat we je ergens mee kunnen helpen.</p><p>We staan voor je klaar!</p><p>Met vriendelijke groet,<br>Het team</p>" }
+            {
+              "name": "from",
+              "value": "={{ $env.BEDRIJF_EMAIL }}"
+            },
+            {
+              "name": "to",
+              "value": "={{ $('Supabase: Haal Lead Op').first().json.email }}"
+            },
+            {
+              "name": "subject",
+              "value": "Heb je nog vragen?"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.followup_tekst }}"
+            }
           ]
         },
         "options": {}
@@ -208,7 +513,10 @@
       "name": "Resend: Follow-up Mail",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1780, 200]
+      "position": [
+        3840,
+        160
+      ]
     },
     {
       "parameters": {
@@ -217,16 +525,35 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey", "value": "={{ $env.SUPABASE_ANON_KEY }}" },
-            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}" },
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_ANON_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "follow_up_verstuurd", "value": true },
-            { "name": "status", "value": "follow_up_verstuurd" }
+            {
+              "name": "follow_up_verstuurd",
+              "value": true
+            },
+            {
+              "name": "status",
+              "value": "follow_up_verstuurd"
+            },
+            {
+              "name": "email_followup",
+              "value": "={{ $('Code: Haal Follow-up Tekst Op').first().json.followup_tekst }}"
+            }
           ]
         },
         "options": {}
@@ -235,57 +562,240 @@
       "name": "Supabase: Markeer Follow-up Verstuurd",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [2000, 200]
+      "position": [
+        4080,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leads?email=eq.{{ $('Webhook: Lead Intake').first().json.body.email }}&order=aangemaakt_op.desc&limit=1",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_ANON_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "email_bevestiging",
+              "value": "={{ $('Code: Haal Email Tekst Op').first().json.email_tekst }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-supabase-save-email",
+      "name": "Supabase: Sla Bevestigingsmail Op",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2340,
+        300
+      ]
     }
   ],
   "connections": {
     "Webhook: Lead Intake": {
       "main": [
         [
-          { "node": "Supabase: Lead Opslaan", "type": "main", "index": 0 },
-          { "node": "Webhook: Bevestig Ontvangst", "type": "main", "index": 0 }
+          {
+            "node": "Supabase: Lead Opslaan",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Supabase: Lead Opslaan": {
       "main": [
-        [{ "node": "Resend: Bevestigingsmail naar Lead", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Claude AI: Score Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude AI: Score Lead": {
+      "main": [
+        [
+          {
+            "node": "Code: Parse AI Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Parse AI Score": {
+      "main": [
+        [
+          {
+            "node": "Supabase: Sla AI Score Op",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: Sla AI Score Op": {
+      "main": [
+        [
+          {
+            "node": "Claude AI: Bevestigingsmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude AI: Bevestigingsmail": {
+      "main": [
+        [
+          {
+            "node": "Code: Haal Email Tekst Op",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Haal Email Tekst Op": {
+      "main": [
+        [
+          {
+            "node": "Resend: Bevestigingsmail naar Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Resend: Bevestigingsmail naar Lead": {
       "main": [
-        [{ "node": "Resend: Notificatie naar Eigenaar", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Resend: Notificatie naar Eigenaar",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Resend: Notificatie naar Eigenaar": {
       "main": [
-        [{ "node": "Set: Bewaar Lead ID", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Supabase: Sla Bevestigingsmail Op",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "Set: Bewaar Lead ID": {
+    "Set: Bewaar Lead Email": {
       "main": [
-        [{ "node": "Wacht: 3 Dagen", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Wacht: 3 Dagen",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Wacht: 3 Dagen": {
       "main": [
-        [{ "node": "Supabase: Haal Lead Op", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Supabase: Haal Lead Op",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Supabase: Haal Lead Op": {
       "main": [
-        [{ "node": "IF: Follow-up Nog Niet Verstuurd?", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "IF: Follow-up Nog Niet Verstuurd?",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "IF: Follow-up Nog Niet Verstuurd?": {
       "main": [
-        [{ "node": "Resend: Follow-up Mail", "type": "main", "index": 0 }],
+        [
+          {
+            "node": "Claude AI: Follow-up Mail",
+            "type": "main",
+            "index": 0
+          }
+        ],
         []
+      ]
+    },
+    "Claude AI: Follow-up Mail": {
+      "main": [
+        [
+          {
+            "node": "Code: Haal Follow-up Tekst Op",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Haal Follow-up Tekst Op": {
+      "main": [
+        [
+          {
+            "node": "Resend: Follow-up Mail",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Resend: Follow-up Mail": {
       "main": [
-        [{ "node": "Supabase: Markeer Follow-up Verstuurd", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Supabase: Markeer Follow-up Verstuurd",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: Sla Bevestigingsmail Op": {
+      "main": [
+        [
+          {
+            "node": "Set: Bewaar Lead Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },
@@ -296,8 +806,14 @@
     "errorWorkflow": ""
   },
   "staticData": null,
-  "tags": ["leads", "automatisering", "resend", "supabase"],
+  "tags": [
+    "leads",
+    "automatisering",
+    "resend",
+    "supabase",
+    "ai"
+  ],
   "triggerCount": 1,
   "updatedAt": "2026-03-28T00:00:00.000Z",
-  "versionId": "1"
+  "versionId": "2"
 }
