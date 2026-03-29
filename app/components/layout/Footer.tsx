@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export default function Footer() {
   const productLinks = [
-    { label: 'Dashboard', href: '/dashboard' },
+    { label: 'Dashboard', href: '/demos/lead-automation/dashboard' },
     { label: 'Lead scoring', href: '/#features' },
     { label: 'Email automatisering', href: '/#features' },
     { label: 'Integraties', href: '/#hoe-het-werkt' },
@@ -11,7 +11,7 @@ export default function Footer() {
   const companyLinks = [
     { label: 'Over Runvex', href: '/#testimonials' },
     { label: 'Blog', href: '#' },
-    { label: 'Demo proberen', href: '/contact' },
+    { label: 'Demo proberen', href: '/demos/lead-automation/contact' },
     { label: 'Vacatures', href: '#' },
   ]
   const legalLinks = [

@@ -79,7 +79,7 @@ export default async function DashboardPage() {
           </div>
         </div>
         <a
-          href="/contact"
+          href="/demos/lead-automation/contact"
           className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white shrink-0 transition-colors"
           style={{
             border: '1.5px dashed rgba(91,110,245,0.4)',

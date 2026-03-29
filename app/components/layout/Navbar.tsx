@@ -33,7 +33,7 @@ export default function Navbar() {
     { label: 'Oplossing', href: '/#hoe-het-werkt' },
     { label: 'Prijzen', href: '/#pricing' },
     { label: 'Over', href: '/#testimonials' },
-    { label: 'Demo', href: '/contact' },
+    { label: 'Demo', href: '/demos/lead-automation/contact' },
     { label: 'Blog', href: '/#blog' },
   ]
 
@@ -101,7 +101,7 @@ export default function Navbar() {
           {/* Right side */}
           <div className="flex items-center gap-3">
             <Link
-              href="/dashboard"
+              href="/demos/lead-automation/dashboard"
               className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all duration-150"
               style={{ background: 'var(--purple)' }}
               onMouseEnter={(e) => {
@@ -184,7 +184,7 @@ export default function Navbar() {
               </Link>
             ))}
             <Link
-              href="/dashboard"
+              href="/demos/lead-automation/dashboard"
               className="mt-4 px-6 py-3 rounded-lg text-sm font-medium text-white"
               style={{ background: 'var(--purple)' }}
               onClick={() => setMobileOpen(false)}
