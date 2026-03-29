@@ -131,7 +131,7 @@ export default function ContactPage() {
       {/* Dashboard link */}
       <div className="fixed top-4 right-4 z-50">
         <Link
-          href="/dashboard"
+          href="/demos/lead-automation/dashboard"
           className="px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors"
           style={{ background: '#5B6EF5' }}
         >

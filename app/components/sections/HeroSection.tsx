@@ -216,7 +216,7 @@ export default function HeroSection() {
           {/* CTAs */}
           <div data-hero-cta className="flex flex-wrap items-center justify-center gap-4">
             <a
-              href="/contact"
+              href="/demos/lead-automation/contact"
               className="group inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-medium text-white transition-all duration-150"
               style={{ background: 'var(--purple)' }}
               onMouseEnter={(e) => (e.currentTarget.style.background = '#6B5FF8')}

@@ -58,22 +58,22 @@ const SECTIONS = [
   {
     group: 'ALGEMEEN',
     items: [
-      { label: 'Overzicht', href: '/dashboard', icon: <IconGrid /> },
-      { label: 'Leads', href: '/dashboard', icon: <IconUsers /> },
+      { label: 'Overzicht', href: '/demos/lead-automation/dashboard', icon: <IconGrid /> },
+      { label: 'Leads', href: '/demos/lead-automation/dashboard', icon: <IconUsers /> },
     ],
   },
   {
     group: 'TOOLS',
     items: [
-      { label: 'AI Insights', href: '/dashboard', icon: <IconSparkle />, badge: '2' },
-      { label: 'Automatisering', href: '/dashboard', icon: <IconBolt /> },
+      { label: 'AI Insights', href: '/demos/lead-automation/dashboard', icon: <IconSparkle />, badge: '2' },
+      { label: 'Automatisering', href: '/demos/lead-automation/dashboard', icon: <IconBolt /> },
     ],
   },
   {
     group: 'OVERIG',
     items: [
-      { label: 'Contactformulier', href: '/contact', icon: <IconMail /> },
-      { label: 'Instellingen', href: '/dashboard', icon: <IconCog /> },
+      { label: 'Contactformulier', href: '/demos/lead-automation/contact', icon: <IconMail /> },
+      { label: 'Instellingen', href: '/demos/lead-automation/dashboard', icon: <IconCog /> },
     ],
   },
 ]

@@ -7,7 +7,7 @@ const demos = [
     title: 'Lead Automatisering',
     description:
       'Leg leads vast, laat Claude AI ze scoren en verstuur automatisch gepersonaliseerde follow-ups — zonder handmatige tussenkomst.',
-    href: '/contact',
+    href: '/demos/lead-automation/contact',
     live: true,
     badge: 'Live demo',
     gradient: 'radial-gradient(ellipse 120% 80% at 10% 110%, rgba(91,110,245,0.18) 0%, transparent 70%)',
