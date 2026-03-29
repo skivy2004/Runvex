@@ -159,19 +159,20 @@ export default function HeroSection() {
           pointer-events: auto;
           background: #5b6ef5;
           color: #ffffff;
-          padding: 0.9rem 2rem;
+          padding: 0.75rem 1.5rem;
           text-decoration: none;
-          font-weight: 700;
-          font-size: 0.7rem;
-          letter-spacing: 0.08em;
-          clip-path: polygon(0 0, 100% 0, 100% 70%, 88% 100%, 0 100%);
-          transition: all 0.25s;
-          display: inline-block;
+          font-weight: 500;
+          font-size: 0.875rem;
+          letter-spacing: normal;
+          border-radius: 0.5rem;
+          transition: background 0.15s;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-family: var(--font-dm-sans), sans-serif;
         }
         .rv-cta:hover {
-          background: #7b6ff0;
-          transform: translateY(-4px);
-          box-shadow: 0 8px 24px rgba(91,110,245,0.4);
+          background: #6b5ff8;
         }
 
         .rv-scroll-hint {
@@ -203,10 +204,8 @@ export default function HeroSection() {
 
         {/* Interface overlay */}
         <div className="rv-interface">
-          {/* Top left */}
-          <div style={{ fontWeight: 700, fontSize: '0.75rem', letterSpacing: '0.1em', color: '#8A8FA8' }}>
-            RUNVEX_AI
-          </div>
+          {/* Top left — empty spacer */}
+          <div />
 
           {/* Top right */}
           <div style={{ textAlign: 'right', fontFamily: 'monospace', color: '#5B6EF5', fontSize: '0.65rem', lineHeight: 1.8 }}>
@@ -221,7 +220,10 @@ export default function HeroSection() {
               <p>LEAD AUTOMATISERING MET CLAUDE AI</p>
             </div>
             <a href="/demos/lead-automation/contact" className="rv-cta">
-              PROBEER DEMO
+              Probeer demo's
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M5.25 3.5L8.75 7L5.25 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </a>
           </div>
         </div>
