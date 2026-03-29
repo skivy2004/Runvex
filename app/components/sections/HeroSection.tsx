@@ -1,300 +1,249 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import gsap from 'gsap'
-import FloatingIcon from '../ui/FloatingIcon'
-
-/* ---------- SVG Icons for integrations ---------- */
-function GmailIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M2 6l10 7 10-7" stroke="#EA4335" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-      <rect x="2" y="5" width="20" height="14" rx="2" stroke="#8B8FB3" strokeWidth="1.5"/>
-    </svg>
-  )
-}
-function LinkedInIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <rect x="3" y="3" width="18" height="18" rx="3" stroke="#0A66C2" strokeWidth="1.5"/>
-      <path d="M8 11v5M8 8v.01M12 16v-4a2 2 0 1 1 4 0v4" stroke="#0A66C2" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  )
-}
-function SlackIconSVG() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z" fill="#E01E5A"/>
-      <path d="M20.5 10H19v-1.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" fill="#E01E5A"/>
-      <path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z" fill="#36C5F0"/>
-      <path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z" fill="#36C5F0"/>
-      <path d="M14 14.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5z" fill="#2EB67D"/>
-      <path d="M14 20.5v-1.5h1.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5z" fill="#2EB67D"/>
-      <path d="M10 9.5c0 .83-.67 1.5-1.5 1.5h-5C2.67 11 2 10.33 2 9.5S2.67 8 3.5 8h5c.83 0 1.5.67 1.5 1.5z" fill="#ECB22E"/>
-      <path d="M10 3.5V5H8.5C7.67 5 7 4.33 7 3.5S7.67 2 8.5 2s1.5.67 1.5 1.5z" fill="#ECB22E"/>
-    </svg>
-  )
-}
-function SupabaseIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M13.5 21.2c-.4.5-1.2.1-1.1-.5l.9-8.7H5.7c-.5 0-.8-.6-.5-1l8.3-9.2c.4-.5 1.2-.1 1.1.5l-.9 8.7h7.6c.5 0 .8.6.5 1l-8.3 9.2z" fill="#3ECF8E"/>
-    </svg>
-  )
-}
-function ResendIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M6 12h6a4 4 0 0 0 0-8H6v16" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M12 12l6 8" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  )
-}
-function N8nIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <circle cx="6" cy="12" r="3" stroke="#EA4B71" strokeWidth="1.5"/>
-      <circle cx="18" cy="6" r="3" stroke="#EA4B71" strokeWidth="1.5"/>
-      <circle cx="18" cy="18" r="3" stroke="#EA4B71" strokeWidth="1.5"/>
-      <path d="M9 12h3l3-6M12 12l3 6" stroke="#EA4B71" strokeWidth="1.5" strokeLinecap="round"/>
-    </svg>
-  )
-}
-
-/* ---------- Dashboard Mockup (CSS-only) ---------- */
-function DashboardMockup() {
-  return (
-    <div className="w-full">
-      {/* Stats row */}
-      <div className="grid grid-cols-3 gap-3 p-4 pb-3">
-        {[
-          { label: 'Totale leads', value: '142', change: '+12%' },
-          { label: 'Hoge prioriteit', value: '28', change: '+3' },
-          { label: 'Follow-ups vandaag', value: '5', change: '' },
-        ].map((s) => (
-          <div
-            key={s.label}
-            className="rounded-xl p-3"
-            style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.06)',
-            }}
-          >
-            <div className="text-[10px]" style={{ color: 'var(--text-3)' }}>{s.label}</div>
-            <div className="text-lg font-semibold font-bricolage text-white mt-0.5">{s.value}</div>
-            {s.change && (
-              <div className="text-[10px] mt-0.5" style={{ color: '#3ECF8E' }}>{s.change}</div>
-            )}
-          </div>
-        ))}
-      </div>
-      {/* Table */}
-      <div className="px-4 pb-4">
-        <div
-          className="rounded-xl overflow-hidden"
-          style={{ border: '1px solid rgba(255,255,255,0.06)' }}
-        >
-          {/* Header */}
-          <div
-            className="grid text-[10px] font-medium px-4 py-2.5"
-            style={{
-              gridTemplateColumns: '1.2fr 1.5fr 0.6fr 0.8fr 0.8fr',
-              color: 'var(--text-3)',
-              background: 'rgba(255,255,255,0.02)',
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
-            }}
-          >
-            <div>Naam</div>
-            <div>Email</div>
-            <div>Score</div>
-            <div>Sector</div>
-            <div>Status</div>
-          </div>
-          {/* Rows */}
-          {[
-            { name: 'Jan de Vries', email: 'jan@devries.nl', score: 9, sector: 'IT', status: 'Nieuw' },
-            { name: 'Sarah Bakker', email: 'sarah@company.nl', score: 7, sector: 'Marketing', status: 'Verstuurd' },
-            { name: 'Tom Janssen', email: 'tom@startup.io', score: 8, sector: 'SaaS', status: 'Nieuw' },
-            { name: 'Lisa Smit', email: 'lisa@agency.nl', score: 5, sector: 'Design', status: 'Beantwoord' },
-          ].map((row, i) => (
-            <div
-              key={i}
-              className="grid text-[11px] px-4 py-2.5 items-center"
-              style={{
-                gridTemplateColumns: '1.2fr 1.5fr 0.6fr 0.8fr 0.8fr',
-                borderBottom: i < 3 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-              }}
-            >
-              <div className="text-white font-medium">{row.name}</div>
-              <div style={{ color: 'var(--text-3)' }}>{row.email}</div>
-              <div>
-                <span
-                  className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold"
-                  style={{
-                    background: row.score >= 8 ? 'rgba(91,110,245,0.2)' : row.score >= 6 ? 'rgba(236,178,46,0.15)' : 'rgba(255,255,255,0.06)',
-                    color: row.score >= 8 ? '#A99FF5' : row.score >= 6 ? '#ECB22E' : 'var(--text-3)',
-                  }}
-                >
-                  {row.score}
-                </span>
-              </div>
-              <div style={{ color: 'var(--text-2)' }}>{row.sector}</div>
-              <div>
-                <span
-                  className="inline-flex px-1.5 py-0.5 rounded text-[10px]"
-                  style={{
-                    background: row.status === 'Nieuw' ? 'rgba(62,207,142,0.12)' : 'rgba(255,255,255,0.05)',
-                    color: row.status === 'Nieuw' ? '#3ECF8E' : 'var(--text-3)',
-                  }}
-                >
-                  {row.status}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
 
 export default function HeroSection() {
-  const containerRef = useRef<HTMLDivElement>(null)
+  const canvasRef = useRef<HTMLDivElement>(null)
+  const layersRef = useRef<HTMLDivElement[]>([])
 
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+    const canvas = canvasRef.current
+    if (!canvas) return
 
-      tl.from('[data-hero-badge]', { y: 10, opacity: 0, duration: 0.5 }, 0.1)
-        .from('[data-hero-line1]', { y: 30, opacity: 0, duration: 0.6 }, 0.2)
-        .from('[data-hero-line2]', { y: 30, opacity: 0, duration: 0.6 }, 0.35)
-        .from('[data-hero-sub]', { opacity: 0, duration: 0.5 }, 0.5)
-        .from('[data-hero-cta]', { y: 10, opacity: 0, scale: 0.97, duration: 0.5 }, 0.65)
-        .from('[data-hero-mockup]', { y: 40, opacity: 0, duration: 0.8 }, 0.3)
-        .from('[data-hero-float]', { opacity: 0, duration: 0.6, stagger: 0.08 }, 0.6)
-    }, containerRef)
+    // Mouse parallax
+    const handleMouseMove = (e: MouseEvent) => {
+      const x = (window.innerWidth / 2 - e.pageX) / 25
+      const y = (window.innerHeight / 2 - e.pageY) / 25
+      canvas.style.transform = `rotateX(${55 + y / 2}deg) rotateZ(${-25 + x / 2}deg)`
+      layersRef.current.forEach((layer, index) => {
+        if (!layer) return
+        const depth = (index + 1) * 15
+        const moveX = x * (index + 1) * 0.2
+        const moveY = y * (index + 1) * 0.2
+        layer.style.transform = `translateZ(${depth}px) translate(${moveX}px, ${moveY}px)`
+      })
+    }
 
-    return () => ctx.revert()
+    // Entrance animation
+    canvas.style.opacity = '0'
+    canvas.style.transform = 'rotateX(90deg) rotateZ(0deg) scale(0.8)'
+    const timeout = setTimeout(() => {
+      canvas.style.transition = 'all 2.5s cubic-bezier(0.16, 1, 0.3, 1)'
+      canvas.style.opacity = '1'
+      canvas.style.transform = 'rotateX(55deg) rotateZ(-25deg) scale(1)'
+    }, 300)
+
+    window.addEventListener('mousemove', handleMouseMove)
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      clearTimeout(timeout)
+    }
   }, [])
 
   return (
-    <section ref={containerRef} className="relative pt-28 pb-20 overflow-hidden">
-      {/* Background effects */}
-      <div className="hero-bg absolute inset-0 pointer-events-none" />
-      <div className="hero-grid absolute inset-0 pointer-events-none" />
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&display=swap');
 
-      <div className="relative max-w-7xl mx-auto px-6">
-        {/* Content */}
-        <div className="text-center max-w-3xl mx-auto">
-          {/* Badge */}
-          <div data-hero-badge className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium mb-8"
-            style={{
-              background: 'rgba(91,110,245,0.15)',
-              border: '1px solid rgba(91,110,245,0.35)',
-              color: '#A99FF5',
-            }}
-          >
-            <span
-              className="inline-block"
-              style={{ width: 6, height: 6, borderRadius: '50%', background: '#5B6EF5' }}
-            />
-            Leads automatisch opvolgen met Claude AI
+        .rv-hero {
+          background-color: #0a0b0f;
+          color: #e0e0e0;
+          font-family: 'Syncopate', sans-serif;
+          overflow: hidden;
+          height: 100vh;
+          width: 100vw;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+        }
+
+        .rv-grain {
+          position: fixed;
+          top: 0; left: 0; width: 100%; height: 100%;
+          pointer-events: none;
+          z-index: 100;
+          opacity: 0.1;
+        }
+
+        .rv-viewport {
+          perspective: 2000px;
+          width: 100vw;
+          height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          position: absolute;
+          inset: 0;
+        }
+
+        .rv-canvas {
+          position: relative;
+          width: 800px;
+          height: 500px;
+          transform-style: preserve-3d;
+          transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .rv-layer {
+          position: absolute;
+          inset: 0;
+          border: 1px solid rgba(91,110,245,0.08);
+          background-size: cover;
+          background-position: center;
+          transition: transform 0.5s ease;
+        }
+
+        .rv-layer-1 {
+          background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1200');
+          filter: grayscale(1) contrast(1.2) brightness(0.4);
+        }
+        .rv-layer-2 {
+          background-image: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=1200');
+          filter: grayscale(1) contrast(1.1) brightness(0.6);
+          opacity: 0.5;
+          mix-blend-mode: screen;
+        }
+        .rv-layer-3 {
+          background-image: url('https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&q=80&w=1200');
+          filter: grayscale(1) contrast(1.3) brightness(0.7);
+          opacity: 0.35;
+          mix-blend-mode: overlay;
+        }
+
+        .rv-contours {
+          position: absolute;
+          width: 200%; height: 200%;
+          top: -50%; left: -50%;
+          background-image: repeating-radial-gradient(
+            circle at 50% 50%,
+            transparent 0,
+            transparent 40px,
+            rgba(91,110,245,0.06) 41px,
+            transparent 42px
+          );
+          transform: translateZ(120px);
+          pointer-events: none;
+        }
+
+        .rv-interface {
+          position: fixed;
+          inset: 0;
+          padding: 3rem 4rem;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          grid-template-rows: auto 1fr auto;
+          z-index: 10;
+          pointer-events: none;
+        }
+
+        @media (max-width: 640px) {
+          .rv-interface { padding: 2rem 1.5rem; }
+        }
+
+        .rv-title {
+          grid-column: 1 / -1;
+          align-self: center;
+          font-size: clamp(2.8rem, 10vw, 9rem);
+          font-weight: 700;
+          line-height: 0.85;
+          letter-spacing: -0.04em;
+          mix-blend-mode: difference;
+          color: #ffffff;
+        }
+
+        .rv-cta {
+          pointer-events: auto;
+          background: #5b6ef5;
+          color: #ffffff;
+          padding: 0.9rem 2rem;
+          text-decoration: none;
+          font-weight: 700;
+          font-size: 0.7rem;
+          letter-spacing: 0.08em;
+          clip-path: polygon(0 0, 100% 0, 100% 70%, 88% 100%, 0 100%);
+          transition: all 0.25s;
+          display: inline-block;
+        }
+        .rv-cta:hover {
+          background: #7b6ff0;
+          transform: translateY(-4px);
+          box-shadow: 0 8px 24px rgba(91,110,245,0.4);
+        }
+
+        .rv-scroll-hint {
+          position: absolute;
+          bottom: 2rem;
+          left: 50%;
+          width: 1px;
+          height: 60px;
+          background: linear-gradient(to bottom, rgba(91,110,245,0.8), transparent);
+          animation: rv-flow 2s infinite ease-in-out;
+        }
+
+        @keyframes rv-flow {
+          0%, 100% { transform: scaleY(0); transform-origin: top; }
+          50%       { transform: scaleY(1); transform-origin: top; }
+          51%       { transform: scaleY(1); transform-origin: bottom; }
+        }
+      `}</style>
+
+      <div className="rv-hero">
+        {/* Grain */}
+        <svg style={{ position: 'absolute', width: 0, height: 0 }}>
+          <filter id="rv-grain">
+            <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" />
+            <feColorMatrix type="saturate" values="0" />
+          </filter>
+        </svg>
+        <div className="rv-grain" style={{ filter: 'url(#rv-grain)' }} />
+
+        {/* Interface overlay */}
+        <div className="rv-interface">
+          {/* Top left */}
+          <div style={{ fontWeight: 700, fontSize: '0.75rem', letterSpacing: '0.1em', color: '#8A8FA8' }}>
+            RUNVEX_AI
           </div>
 
-          {/* Headline */}
-          <h1 className="font-bricolage font-extrabold mb-6" style={{ letterSpacing: '-0.03em', lineHeight: 1.0, fontSize: 'clamp(42px, 6.5vw, 82px)' }}>
-            <span data-hero-line1 className="block text-white">Automatiseer je leads.</span>
-            <span data-hero-line2 className="block text-white">Verlies geen klant meer.</span>
+          {/* Top right */}
+          <div style={{ textAlign: 'right', fontFamily: 'monospace', color: '#5B6EF5', fontSize: '0.65rem', lineHeight: 1.8 }}>
+            <div>LEADS VERWERKT: ∞</div>
+            <div>RESPONSE TIME: &lt; 3 SEC</div>
+          </div>
+
+          {/* Main title */}
+          <h1 className="rv-title">
+            GEEN<br />
+            LEAD<br />
+            MEER
           </h1>
 
-          {/* Subheadline */}
-          <p data-hero-sub className="text-base md:text-lg mx-auto mb-10" style={{ color: 'var(--text-2)', maxWidth: 520 }}>
-            Runvex legt leads vast, scoort ze met AI en stuurt gepersonaliseerde
-            opvolgmails — zonder dat jij er iets voor hoeft te doen.
-          </p>
-
-          {/* CTAs */}
-          <div data-hero-cta className="flex flex-wrap items-center justify-center gap-4">
-            <a
-              href="/demos/lead-automation/contact"
-              className="group inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-medium text-white transition-all duration-150"
-              style={{ background: 'var(--purple)' }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = '#6B5FF8')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--purple)')}
-            >
-              Probeer de demo
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="transition-transform duration-150 group-hover:translate-x-[3px]">
-                <path d="M5.25 3.5L8.75 7L5.25 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </a>
-            <a
-              href="/#hoe-het-werkt"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-medium text-white transition-all duration-150"
-              style={{ border: '1px solid rgba(255,255,255,0.18)' }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.35)')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)')}
-            >
-              Hoe het werkt
+          {/* Bottom row */}
+          <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
+            <div style={{ fontFamily: 'monospace', fontSize: '0.65rem', lineHeight: 1.9, color: '#5A5E82' }}>
+              <p>[ DEMO BESCHIKBAAR ]</p>
+              <p>LEAD AUTOMATISERING MET CLAUDE AI</p>
+            </div>
+            <a href="/demos/lead-automation/contact" className="rv-cta">
+              PROBEER DEMO
             </a>
           </div>
         </div>
 
-        {/* Mockup with floating icons */}
-        <div className="relative mt-16 md:mt-20 max-w-[900px] mx-auto">
-          {/* Floating icons - left */}
-          <div className="absolute -left-4 md:-left-16 top-1/4 flex flex-col gap-4 z-10 hidden md:flex">
-            <div data-hero-float><FloatingIcon delay={0}><GmailIcon /></FloatingIcon></div>
-            <div data-hero-float><FloatingIcon delay={0.4} duration={2.8}><LinkedInIcon /></FloatingIcon></div>
-            <div data-hero-float><FloatingIcon delay={0.8} duration={3.2}><SlackIconSVG /></FloatingIcon></div>
-          </div>
-
-          {/* Floating icons - right */}
-          <div className="absolute -right-4 md:-right-16 top-1/3 flex flex-col gap-4 z-10 hidden md:flex">
-            <div data-hero-float><FloatingIcon delay={0.2} duration={3}><SupabaseIcon /></FloatingIcon></div>
-            <div data-hero-float><FloatingIcon delay={0.6} duration={2.6}><ResendIcon /></FloatingIcon></div>
-            <div data-hero-float><FloatingIcon delay={1} duration={3.4}><N8nIcon /></FloatingIcon></div>
-          </div>
-
-          {/* Browser frame */}
-          <div
-            data-hero-mockup
-            className="rounded-2xl overflow-hidden"
-            style={{
-              background: 'var(--bg-2)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              boxShadow: '0 40px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(91,110,245,0.1), inset 0 1px 0 rgba(255,255,255,0.05)',
-            }}
-          >
-            {/* Chrome bar */}
-            <div
-              className="flex items-center gap-3 px-4 py-3"
-              style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
-            >
-              <div className="flex gap-1.5">
-                {['#FF5F57', '#FFBD2E', '#28C840'].map((c) => (
-                  <div key={c} className="w-3 h-3 rounded-full" style={{ background: c, opacity: 0.7 }} />
-                ))}
-              </div>
-              <div
-                className="flex-1 text-center text-xs rounded-md py-1 px-3"
-                style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.25)' }}
-              >
-                app.runvex.nl/dashboard
-              </div>
-            </div>
-
-            {/* Dashboard content */}
-            <div className="relative">
-              <DashboardMockup />
-              {/* Fade at bottom */}
-              <div
-                className="absolute inset-x-0 bottom-0 h-24 pointer-events-none"
-                style={{ background: 'linear-gradient(to bottom, transparent 0%, #0A0B0F 100%)' }}
-              />
-            </div>
+        {/* 3D scene */}
+        <div className="rv-viewport">
+          <div className="rv-canvas" ref={canvasRef}>
+            <div className="rv-layer rv-layer-1" ref={(el) => { if (el) layersRef.current[0] = el }} />
+            <div className="rv-layer rv-layer-2" ref={(el) => { if (el) layersRef.current[1] = el }} />
+            <div className="rv-layer rv-layer-3" ref={(el) => { if (el) layersRef.current[2] = el }} />
+            <div className="rv-contours" />
           </div>
         </div>
+
+        {/* Scroll line */}
+        <div className="rv-scroll-hint" />
       </div>
-    </section>
+    </>
   )
 }
