@@ -99,18 +99,6 @@ export default function HeroSection() {
           background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1200');
           filter: grayscale(1) contrast(1.2) brightness(0.3) hue-rotate(220deg) saturate(0.4);
         }
-        .rv-layer-2 {
-          background-image: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=1200');
-          filter: grayscale(0.8) contrast(1.1) brightness(0.5) hue-rotate(220deg) saturate(0.6);
-          opacity: 0.45;
-          mix-blend-mode: screen;
-        }
-        .rv-layer-3 {
-          background-image: url('https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&q=80&w=1200');
-          filter: grayscale(0.6) contrast(1.3) brightness(0.6) hue-rotate(220deg) saturate(0.5);
-          opacity: 0.3;
-          mix-blend-mode: overlay;
-        }
 
         .rv-purple-overlay {
           position: absolute;
@@ -232,8 +220,6 @@ export default function HeroSection() {
         <div className="rv-viewport">
           <div className="rv-canvas" ref={canvasRef}>
             <div className="rv-layer rv-layer-1" ref={(el) => { if (el) layersRef.current[0] = el }} />
-            <div className="rv-layer rv-layer-2" ref={(el) => { if (el) layersRef.current[1] = el }} />
-            <div className="rv-layer rv-layer-3" ref={(el) => { if (el) layersRef.current[2] = el }} />
             <div className="rv-purple-overlay" />
             <div className="rv-contours" />
           </div>
