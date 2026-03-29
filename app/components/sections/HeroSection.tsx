@@ -97,7 +97,7 @@ export default function HeroSection() {
 
         .rv-layer-1 {
           background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1200');
-          filter: grayscale(1) contrast(1.2) brightness(0.3) hue-rotate(220deg) saturate(0.4);
+          filter: contrast(1.1) brightness(0.5);
         }
 
         .rv-purple-overlay {
@@ -199,6 +199,34 @@ export default function HeroSection() {
           <div style={{ textAlign: 'right', fontFamily: 'monospace', color: '#5B6EF5', fontSize: '0.65rem', lineHeight: 1.8 }}>
             <div>LEADS VERWERKT: ∞</div>
             <div>RESPONSE TIME: &lt; 3 SEC</div>
+          </div>
+
+          {/* Center headline */}
+          <div style={{
+            gridColumn: '1 / -1',
+            alignSelf: 'center',
+            textAlign: 'center',
+            padding: '0 1rem',
+          }}>
+            <p style={{
+              fontFamily: 'var(--font-bricolage), sans-serif',
+              fontSize: 'clamp(1.6rem, 4vw, 3rem)',
+              fontWeight: 800,
+              color: '#ffffff',
+              letterSpacing: '-0.03em',
+              lineHeight: 1.15,
+            }}>
+              Laat geen enkele lead<br />
+              <span style={{ color: '#5B6EF5' }}>meer liggen.</span>
+            </p>
+            <p style={{
+              marginTop: '0.75rem',
+              fontSize: '0.95rem',
+              color: '#8A8FA8',
+              fontFamily: 'var(--font-dm-sans), sans-serif',
+            }}>
+              Runvex volgt elke lead automatisch op — zodat jij je focust op groeien.
+            </p>
           </div>
 
           {/* Bottom row */}
