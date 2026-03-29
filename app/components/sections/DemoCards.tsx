@@ -112,42 +112,64 @@ export default function DemoCards() {
 
         {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {demos.map((demo, i) => (
+          {demos.map((demo, i) => {
+            const Tag = demo.live ? 'a' : 'div'
+            return (
             <motion.div
               key={demo.title}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: i * 0.08 }}
+              className="group"
+              whileHover={demo.live ? { y: -4 } : {}}
             >
-              <div
-                className="relative rounded-2xl p-6 flex flex-col h-full overflow-hidden transition-all duration-200"
+              <Tag
+                {...(demo.live ? { href: demo.href! } : {})}
+                className="relative rounded-2xl p-6 flex flex-col h-full overflow-hidden transition-all duration-200 block"
                 style={{
                   background: '#12141A',
                   border: `1px solid ${demo.borderColor}`,
-                  opacity: demo.live ? 1 : 0.72,
+                  opacity: demo.live ? 1 : 0.65,
+                  cursor: demo.live ? 'pointer' : 'default',
+                  boxShadow: 'none',
                 }}
               >
-                {/* Gradient glow */}
+                {/* Gradient glow — intensifies on hover for live card */}
                 <div
-                  className="absolute inset-0 pointer-events-none"
-                  style={{ background: demo.gradient }}
+                  className="absolute inset-0 pointer-events-none transition-opacity duration-200"
+                  style={{ background: demo.gradient, opacity: 1 }}
                 />
+                {demo.live && (
+                  <div
+                    className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    style={{ background: demo.gradient.replace('0.18', '0.32').replace('0.12', '0.24') }}
+                  />
+                )}
 
-                {/* Top row: icons + lock */}
+                {/* Top row: icons + arrow (live) or lock (dummy) */}
                 <div className="relative z-10 flex items-start justify-between mb-6">
                   <div className="flex items-center gap-2">
                     {demo.icons.map((icon, j) => (
                       <div
                         key={j}
-                        className="w-10 h-10 rounded-xl flex items-center justify-center"
+                        className="w-10 h-10 rounded-xl flex items-center justify-center transition-transform duration-200 group-hover:scale-110"
                         style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}
                       >
                         {icon}
                       </div>
                     ))}
                   </div>
-                  {!demo.live && (
+                  {demo.live ? (
+                    <div
+                      className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-1 group-hover:translate-x-0"
+                      style={{ background: demo.badgeBg }}
+                    >
+                      <svg width="13" height="13" fill="none" stroke={demo.badgeColor} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  ) : (
                     <div
                       className="w-7 h-7 rounded-lg flex items-center justify-center"
                       style={{ background: 'rgba(255,255,255,0.05)' }}
@@ -184,22 +206,23 @@ export default function DemoCards() {
                   </span>
 
                   {demo.live ? (
-                    <a
-                      href={demo.href!}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-white transition-opacity hover:opacity-75"
+                    <span
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-200 group-hover:gap-2"
+                      style={{ background: demo.badgeBg, color: demo.badgeColor }}
                     >
                       Probeer nu
-                      <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24" className="transition-transform duration-200 group-hover:translate-x-0.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                       </svg>
-                    </a>
+                    </span>
                   ) : (
                     <span className="text-xs" style={{ color: '#3A3D50' }}>Binnenkort beschikbaar</span>
                   )}
                 </div>
-              </div>
+              </Tag>
             </motion.div>
-          ))}
+            )
+          })}
         </div>
       </div>
     </section>
