@@ -71,7 +71,7 @@ export default function CTASection() {
                 onMouseEnter={(e) => (e.currentTarget.style.background = '#6B5FF8')}
                 onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--purple)')}
               >
-                Gratis starten
+                Probeer de demo
                 <svg
                   width="14"
                   height="14"
@@ -99,7 +99,7 @@ export default function CTASection() {
                   (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)')
                 }
               >
-                Bekijk demo
+                Hoe het werkt
               </a>
             </div>
           </div>

@@ -11,7 +11,7 @@ export default function Footer() {
   const companyLinks = [
     { label: 'Over Runvex', href: '/#testimonials' },
     { label: 'Blog', href: '#' },
-    { label: 'Contact', href: '/contact' },
+    { label: 'Demo proberen', href: '/contact' },
     { label: 'Vacatures', href: '#' },
   ]
   const legalLinks = [

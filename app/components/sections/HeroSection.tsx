@@ -222,7 +222,7 @@ export default function HeroSection() {
               onMouseEnter={(e) => (e.currentTarget.style.background = '#6B5FF8')}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--purple)')}
             >
-              Gratis starten
+              Probeer de demo
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="transition-transform duration-150 group-hover:translate-x-[3px]">
                 <path d="M5.25 3.5L8.75 7L5.25 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
@@ -234,7 +234,7 @@ export default function HeroSection() {
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.35)')}
               onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)')}
             >
-              Bekijk de demo
+              Hoe het werkt
             </a>
           </div>
         </div>

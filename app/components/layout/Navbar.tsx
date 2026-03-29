@@ -33,7 +33,7 @@ export default function Navbar() {
     { label: 'Oplossing', href: '/#hoe-het-werkt' },
     { label: 'Prijzen', href: '/#pricing' },
     { label: 'Over', href: '/#testimonials' },
-    { label: 'Contact', href: '/contact' },
+    { label: 'Demo', href: '/contact' },
     { label: 'Blog', href: '/#blog' },
   ]
 
