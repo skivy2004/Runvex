@@ -79,7 +79,7 @@ export default function ContactPage() {
 
   if (status === 'success') {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4 text-gray-900">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 max-w-md w-full text-center">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -94,7 +94,7 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 text-gray-900">
       <div className="fixed top-4 right-4 z-50">
         <a href="/dashboard" className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-md transition-colors">
           Dashboard →
@@ -116,33 +116,33 @@ export default function ContactPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Naam <span className="text-red-500">*</span></label>
             <input name="naam" type="text" placeholder="Jan de Vries" autoComplete="name"
-              className={`w-full px-4 py-2.5 border rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white ${errors.naam ? 'border-red-400' : 'border-gray-200'}`} />
+              className={`w-full px-4 py-2.5 border rounded-lg text-sm bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white ${errors.naam ? 'border-red-400' : 'border-gray-200'}`} />
             {errors.naam && <p className="text-red-500 text-xs mt-1">{errors.naam}</p>}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">E-mailadres <span className="text-red-500">*</span></label>
             <input name="email" type="email" placeholder="jan@bedrijf.nl" autoComplete="email"
-              className={`w-full px-4 py-2.5 border rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white ${errors.email ? 'border-red-400' : 'border-gray-200'}`} />
+              className={`w-full px-4 py-2.5 border rounded-lg text-sm bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white ${errors.email ? 'border-red-400' : 'border-gray-200'}`} />
             {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Telefoonnummer</label>
             <input name="telefoon" type="tel" placeholder="+31 6 12345678" autoComplete="tel"
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white" />
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white" />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Bedrijf</label>
             <input name="bedrijf" type="text" placeholder="Bedrijf B.V." autoComplete="organization"
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white" />
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white" />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Hoe heeft u ons gevonden? <span className="text-red-500">*</span></label>
             <select name="bron" defaultValue=""
-              className={`w-full px-4 py-2.5 border rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white ${errors.bron ? 'border-red-400' : 'border-gray-200'}`}>
+              className={`w-full px-4 py-2.5 border rounded-lg text-sm bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white ${errors.bron ? 'border-red-400' : 'border-gray-200'}`}>
               <option value="" disabled>Selecteer een optie</option>
               <option>Google / Zoekmachine</option>
               <option>LinkedIn</option>
@@ -156,7 +156,7 @@ export default function ContactPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Bericht <span className="text-red-500">*</span></label>
             <textarea name="bericht" rows={4} placeholder="Hoe kunnen we je helpen?"
-              className={`w-full px-4 py-2.5 border rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white resize-y ${errors.bericht ? 'border-red-400' : 'border-gray-200'}`} />
+              className={`w-full px-4 py-2.5 border rounded-lg text-sm bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white resize-y ${errors.bericht ? 'border-red-400' : 'border-gray-200'}`} />
             {errors.bericht && <p className="text-red-500 text-xs mt-1">{errors.bericht}</p>}
           </div>
 
