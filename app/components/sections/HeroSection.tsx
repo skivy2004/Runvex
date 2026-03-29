@@ -235,7 +235,7 @@ export default function HeroSection() {
               <p>[ DEMO BESCHIKBAAR ]</p>
               <p>LEAD AUTOMATISERING MET CLAUDE AI</p>
             </div>
-            <a href="/demos/lead-automation/contact" className="rv-cta">
+            <a href="/#demos" className="rv-cta">
               Probeer demo's
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M5.25 3.5L8.75 7L5.25 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>

@@ -77,7 +77,7 @@ const demos = [
 
 export default function DemoCards() {
   return (
-    <section className="py-20 md:py-28">
+    <section id="demos" className="py-20 md:py-28">
       <div className="max-w-7xl mx-auto px-6">
 
         {/* Header */}
