@@ -119,13 +119,7 @@ export default function LeadTable({ leads, lastUpdated }: { leads: Lead[]; lastU
       </div>
 
       {/* Table */}
-      <div
-        className="rounded-xl overflow-hidden"
-        style={{
-          background: '#12141A',
-          border: '1px solid rgba(255,255,255,0.06)',
-        }}
-      >
+      <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
