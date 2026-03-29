@@ -8,6 +8,7 @@ import HowItWorks from './components/sections/HowItWorks'
 import ProductShowcase from './components/sections/ProductShowcase'
 import Testimonials from './components/sections/Testimonials'
 import CTASection from './components/sections/CTASection'
+import DemoCards from './components/sections/DemoCards'
 import Footer from './components/layout/Footer'
 
 export default function Home() {
@@ -19,6 +20,7 @@ export default function Home() {
         <StatsBar />
         <WhyRunvex />
         <HowItWorks />
+        <DemoCards />
         <ProductShowcase />
         <Testimonials />
         <CTASection />
