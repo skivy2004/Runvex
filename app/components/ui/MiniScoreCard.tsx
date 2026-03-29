@@ -17,9 +17,9 @@ export default function MiniScoreCard() {
         <div
           className="px-2.5 py-1 rounded-lg text-xs font-semibold"
           style={{
-            background: 'rgba(91,79,232,0.2)',
+            background: 'rgba(91,110,245,0.2)',
             color: '#A99FF5',
-            border: '1px solid rgba(91,79,232,0.3)',
+            border: '1px solid rgba(91,110,245,0.3)',
           }}
         >
           9/10
@@ -30,7 +30,7 @@ export default function MiniScoreCard() {
         <div
           className="px-2 py-0.5 rounded-md text-[10px] font-medium"
           style={{
-            background: 'rgba(91,79,232,0.15)',
+            background: 'rgba(91,110,245,0.15)',
             color: 'var(--purple-2)',
           }}
         >

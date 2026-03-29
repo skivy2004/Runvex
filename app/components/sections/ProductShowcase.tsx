@@ -6,7 +6,7 @@ import { motion } from 'framer-motion'
 function Check() {
   return (
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="flex-shrink-0 mt-0.5">
-      <circle cx="9" cy="9" r="9" fill="rgba(91,79,232,0.15)" />
+      <circle cx="9" cy="9" r="9" fill="rgba(91,110,245,0.15)" />
       <path d="M5.5 9l2.5 2.5 4.5-5" stroke="var(--purple-2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
@@ -67,7 +67,7 @@ function DashboardPreview() {
             <span
               className="px-1.5 py-0.5 rounded text-[10px] font-semibold"
               style={{
-                background: lead.score >= 8 ? 'rgba(91,79,232,0.2)' : 'rgba(255,255,255,0.06)',
+                background: lead.score >= 8 ? 'rgba(91,110,245,0.2)' : 'rgba(255,255,255,0.06)',
                 color: lead.score >= 8 ? '#A99FF5' : 'var(--text-3)',
               }}
             >
@@ -118,9 +118,9 @@ function LeadDetailPreview() {
             <div
               className="px-2.5 py-1 rounded-lg text-[10px] font-semibold"
               style={{
-                background: 'rgba(91,79,232,0.2)',
+                background: 'rgba(91,110,245,0.2)',
                 color: '#A99FF5',
-                border: '1px solid rgba(91,79,232,0.3)',
+                border: '1px solid rgba(91,110,245,0.3)',
               }}
             >
               Score: 9/10
@@ -136,9 +136,9 @@ function LeadDetailPreview() {
             key={s}
             className="px-2 py-1 rounded-md text-[10px] font-medium"
             style={{
-              background: i === 0 ? 'rgba(91,79,232,0.2)' : 'rgba(255,255,255,0.04)',
+              background: i === 0 ? 'rgba(91,110,245,0.2)' : 'rgba(255,255,255,0.04)',
               color: i === 0 ? '#A99FF5' : 'var(--text-3)',
-              border: i === 0 ? '1px solid rgba(91,79,232,0.3)' : '1px solid rgba(255,255,255,0.06)',
+              border: i === 0 ? '1px solid rgba(91,110,245,0.3)' : '1px solid rgba(255,255,255,0.06)',
             }}
           >
             {s}
@@ -176,7 +176,7 @@ function LeadDetailPreview() {
           </div>
           <div
             className="rounded-lg p-3 text-[11px]"
-            style={{ background: 'rgba(91,79,232,0.08)', color: 'var(--text-2)' }}
+            style={{ background: 'rgba(91,110,245,0.08)', color: 'var(--text-2)' }}
           >
             <div className="flex justify-between mb-1">
               <span className="font-medium text-white">Runvex AI</span>

@@ -3,15 +3,15 @@
 @tailwind utilities;
 
 :root {
-  --bg: #07071A;
-  --bg-2: #0C0C28;
-  --bg-3: #111130;
-  --purple: #5B4FE8;
-  --purple-2: #7B6FF0;
-  --border: rgba(255, 255, 255, 0.07);
+  --bg: #0A0B0F;
+  --bg-2: #12141A;
+  --bg-3: #1A1C24;
+  --purple: #5B6EF5;
+  --purple-2: #7B8FF8;
+  --border: rgba(255, 255, 255, 0.06);
   --border-2: rgba(255, 255, 255, 0.12);
   --text: #FFFFFF;
-  --text-2: #8B8FB3;
+  --text-2: #8A8FA8;
   --text-3: #5A5E82;
 }
 
@@ -26,8 +26,8 @@ html {
 body {
   background-color: var(--bg);
   background-image:
-    radial-gradient(ellipse 100% 60% at 50% -5%, rgba(91, 79, 232, 0.2) 0%, transparent 65%),
-    radial-gradient(ellipse 40% 30% at 85% 40%, rgba(91, 79, 232, 0.08) 0%, transparent 50%);
+    radial-gradient(ellipse 100% 60% at 50% -5%, rgba(91, 110, 245, 0.18) 0%, transparent 65%),
+    radial-gradient(ellipse 40% 30% at 85% 40%, rgba(91, 110, 245, 0.06) 0%, transparent 50%);
   background-attachment: fixed;
   color: var(--text);
   -webkit-font-smoothing: antialiased;
@@ -52,8 +52,8 @@ body {
 /* Hero background effects */
 .hero-bg {
   background:
-    radial-gradient(ellipse 70% 50% at 50% 80%, rgba(91, 79, 232, 0.18) 0%, transparent 60%),
-    radial-gradient(ellipse 30% 20% at 20% 60%, rgba(91, 79, 232, 0.08) 0%, transparent 50%);
+    radial-gradient(ellipse 70% 50% at 50% 80%, rgba(91, 110, 245, 0.15) 0%, transparent 60%),
+    radial-gradient(ellipse 30% 20% at 20% 60%, rgba(91, 110, 245, 0.06) 0%, transparent 50%);
 }
 
 .hero-grid {

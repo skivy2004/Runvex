@@ -11,8 +11,8 @@ export default function CTASection() {
           style={{
             maxWidth: 700,
             background:
-              'linear-gradient(135deg, rgba(91,79,232,0.15) 0%, rgba(91,79,232,0.05) 100%)',
-            border: '1px solid rgba(91,79,232,0.25)',
+              'linear-gradient(135deg, rgba(91,110,245,0.15) 0%, rgba(91,110,245,0.05) 100%)',
+            border: '1px solid rgba(91,110,245,0.25)',
             padding: 'clamp(40px, 6vw, 64px)',
           }}
           initial={{ opacity: 0, y: 20 }}
@@ -25,7 +25,7 @@ export default function CTASection() {
             className="absolute inset-0 pointer-events-none"
             style={{
               background:
-                'radial-gradient(ellipse 60% 60% at 50% 100%, rgba(91,79,232,0.2) 0%, transparent 70%)',
+                'radial-gradient(ellipse 60% 60% at 50% 100%, rgba(91,110,245,0.2) 0%, transparent 70%)',
             }}
           />
 
@@ -35,7 +35,7 @@ export default function CTASection() {
               className="w-12 h-12 rounded-xl flex items-center justify-center"
               style={{
                 background: 'linear-gradient(135deg, var(--purple), var(--purple-2))',
-                boxShadow: '0 8px 24px rgba(91,79,232,0.3)',
+                boxShadow: '0 8px 24px rgba(91,110,245,0.3)',
               }}
             >
               <svg width="20" height="20" viewBox="0 0 16 16" fill="none">

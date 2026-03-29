@@ -33,7 +33,7 @@ export default function HowItWorks() {
       className="py-24 md:py-32 relative"
       style={{
         background:
-          'radial-gradient(ellipse 80% 60% at 50% 50%, rgba(91,79,232,0.12) 0%, transparent 70%)',
+          'radial-gradient(ellipse 80% 60% at 50% 50%, rgba(91,110,245,0.12) 0%, transparent 70%)',
         borderTop: '1px solid var(--border)',
         borderBottom: '1px solid var(--border)',
       }}
@@ -67,7 +67,7 @@ export default function HowItWorks() {
           <div
             className="hidden lg:block absolute top-1/2 left-[16%] right-[16%] h-px -translate-y-1/2"
             style={{
-              backgroundImage: 'repeating-linear-gradient(90deg, rgba(91,79,232,0.3) 0, rgba(91,79,232,0.3) 8px, transparent 8px, transparent 16px)',
+              backgroundImage: 'repeating-linear-gradient(90deg, rgba(91,110,245,0.3) 0, rgba(91,110,245,0.3) 8px, transparent 8px, transparent 16px)',
             }}
           />
 
@@ -87,7 +87,7 @@ export default function HowItWorks() {
                   style={{
                     fontSize: '120px',
                     lineHeight: 1,
-                    color: 'rgba(91,79,232,0.05)',
+                    color: 'rgba(91,110,245,0.05)',
                   }}
                 >
                   {step.number}

@@ -131,7 +131,7 @@ function DashboardMockup() {
                 <span
                   className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold"
                   style={{
-                    background: row.score >= 8 ? 'rgba(91,79,232,0.2)' : row.score >= 6 ? 'rgba(236,178,46,0.15)' : 'rgba(255,255,255,0.06)',
+                    background: row.score >= 8 ? 'rgba(91,110,245,0.2)' : row.score >= 6 ? 'rgba(236,178,46,0.15)' : 'rgba(255,255,255,0.06)',
                     color: row.score >= 8 ? '#A99FF5' : row.score >= 6 ? '#ECB22E' : 'var(--text-3)',
                   }}
                 >
@@ -189,14 +189,14 @@ export default function HeroSection() {
           {/* Badge */}
           <div data-hero-badge className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium mb-8"
             style={{
-              background: 'rgba(91,79,232,0.15)',
-              border: '1px solid rgba(91,79,232,0.35)',
+              background: 'rgba(91,110,245,0.15)',
+              border: '1px solid rgba(91,110,245,0.35)',
               color: '#A99FF5',
             }}
           >
             <span
               className="inline-block"
-              style={{ width: 6, height: 6, borderRadius: '50%', background: '#7B6FF0' }}
+              style={{ width: 6, height: 6, borderRadius: '50%', background: '#5B6EF5' }}
             />
             Leads automatisch opvolgen met Claude AI
           </div>
@@ -262,7 +262,7 @@ export default function HeroSection() {
             style={{
               background: 'var(--bg-2)',
               border: '1px solid rgba(255,255,255,0.08)',
-              boxShadow: '0 40px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(91,79,232,0.1), inset 0 1px 0 rgba(255,255,255,0.05)',
+              boxShadow: '0 40px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(91,110,245,0.1), inset 0 1px 0 rgba(255,255,255,0.05)',
             }}
           >
             {/* Chrome bar */}
@@ -289,7 +289,7 @@ export default function HeroSection() {
               {/* Fade at bottom */}
               <div
                 className="absolute inset-x-0 bottom-0 h-24 pointer-events-none"
-                style={{ background: 'linear-gradient(to bottom, transparent 0%, #07071A 100%)' }}
+                style={{ background: 'linear-gradient(to bottom, transparent 0%, #0A0B0F 100%)' }}
               />
             </div>
           </div>
