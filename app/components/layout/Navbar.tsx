@@ -44,8 +44,8 @@ export default function Navbar() {
         className="fixed top-0 left-0 right-0 z-50 transition-all duration-200"
         style={{
           background: scrolled
-            ? 'rgba(7,7,26,0.97)'
-            : 'rgba(7,7,26,0.8)',
+            ? 'rgba(10,11,15,0.97)'
+            : 'rgba(10,11,15,0.8)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
           borderBottom: `1px solid rgba(255,255,255,${scrolled ? 0.12 : 0})`,
@@ -167,7 +167,7 @@ export default function Navbar() {
         <div
           className="fixed inset-0 z-40 pt-16"
           style={{
-            background: 'rgba(7,7,26,0.98)',
+            background: 'rgba(10,11,15,0.98)',
             backdropFilter: 'blur(20px)',
           }}
         >

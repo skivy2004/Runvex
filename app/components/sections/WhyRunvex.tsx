@@ -90,8 +90,8 @@ export default function WhyRunvex() {
             }}
             whileHover={{
               y: -2,
-              borderColor: 'rgba(91,79,232,0.3)',
-              boxShadow: '0 0 0 1px rgba(91,79,232,0.15), 0 20px 60px rgba(91,79,232,0.08)',
+              borderColor: 'rgba(91,110,245,0.3)',
+              boxShadow: '0 0 0 1px rgba(91,110,245,0.15), 0 20px 60px rgba(91,110,245,0.08)',
             }}
           >
             <div className="mb-6">
@@ -121,8 +121,8 @@ export default function WhyRunvex() {
             }}
             whileHover={{
               y: -2,
-              borderColor: 'rgba(91,79,232,0.3)',
-              boxShadow: '0 0 0 1px rgba(91,79,232,0.15), 0 20px 60px rgba(91,79,232,0.08)',
+              borderColor: 'rgba(91,110,245,0.3)',
+              boxShadow: '0 0 0 1px rgba(91,110,245,0.15), 0 20px 60px rgba(91,110,245,0.08)',
             }}
           >
             <div className="mb-6">

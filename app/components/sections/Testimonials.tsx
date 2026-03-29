@@ -69,10 +69,10 @@ function TestimonialCard({
       style={{
         background: 'var(--bg-2)',
         border: t.highlight
-          ? '1px solid rgba(91,79,232,0.35)'
+          ? '1px solid rgba(91,110,245,0.35)'
           : '1px solid var(--border)',
         boxShadow: t.highlight
-          ? '0 0 0 1px rgba(91,79,232,0.1)'
+          ? '0 0 0 1px rgba(91,110,245,0.1)'
           : 'none',
       }}
     >
@@ -89,7 +89,7 @@ function TestimonialCard({
         <div
           className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-semibold text-white"
           style={{
-            background: 'linear-gradient(135deg, #5B4FE8, #7B6FF0)',
+            background: 'linear-gradient(135deg, #5B6EF5, #7B8FF8)',
           }}
         >
           {t.name.charAt(0)}
