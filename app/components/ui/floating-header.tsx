@@ -15,13 +15,7 @@ const links = [
 
 export function FloatingHeader() {
   const [open, setOpen] = React.useState(false)
-  const [visible, setVisible] = React.useState(false)
-
-  React.useEffect(() => {
-    const onScroll = () => setVisible(window.scrollY > 50)
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+  const [visible] = React.useState(true)
 
   return (
     <header

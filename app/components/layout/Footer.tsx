@@ -2,17 +2,15 @@ import Link from 'next/link'
 
 export default function Footer() {
   const productLinks = [
-    { label: 'Dashboard', href: '/demos/lead-automation/dashboard' },
-    { label: 'Lead scoring', href: '/#features' },
-    { label: 'Email automatisering', href: '/#features' },
-    { label: 'Integraties', href: '/#hoe-het-werkt' },
-    { label: 'Changelog', href: '#' },
+    { label: 'Features', href: '/#features' },
+    { label: 'Lead scoring', href: '/#hoe-het-werkt' },
+    { label: 'Demo\'s', href: '/#demos' },
+    { label: 'Prijzen', href: '/#pricing' },
   ]
   const companyLinks = [
-    { label: 'Over Runvex', href: '/#testimonials' },
-    { label: 'Blog', href: '#' },
-    { label: 'Demo proberen', href: '/demos/lead-automation/contact' },
-    { label: 'Vacatures', href: '#' },
+    { label: 'Demo proberen', href: '/#demos' },
+    { label: 'Contact', href: '/contact' },
+    { label: 'Dashboard', href: '/dashboard' },
   ]
   const legalLinks = [
     { label: 'Privacybeleid', href: '#' },
@@ -158,7 +156,7 @@ export default function Footer() {
         style={{ borderTop: '1px solid var(--border)' }}
       >
         <p className="text-xs text-center" style={{ color: 'var(--text-3)' }}>
-          © 2025 Runvex B.V. · Alle rechten voorbehouden.
+          © {new Date().getFullYear()} Runvex B.V. · Alle rechten voorbehouden.
         </p>
       </div>
     </footer>

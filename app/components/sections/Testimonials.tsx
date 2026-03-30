@@ -4,46 +4,24 @@ import { motion } from 'framer-motion'
 
 const testimonials = [
   {
-    name: 'Thomas K.',
-    role: 'Freelance developer',
+    name: 'Lars van den Berg',
+    role: 'Growth Manager bij TechFlow B.V.',
     quote:
-      'Dit bespaart me minstens 2 uur per dag aan handmatig opvolgen. De AI-scoring is verrassend accuraat — ik focus nu alleen nog op de hoge prioriteit leads.',
+      'Runvex heeft ons leadproces volledig getransformeerd. We besparen nu 8 uur per week en onze opvolging is 3x sneller.',
     highlight: true,
   },
   {
-    name: 'Sarah M.',
-    role: 'Marketing consultant',
+    name: 'Sanne Dijkstra',
+    role: 'Directeur bij MarketPro Amsterdam',
     quote:
-      'De gepersonaliseerde emails worden door klanten altijd als authentiek ervaren. Niemand heeft ooit gemerkt dat ze AI-gegenereerd zijn.',
+      'De AI scoring is ongelooflijk accuraat. We focussen nu alleen op leads met een hoge score en onze conversie is met 40% gestegen.',
     highlight: false,
   },
   {
-    name: 'Jeroen V.',
-    role: 'Ondernemer',
-    quote: 'Setup duurde 10 minuten. Het werkt feilloos.',
-    short: true,
-    highlight: false,
-  },
-  {
-    name: 'Lisa B.',
-    role: 'Sales manager',
+    name: 'Daan Vermeer',
+    role: 'Sales Lead bij Groei.io',
     quote:
-      'Het dashboard is het eerste wat ik elke ochtend open. Eindelijk alles op één plek, zonder ruis.',
-    highlight: false,
-  },
-  {
-    name: 'Mark T.',
-    role: 'Directeur',
-    quote:
-      'De wekelijkse AI-rapportage geeft me precies het overzicht dat ik nodig heb voor mijn teamgesprekken. Concrete data, geen vaag gedoe.',
-    highlight: true,
-  },
-  {
-    name: 'Anna R.',
-    role: 'Freelance designer',
-    quote:
-      'Ik had altijd moeite met opvolgen. Nu gaat het gewoon automatisch.',
-    short: true,
+      'Setup was klaar in 5 minuten. Geen gedoe, gewoon werken. Runvex is de beste investering die we dit jaar hebben gedaan.',
     highlight: false,
   },
 ]
@@ -116,6 +94,16 @@ export default function Testimonials() {
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
+          <div
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium mb-4"
+            style={{
+              background: 'rgba(91,110,245,0.1)',
+              border: '1px solid rgba(91,110,245,0.2)',
+              color: '#5B6EF5',
+            }}
+          >
+            Klantervaring
+          </div>
           <h2
             className="font-bricolage font-extrabold text-3xl md:text-5xl text-white"
             style={{ letterSpacing: '-0.02em' }}
