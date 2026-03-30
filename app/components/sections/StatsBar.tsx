@@ -53,7 +53,7 @@ export default function StatsBar() {
       <div className="max-w-5xl mx-auto px-6">
         <motion.div
           className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-0"
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0.15, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}

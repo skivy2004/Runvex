@@ -42,7 +42,7 @@ export default function HowItWorks() {
         {/* Header */}
         <motion.div
           className="text-center mb-20"
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0.15, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
@@ -76,7 +76,7 @@ export default function HowItWorks() {
               <motion.div
                 key={step.number}
                 className="relative"
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0.15, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.15 }}

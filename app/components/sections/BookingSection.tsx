@@ -23,7 +23,7 @@ export default function BookingSection() {
         {/* Header */}
         <motion.div
           className="text-center mb-12"
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0.15, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.45 }}
@@ -54,7 +54,7 @@ export default function BookingSection() {
         {/* Step indicator */}
         <motion.div
           className="flex items-center justify-center mb-10"
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0.15, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.4, delay: 0.1 }}
@@ -126,7 +126,7 @@ export default function BookingSection() {
         {/* Card containing the multi-step flow */}
         <motion.div
           className="mx-auto max-w-2xl"
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0.15, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.45, delay: 0.15 }}

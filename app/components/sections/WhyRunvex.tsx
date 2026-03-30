@@ -49,7 +49,7 @@ const tiles = [
 ]
 
 const fadeUp = {
-  initial: { opacity: 0, y: 20 },
+  initial: { opacity: 0.15, y: 20 },
   whileInView: { opacity: 1, y: 0 },
   viewport: { once: true as const },
   transition: { duration: 0.5 },
@@ -146,7 +146,7 @@ export default function WhyRunvex() {
           {tiles.map((tile, i) => (
             <motion.div
               key={tile.title}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0.15, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.08 }}
