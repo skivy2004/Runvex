@@ -5,7 +5,7 @@
       "parameters": {
         "httpMethod": "GET",
         "path": "book-availability",
-        "responseMode": "lastNode",
+        "responseMode": "responseNode",
         "options": {}
       },
       "id": "node-availability-webhook",
