@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Step1Form from './Step1Form'
 import Step2Calendar from './Step2Calendar'
 import Step3Confirmation from './Step3Confirmation'
@@ -31,12 +31,24 @@ interface BookingFlowProps {
   onStepChange?: (step: 1 | 2 | 3) => void
 }
 
+export type AvailabilityData = { dates: Record<string, string[]> }
+
 export default function BookingFlow({ onStepChange }: BookingFlowProps = {}) {
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM_DATA)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [visible, setVisible] = useState(true)
+  const [availability, setAvailability] = useState<AvailabilityData | null>(null)
+  const [loadingAvail, setLoadingAvail] = useState(true)
+  const [availError, setAvailError] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch('/api/booking/availability')
+      .then((r) => r.json())
+      .then((data: AvailabilityData) => { setAvailability(data); setLoadingAvail(false) })
+      .catch(() => { setAvailError('Beschikbaarheid kon niet worden geladen.'); setLoadingAvail(false) })
+  }, [])
 
   const handleChange = (data: Partial<FormData>) => {
     setFormData((prev) => ({ ...prev, ...data }))
@@ -124,6 +136,9 @@ export default function BookingFlow({ onStepChange }: BookingFlowProps = {}) {
             onNext={handleStep2Next}
             onBack={handleStep2Back}
             isSubmitting={isSubmitting}
+            availability={availability}
+            loadingAvail={loadingAvail}
+            availError={availError}
           />
         )}
         {step === 3 && (
