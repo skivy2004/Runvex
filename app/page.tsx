@@ -9,6 +9,7 @@ import ProductShowcase from './components/sections/ProductShowcase'
 import Testimonials from './components/sections/Testimonials'
 import CTASection from './components/sections/CTASection'
 import DemoCards from './components/sections/DemoCards'
+import BookingSection from './components/sections/BookingSection'
 import Footer from './components/layout/Footer'
 
 export default function Home() {
@@ -23,6 +24,7 @@ export default function Home() {
         <DemoCards />
         <ProductShowcase />
         <Testimonials />
+        <BookingSection />
         <CTASection />
       </main>
       <Footer />
