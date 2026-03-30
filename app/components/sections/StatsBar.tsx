@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState } from 'react'
 import { motion, useInView } from 'framer-motion'
 
-function Counter({ value, suffix }: { value: number; suffix: string }) {
+function Counter({ value, prefix, suffix }: { value: number; prefix?: string; suffix: string }) {
   const ref = useRef<HTMLSpanElement>(null)
   const inView = useInView(ref, { once: true, margin: '-50px' })
   const [count, setCount] = useState(0)
@@ -28,6 +28,7 @@ function Counter({ value, suffix }: { value: number; suffix: string }) {
 
   return (
     <span ref={ref} className="font-bricolage font-extrabold text-4xl md:text-5xl text-white">
+      {prefix && <span style={{ color: 'var(--purple-2)' }}>{prefix}</span>}
       {count}
       <span style={{ color: 'var(--purple-2)' }}>{suffix}</span>
     </span>
@@ -35,9 +36,9 @@ function Counter({ value, suffix }: { value: number; suffix: string }) {
 }
 
 const stats = [
-  { value: 142, suffix: '+', label: 'Leads verwerkt' },
-  { value: 87, suffix: '%', label: 'AI score accuraatheid' },
-  { value: 3, suffix: ' min', label: 'Gemiddelde setup' },
+  { value: 500, suffix: '+', label: 'Leads verwerkt' },
+  { value: 94, suffix: '%', label: 'AI score accuraatheid' },
+  { value: 10, prefix: '< ', suffix: ' min', label: 'Gemiddelde setup' },
 ]
 
 export default function StatsBar() {
@@ -69,7 +70,7 @@ export default function StatsBar() {
                 borderColor: 'var(--border)',
               }}
             >
-              <Counter value={stat.value} suffix={stat.suffix} />
+              <Counter value={stat.value} prefix={stat.prefix} suffix={stat.suffix} />
               <div className="mt-2 text-sm" style={{ color: 'var(--text-2)' }}>
                 {stat.label}
               </div>
