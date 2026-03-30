@@ -62,7 +62,7 @@ function FAQItem({ faq, index }: { faq: (typeof faqs)[number]; index: number }) 
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0.15, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.4, delay: index * 0.06 }}
@@ -96,7 +96,7 @@ export default function FAQ() {
         {/* Header */}
         <motion.div
           className="text-center mb-12"
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0.15, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}

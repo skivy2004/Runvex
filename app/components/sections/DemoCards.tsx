@@ -1,7 +1,72 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { GlowCard } from '../ui/spotlight-card'
+
+function WaitlistForm({ feature }: { feature: string }) {
+  const [email, setEmail] = useState('')
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!email) return
+    setStatus('loading')
+    try {
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, feature }),
+      })
+      if (res.ok) {
+        setStatus('success')
+      } else {
+        setStatus('error')
+      }
+    } catch {
+      setStatus('error')
+    }
+  }
+
+  if (status === 'success') {
+    return (
+      <p className="text-xs mt-4" style={{ color: '#3ECF8E' }}>
+        ✓ Je staat op de lijst!
+      </p>
+    )
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-4 flex gap-2" onClick={(e) => e.stopPropagation()}>
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="jouw@email.nl"
+        required
+        className="flex-1 text-xs px-3 py-2 rounded-lg outline-none"
+        style={{
+          background: 'rgba(255,255,255,0.05)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          color: '#ffffff',
+        }}
+      />
+      <button
+        type="submit"
+        disabled={status === 'loading'}
+        className="text-xs px-3 py-2 rounded-lg font-medium transition-colors"
+        style={{
+          background: 'rgba(91,110,245,0.2)',
+          color: '#A99FF5',
+          border: '1px solid rgba(91,110,245,0.3)',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {status === 'loading' ? '...' : 'Houd me op de hoogte'}
+      </button>
+    </form>
+  )
+}
 
 const demos = [
   {
@@ -83,7 +148,7 @@ export default function DemoCards() {
         {/* Header */}
         <motion.div
           className="text-center mb-12"
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0.15, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.45 }}
@@ -105,7 +170,7 @@ export default function DemoCards() {
             <motion.div
               key={demo.title}
               className="group"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0.15, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: i * 0.08 }}
@@ -169,6 +234,7 @@ export default function DemoCards() {
                   <p className="text-sm leading-relaxed" style={{ color: '#5A5E82' }}>
                     {demo.description}
                   </p>
+                  {!demo.live && <WaitlistForm feature={demo.title} />}
                 </div>
 
                 {/* Footer */}

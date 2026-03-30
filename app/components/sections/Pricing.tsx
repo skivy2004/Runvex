@@ -80,7 +80,7 @@ export default function Pricing() {
         {/* Header */}
         <motion.div
           className="text-center mb-16"
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0.15, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
@@ -110,7 +110,7 @@ export default function Pricing() {
           {tiers.map((tier, i) => (
             <motion.div
               key={tier.name}
-              initial={{ opacity: 0, y: 24 }}
+              initial={{ opacity: 0.15, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.1 }}

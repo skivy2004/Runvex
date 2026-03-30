@@ -227,6 +227,61 @@ export default function HeroSection() {
             }}>
               Runvex volgt elke lead automatisch op — zodat jij je focust op groeien.
             </p>
+            <div style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.75rem',
+              marginTop: '2rem',
+              pointerEvents: 'auto',
+            }}>
+              <a
+                href="/#demos"
+                style={{
+                  background: '#5B6EF5',
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  padding: '0.75rem 1.5rem',
+                  borderRadius: '0.5rem',
+                  textDecoration: 'none',
+                  fontFamily: 'var(--font-dm-sans), sans-serif',
+                  fontSize: '0.875rem',
+                  transition: 'background 0.15s',
+                  display: 'inline-block',
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = '#4B5EE5' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = '#5B6EF5' }}
+              >
+                Probeer gratis →
+              </a>
+              <a
+                href="/#hoe-het-werkt"
+                style={{
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  color: 'rgba(255,255,255,0.8)',
+                  padding: '0.75rem 1.5rem',
+                  borderRadius: '0.5rem',
+                  textDecoration: 'none',
+                  fontFamily: 'var(--font-dm-sans), sans-serif',
+                  fontSize: '0.875rem',
+                  transition: 'border-color 0.15s, color 0.15s',
+                  display: 'inline-block',
+                }}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget as HTMLAnchorElement
+                  el.style.borderColor = 'rgba(255,255,255,0.4)'
+                  el.style.color = '#ffffff'
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget as HTMLAnchorElement
+                  el.style.borderColor = 'rgba(255,255,255,0.2)'
+                  el.style.color = 'rgba(255,255,255,0.8)'
+                }}
+              >
+                Hoe het werkt
+              </a>
+            </div>
           </div>
 
           {/* Bottom row */}

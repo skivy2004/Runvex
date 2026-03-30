@@ -211,7 +211,7 @@ export default function ProductShowcase() {
         {/* Block 1: text left, mockup right */}
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0.15, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
@@ -241,7 +241,7 @@ export default function ProductShowcase() {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, x: 60 }}
+            initial={{ opacity: 0.15, x: 60 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.1 }}
@@ -254,7 +254,7 @@ export default function ProductShowcase() {
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           <motion.div
             className="order-2 lg:order-1"
-            initial={{ opacity: 0, x: -60 }}
+            initial={{ opacity: 0.15, x: -60 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.1 }}
@@ -264,7 +264,7 @@ export default function ProductShowcase() {
 
           <motion.div
             className="order-1 lg:order-2"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0.15, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}

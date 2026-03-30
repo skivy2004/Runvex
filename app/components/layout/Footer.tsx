@@ -9,12 +9,13 @@ export default function Footer() {
   ]
   const companyLinks = [
     { label: 'Demo proberen', href: '/#demos' },
+    { label: 'Integraties', href: '/#integraties' },
     { label: 'Contact', href: '/contact' },
-    { label: 'Dashboard', href: '/dashboard' },
+    { label: 'Dashboard', href: '/demos/lead-automation/dashboard' },
   ]
   const legalLinks = [
-    { label: 'Privacybeleid', href: '#' },
-    { label: 'Gebruiksvoorwaarden', href: '#' },
+    { label: 'Privacybeleid', href: '/privacybeleid' },
+    { label: 'Algemene voorwaarden', href: '/algemene-voorwaarden' },
     { label: 'Cookie instellingen', href: '#' },
   ]
 
@@ -157,6 +158,9 @@ export default function Footer() {
       >
         <p className="text-xs text-center" style={{ color: 'var(--text-3)' }}>
           © {new Date().getFullYear()} Runvex B.V. · Alle rechten voorbehouden.
+        </p>
+        <p className="text-xs text-center mt-1" style={{ color: 'rgba(139,143,179,0.5)' }}>
+          Runvex B.V. (i.o.) · KvK: [PLACEHOLDER] · BTW: [PLACEHOLDER]
         </p>
       </div>
     </footer>

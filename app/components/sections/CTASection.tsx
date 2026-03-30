@@ -15,7 +15,7 @@ export default function CTASection() {
             border: '1px solid rgba(91,110,245,0.25)',
             padding: 'clamp(40px, 6vw, 64px)',
           }}
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0.15, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}

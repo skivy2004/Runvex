@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Bricolage_Grotesque, DM_Sans } from 'next/font/google'
 import './globals.css'
+import CookieBanner from './components/CookieBanner'
 
 const bricolage = Bricolage_Grotesque({
   subsets: ['latin'],
@@ -19,7 +20,22 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   title: 'Runvex — AI Lead Automatisering',
   description:
-    'Van lead naar klant. Runvex legt leads vast, scoort ze met AI en volgt ze op — volledig automatisch.',
+    'Volg elke lead automatisch op met Claude AI. Geen handmatig werk meer. Setup in minder dan 10 minuten.',
+  openGraph: {
+    title: 'Runvex — AI Lead Automatisering',
+    description: 'Volg elke lead automatisch op met Claude AI. Geen handmatig werk meer.',
+    url: 'https://runvex.app',
+    siteName: 'Runvex',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Runvex AI Lead Automatisering' }],
+    locale: 'nl_NL',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Runvex — AI Lead Automatisering',
+    description: 'Volg elke lead automatisch op met Claude AI.',
+    images: ['/og-image.png'],
+  },
 }
 
 export default function RootLayout({
@@ -29,7 +45,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="nl" className={`${bricolage.variable} ${dmSans.variable}`}>
-      <body style={{ fontFamily: 'var(--font-dm-sans)' }}>{children}</body>
+      <body style={{ fontFamily: 'var(--font-dm-sans)' }}>
+        {children}
+        <CookieBanner />
+      </body>
     </html>
   )
 }
