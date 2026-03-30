@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { FormData } from './BookingFlow'
+import { useState } from 'react'
+import { FormData, AvailabilityData } from './BookingFlow'
 
 interface Step2CalendarProps {
   formData: FormData
@@ -9,10 +9,9 @@ interface Step2CalendarProps {
   onNext: () => void
   onBack: () => void
   isSubmitting: boolean
-}
-
-interface AvailabilityData {
-  dates: Record<string, string[]>
+  availability: AvailabilityData | null
+  loadingAvail: boolean
+  availError: string | null
 }
 
 const DUTCH_MONTHS = [
@@ -53,10 +52,10 @@ export default function Step2Calendar({
   onNext,
   onBack,
   isSubmitting,
+  availability,
+  loadingAvail,
+  availError,
 }: Step2CalendarProps) {
-  const [availability, setAvailability] = useState<AvailabilityData | null>(null)
-  const [loadingAvail, setLoadingAvail] = useState(true)
-  const [availError, setAvailError] = useState<string | null>(null)
 
   const todayUtc = new Date()
   const [viewYear, setViewYear] = useState(
@@ -66,19 +65,6 @@ export default function Step2Calendar({
     parseInt(new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Amsterdam', month: 'numeric' }), 10) - 1
   )
 
-  useEffect(() => {
-    setLoadingAvail(true)
-    fetch('/api/booking/availability')
-      .then((r) => r.json())
-      .then((data: AvailabilityData) => {
-        setAvailability(data)
-        setLoadingAvail(false)
-      })
-      .catch(() => {
-        setAvailError('Beschikbaarheid kon niet worden geladen.')
-        setLoadingAvail(false)
-      })
-  }, [])
 
   const daysInMonth = getDaysInMonth(viewYear, viewMonth)
   const firstDayOffset = getFirstDayOffset(viewYear, viewMonth)
