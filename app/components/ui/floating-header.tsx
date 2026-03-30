@@ -10,7 +10,6 @@ const links = [
   { label: 'Features',   href: '/#features' },
   { label: 'Oplossing',  href: '/#hoe-het-werkt' },
   { label: 'Demo\'s',   href: '/#demos' },
-  { label: 'Prijzen',    href: '/#pricing' },
 ]
 
 export function FloatingHeader() {
@@ -59,10 +58,23 @@ export function FloatingHeader() {
         {/* Right side */}
         <div className="flex items-center gap-2">
           <a
-            href="/demos/lead-automation/dashboard"
-            className={cn(buttonVariants({ variant: 'default', size: 'sm' }), 'hidden sm:inline-flex')}
+            href="/#booking"
+            className="hidden sm:inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-semibold text-white transition-all duration-200 hover:scale-105"
+            style={{
+              background: 'linear-gradient(135deg, #5B6EF5, #7B5EF5)',
+              boxShadow: '0 0 16px rgba(91,110,245,0.45)',
+            }}
           >
-            Log in →
+            Boek een call
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+          <a
+            href="/demos/lead-automation/dashboard"
+            className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'hidden sm:inline-flex text-[#8A8FA8]')}
+          >
+            Log in
           </a>
 
           {/* Mobile menu */}
@@ -97,13 +109,21 @@ export function FloatingHeader() {
                   ))}
                 </div>
               </div>
-              <SheetFooter>
+              <SheetFooter className="flex flex-col gap-2">
+                <a
+                  href="/#booking"
+                  onClick={() => setOpen(false)}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold text-white"
+                  style={{ background: 'linear-gradient(135deg, #5B6EF5, #7B5EF5)', boxShadow: '0 0 16px rgba(91,110,245,0.35)' }}
+                >
+                  Boek een call →
+                </a>
                 <a
                   href="/demos/lead-automation/dashboard"
-                  className={cn(buttonVariants({ variant: 'default' }), 'w-full justify-center')}
+                  className={cn(buttonVariants({ variant: 'ghost' }), 'w-full justify-center')}
                   onClick={() => setOpen(false)}
                 >
-                  Log in →
+                  Log in
                 </a>
               </SheetFooter>
             </SheetContent>
