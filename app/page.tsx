@@ -15,10 +15,10 @@ export default function Home() {
   return (
     <>
       <main>
-        <HeroSection />
         <div className="px-4">
           <FloatingHeader />
         </div>
+        <HeroSection />
         <StatsBar />
         <WhyRunvex />
         <HowItWorks />
