@@ -15,9 +15,7 @@ export default function Home() {
   return (
     <>
       <main>
-        <div className="px-4">
-          <FloatingHeader />
-        </div>
+        <FloatingHeader />
         <HeroSection />
         <StatsBar />
         <WhyRunvex />

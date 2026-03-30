@@ -15,12 +15,21 @@ const links = [
 
 export function FloatingHeader() {
   const [open, setOpen] = React.useState(false)
+  const [visible, setVisible] = React.useState(false)
+
+  React.useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY > 50)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   return (
     <header
       className={cn(
-        'sticky top-4 z-50',
+        'fixed top-4 left-4 right-4 z-50',
         'mx-auto w-full max-w-3xl rounded-xl',
+        'transition-all duration-300',
+        visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none',
       )}
       style={{
         background: 'rgba(10,11,15,0.85)',
