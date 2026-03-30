@@ -29,7 +29,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ \"https://www.googleapis.com/calendar/v3/calendars/\" + encodeURIComponent($env.GOOGLE_CALENDAR_ID) + \"/events?conferenceDataVersion=1\" }}",
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "googleCalendarOAuth2Api",
         "sendBody": true,

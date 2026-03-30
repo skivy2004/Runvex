@@ -23,7 +23,7 @@
         "nodeCredentialType": "googleCalendarOAuth2Api",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ timeMin: new Date().toISOString(), timeMax: new Date(Date.now() + 14*24*60*60*1000).toISOString(), timeZone: \"Europe/Amsterdam\", items: [{ id: $env.GOOGLE_CALENDAR_ID }] }) }}",
+        "jsonBody": "={{ JSON.stringify({ timeMin: new Date().toISOString(), timeMax: new Date(Date.now() + 14*24*60*60*1000).toISOString(), timeZone: \"Europe/Amsterdam\", items: [{ id: \"primary\" }] }) }}",
         "options": {}
       },
       "id": "node-freebusy",
