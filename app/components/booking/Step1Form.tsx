@@ -21,6 +21,15 @@ const services = [
   'Anders',
 ]
 
+const testData = {
+  name: 'Jeremy Cordes',
+  email: 'jeremycordes31@gmail.com',
+  phone: '+31 6 12345678',
+  company: 'Runvex',
+  service: 'Lead Automatisering',
+  message: 'Ik wil graag een discovery call inplannen om de mogelijkheden van lead automatisering te bespreken.',
+}
+
 export default function Step1Form({ formData, onChange, onNext }: Step1FormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -29,6 +38,15 @@ export default function Step1Form({ formData, onChange, onNext }: Step1FormProps
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => onChange(testData)}
+          className="text-xs text-[#8A8FA8] hover:text-[#5B6EF5] transition-colors px-2 py-1 rounded border border-white/[0.06] hover:border-[#5B6EF5]/40"
+        >
+          Testdata invullen
+        </button>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={labelClass}>Naam *</label>
