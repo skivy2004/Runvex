@@ -1,0 +1,75 @@
+{
+  "name": "Book a Call — Availability",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "book-availability",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "node-availability-webhook",
+      "name": "Webhook - Availability",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [260, 300],
+      "webhookId": "book-availability"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/calendar/v3/freeBusy",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ timeMin: new Date().toISOString(), timeMax: new Date(Date.now() + 14*24*60*60*1000).toISOString(), timeZone: \"Europe/Amsterdam\", items: [{ id: $env.GOOGLE_CALENDAR_ID }] }) }}",
+        "options": {}
+      },
+      "id": "node-freebusy",
+      "name": "HTTP Request - Freebusy",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const input = $input.first().json;\nconst calId = Object.keys(input.calendars)[0];\nconst busyPeriods = input.calendars[calId].busy || [];\n\nconst now = new Date();\nconst dates = {};\n\nfunction toAmsterdamDate(date) {\n  return date.toLocaleDateString('en-CA', { timeZone: 'Europe/Amsterdam' });\n}\n\nfunction getAmsterdamOffsetMs(date) {\n  const parse = s => new Date(s.replace(',', '') + ':00Z').getTime();\n  const amStr = date.toLocaleString('en-CA', { timeZone: 'Europe/Amsterdam', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });\n  const utcStr = date.toLocaleString('en-CA', { timeZone: 'UTC', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });\n  return parse(amStr) - parse(utcStr);\n}\n\nfunction overlapsBusy(slotStart, busy) {\n  const slotEnd = new Date(slotStart.getTime() + 30 * 60 * 1000);\n  return busy.some(p => p.start && p.end && slotStart < new Date(p.end) && slotEnd > new Date(p.start));\n}\n\nconst nowHour = parseInt(now.toLocaleString('nl-NL', { timeZone: 'Europe/Amsterdam', hour: 'numeric', hour12: false }));\nconst todayStr = toAmsterdamDate(now);\n\nfor (let i = 0; i < 14; i++) {\n  const d = new Date(now);\n  d.setDate(d.getDate() + i);\n  const dateStr = toAmsterdamDate(d);\n  if (dateStr === todayStr && nowHour >= 16) continue;\n  const dow = new Date(dateStr + 'T12:00:00Z').getDay();\n  if (dow === 0 || dow === 6) continue;\n\n  const [year, month, day] = dateStr.split('-').map(Number);\n  const available = [];\n\n  for (let hour = 9; hour < 18; hour++) {\n    for (const minute of [0, 30]) {\n      if (hour === 17 && minute === 30) break;\n      const pad = n => String(n).padStart(2, '0');\n      const utcDate = new Date(`${year}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}:00Z`);\n      const slotUtc = new Date(utcDate.getTime() - getAmsterdamOffsetMs(utcDate));\n      if (slotUtc <= now) continue;\n      if (!overlapsBusy(slotUtc, busyPeriods)) {\n        available.push(slotUtc.toLocaleString('nl-NL', { timeZone: 'Europe/Amsterdam', hour: '2-digit', minute: '2-digit', hour12: false }));\n      }\n    }\n  }\n\n  if (available.length > 0) dates[dateStr] = available;\n}\n\nreturn [{ json: { dates } }];"
+      },
+      "id": "node-generate-slots",
+      "name": "Code - Generate Slots",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "node-respond-availability",
+      "name": "Respond - Availability",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [920, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Availability": {
+      "main": [[{ "node": "HTTP Request - Freebusy", "type": "main", "index": 0 }]]
+    },
+    "HTTP Request - Freebusy": {
+      "main": [[{ "node": "Code - Generate Slots", "type": "main", "index": 0 }]]
+    },
+    "Code - Generate Slots": {
+      "main": [[{ "node": "Respond - Availability", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "staticData": null,
+  "tags": ["booking", "google-calendar"],
+  "versionId": "1"
+}
