@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export default function HeroSection() {
   const canvasRef = useRef<HTMLDivElement>(null)
   const layersRef = useRef<HTMLDivElement[]>([])
+  const [ctaVisible, setCtaVisible] = useState(false)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -33,9 +34,12 @@ export default function HeroSection() {
       canvas.style.transform = 'rotateX(55deg) rotateZ(-25deg) scale(1)'
     }, 300)
 
+    const handleScroll = () => setCtaVisible(window.scrollY > 600)
     window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('scroll', handleScroll, { passive: true })
     return () => {
       window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('scroll', handleScroll)
       clearTimeout(timeout)
     }
   }, [])
@@ -96,8 +100,7 @@ export default function HeroSection() {
         }
 
         .rv-layer-1 {
-          background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1200');
-          filter: contrast(1.1) brightness(0.5);
+          background: linear-gradient(135deg, #0D0F1A 0%, #12143A 40%, #1A1040 70%, #0A0B0F 100%);
         }
 
         .rv-purple-overlay {
@@ -196,9 +199,9 @@ export default function HeroSection() {
           <div />
 
           {/* Top right */}
-          <div style={{ textAlign: 'right', fontFamily: 'monospace', color: '#5B6EF5', fontSize: '0.65rem', lineHeight: 1.8 }}>
-            <div>LEADS VERWERKT: ∞</div>
-            <div>RESPONSE TIME: &lt; 3 SEC</div>
+          <div style={{ textAlign: 'right', fontFamily: 'monospace', color: 'rgba(255,255,255,0.45)', fontSize: '0.65rem', lineHeight: 1.8 }}>
+            <div>LEADS VERWERKT: <span style={{ color: '#5B6EF5' }}>142+</span></div>
+            <div>RESPONSE TIME: <span style={{ color: '#5B6EF5' }}>&lt; 3 SEC</span></div>
           </div>
 
           {/* Center headline */}
@@ -290,7 +293,11 @@ export default function HeroSection() {
               <p>[ DEMO BESCHIKBAAR ]</p>
               <p>LEAD AUTOMATISERING MET CLAUDE AI</p>
             </div>
-            <a href="/#demos" className="rv-cta">
+            <a
+              href="/#demos"
+              className="rv-cta"
+              style={{ opacity: ctaVisible ? 1 : 0, transition: 'opacity 300ms ease' }}
+            >
               Probeer demo's
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M5.25 3.5L8.75 7L5.25 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
