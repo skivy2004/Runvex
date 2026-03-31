@@ -31,7 +31,7 @@ export function FloatingHeader() {
         boxShadow: '0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(91,110,245,0.08)',
       }}
     >
-      <nav className="flex items-center justify-between px-3 py-2">
+      <nav className="relative flex items-center justify-between px-3 py-2">
 
         {/* Logo */}
         <a href="/" className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-white/05 transition-colors">
@@ -42,8 +42,8 @@ export function FloatingHeader() {
           <span className="font-bricolage font-bold text-white text-sm tracking-tight">runvex</span>
         </a>
 
-        {/* Desktop links */}
-        <div className="hidden items-center gap-0.5 lg:flex">
+        {/* Desktop links — absolute center */}
+        <div className="absolute left-1/2 -translate-x-1/2 hidden items-center gap-0.5 lg:flex">
           {links.map((link) => (
             <a
               key={link.label}
