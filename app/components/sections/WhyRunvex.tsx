@@ -164,7 +164,7 @@ export default function WhyRunvex() {
               <h4 className="font-bricolage font-semibold text-sm text-white mb-1.5">
                 {tile.title}
               </h4>
-              <p className="text-xs leading-relaxed" style={{ color: 'var(--text-2)' }}>
+              <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>
                 {tile.desc}
               </p>
             </motion.div>

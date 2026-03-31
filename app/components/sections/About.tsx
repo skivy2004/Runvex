@@ -9,7 +9,7 @@ export default function About() {
               className="w-48 h-48 md:w-64 md:h-64 rounded-2xl flex items-center justify-center font-bricolage font-bold text-5xl md:text-6xl"
               style={{
                 background: '#12141A',
-                border: '1px solid rgba(255,255,255,0.06)',
+                border: '1px solid rgba(91,110,245,0.4)',
                 color: '#5B6EF5',
               }}
             >
