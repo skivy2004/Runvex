@@ -107,11 +107,17 @@ export default function ContactPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="font-bricolage font-extrabold text-2xl text-white mb-2">Bericht ontvangen!</h2>
-          <p className="text-sm mb-6" style={{ color: '#8A8FA8' }}>Bedankt voor je bericht. Je ontvangt een bevestiging per e-mail.</p>
-          <Link href="/" className="inline-block px-5 py-2.5 rounded-lg text-sm font-semibold text-white" style={{ background: '#5B6EF5' }}>
-            ← Terug naar home
-          </Link>
+          <h2 className="font-bricolage font-extrabold text-2xl text-white mb-2">Lead ontvangen! ✓</h2>
+          <p className="text-sm mb-2" style={{ color: '#8A8FA8' }}>De lead is nu opgeslagen in het dashboard en wordt automatisch gescoord door Claude AI.</p>
+          <p className="text-sm mb-6" style={{ color: '#5A5E82' }}>Zo werkt het voor jouw klanten — volledig automatisch.</p>
+          <div className="flex flex-col gap-2">
+            <Link href="/demos/lead-automation/dashboard" className="inline-block px-5 py-2.5 rounded-lg text-sm font-semibold text-white text-center" style={{ background: '#5B6EF5' }}>
+              Bekijk in dashboard →
+            </Link>
+            <Link href="/" className="inline-block px-5 py-2.5 rounded-lg text-sm font-medium text-center" style={{ color: '#8A8FA8' }}>
+              ← Terug naar home
+            </Link>
+          </div>
         </div>
       </div>
     )
@@ -152,10 +158,11 @@ export default function ContactPage() {
           <div>
             {/* Badge */}
             <div
-              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-widest uppercase mb-6"
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold tracking-widest uppercase mb-6"
               style={{ background: 'rgba(91,110,245,0.1)', border: '1px solid rgba(91,110,245,0.2)', color: '#5B6EF5' }}
             >
-              Neem Contact Op
+              <span className="w-1.5 h-1.5 rounded-full bg-[#5B6EF5] animate-pulse" />
+              Live Demo
             </div>
 
             {/* Headline */}
@@ -163,18 +170,32 @@ export default function ContactPage() {
               className="font-bricolage font-extrabold text-white mb-6"
               style={{ fontSize: 'clamp(2.5rem, 5vw, 3.5rem)', letterSpacing: '-0.03em', lineHeight: 1.1 }}
             >
-              Laten we<br />
-              <span style={{ color: '#5B6EF5' }}>kennismaken.</span>
+              Dit zien jouw<br />
+              <span style={{ color: '#5B6EF5' }}>klanten.</span>
             </h1>
 
             {/* Description */}
             <p className="text-base leading-relaxed mb-8" style={{ color: '#8A8FA8', maxWidth: 380 }}>
-              Vertel ons over je bedrijf en uitdagingen. We kijken samen hoe Runvex jouw lead-opvolging kan automatiseren.
+              Dit is een live demo van het contactformulier dat jouw klanten invullen. Elke inzending wordt automatisch gescoord door AI, opgeslagen en opgevolgd — zonder dat jij er iets voor hoeft te doen.
             </p>
+
+            {/* Demo uitleg */}
+            <div className="space-y-3 mb-8">
+              {[
+                { icon: '⚡', text: 'Inzending verschijnt direct in het dashboard' },
+                { icon: '🤖', text: 'Claude AI scoort de lead automatisch (1–10)' },
+                { icon: '📧', text: 'Klant krijgt direct een bevestigingsmail' },
+              ].map((item) => (
+                <div key={item.text} className="flex items-start gap-3">
+                  <span className="text-sm mt-0.5">{item.icon}</span>
+                  <span className="text-sm" style={{ color: '#8A8FA8' }}>{item.text}</span>
+                </div>
+              ))}
+            </div>
 
             {/* Contact info */}
             <div className="space-y-3">
-              <p className="text-sm" style={{ color: '#5A5E82' }}>Of bereik ons direct via</p>
+              <p className="text-sm" style={{ color: '#5A5E82' }}>Wil je dit voor jouw bedrijf? Bereik ons via</p>
               <a
                 href="mailto:jeremycordes31@gmail.com"
                 className="text-sm font-medium transition-colors"
@@ -212,7 +233,7 @@ export default function ContactPage() {
           >
             {/* Form header */}
             <div className="flex items-center justify-between mb-6">
-              <h2 className="font-bricolage font-bold text-white text-lg">Stuur een bericht</h2>
+              <h2 className="font-bricolage font-bold text-white text-lg">Probeer het zelf uit</h2>
               <button
                 type="button"
                 onClick={fillRandom}
