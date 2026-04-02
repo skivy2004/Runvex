@@ -5,7 +5,7 @@ import LeadSourceCard from './components/LeadSourceCard'
 import ActivityFeed from './components/ActivityFeed'
 import LeadChart from './components/LeadChart'
 
-export const revalidate = 60
+export const revalidate = 0
 
 export type Lead = {
   id: string

@@ -3,11 +3,11 @@ import type { Lead } from '../page'
 const COLORS = ['#5B6EF5', '#3ECF8E', '#ECB22E', '#E8507A', '#7B6FF0']
 
 function DonutChart({ segments }: { segments: { pct: number; color: string }[] }) {
-  const R = 62
-  const stroke = 14
-  const cx = 80
-  const cy = 80
-  const size = 160
+  const R = 80
+  const stroke = 16
+  const cx = 98
+  const cy = 98
+  const size = 196
   const circumference = 2 * Math.PI * R
   const gap = 3 // gap between segments in SVG units
 
