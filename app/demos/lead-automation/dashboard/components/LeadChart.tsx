@@ -56,7 +56,7 @@ export default function LeadChart({ data }: { data: ChartPoint[] }) {
   return (
     <div className="relative w-full" style={{ userSelect: 'none' }}>
       {/* Legend */}
-      <div className="flex items-center gap-4 mb-3">
+      <div className="flex items-center gap-4 mb-3 px-5">
         <div className="flex items-center gap-1.5">
           <div className="w-6 h-0.5 rounded-full" style={{ background: '#5B6EF5' }} />
           <span className="text-xs" style={{ color: '#8A8FA8' }}>Alle leads</span>
@@ -68,7 +68,7 @@ export default function LeadChart({ data }: { data: ChartPoint[] }) {
       </div>
 
       {/* SVG chart */}
-      <div className="relative overflow-hidden rounded-lg" style={{ background: 'rgba(255,255,255,0.02)' }}>
+      <div className="relative overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)' }}>
         <svg
           viewBox={`0 0 ${W} ${H}`}
           className="w-full"

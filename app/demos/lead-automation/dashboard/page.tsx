@@ -137,10 +137,10 @@ export default async function DashboardPage() {
 
       {/* Chart */}
       <div
-        className="rounded-xl p-5 mb-4"
+        className="rounded-xl mb-4 overflow-hidden"
         style={{ background: '#12141A', border: '1px solid rgba(255,255,255,0.06)' }}
       >
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between px-5 pt-5 pb-4">
           <div>
             <h2 className="text-sm font-semibold text-white">Lead activiteit</h2>
             <p className="text-xs mt-0.5" style={{ color: '#5A5E82' }}>Afgelopen 28 dagen</p>
