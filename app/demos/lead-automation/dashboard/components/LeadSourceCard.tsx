@@ -57,7 +57,7 @@ export default function LeadSourceCard({ leads }: { leads: Lead[] }) {
 
   return (
     <div
-      className="rounded-xl p-5 flex flex-col"
+      className="rounded-xl p-5 flex flex-col h-full"
       style={{ background: '#12141A', border: '1px solid rgba(255,255,255,0.06)' }}
     >
       <div className="flex items-center justify-between mb-4">
