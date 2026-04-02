@@ -31,7 +31,7 @@ async function getLeads(): Promise<Lead[]> {
   const { data, error } = await supabase
     .from('leads')
     .select('*')
-    .eq('form_token', process.env.NEXT_PUBLIC_FORM_TOKEN || process.env.FORM_TOKEN)
+    .neq('bron', 'waitlist')
     .order('ai_prioriteit', { ascending: false })
     .order('aangemaakt_op', { ascending: false })
 
