@@ -1,93 +1,51 @@
 'use client'
 
-import { useState } from 'react'
 import { motion } from 'framer-motion'
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from '@/app/components/ui/interfaces-accordion'
 
 const faqs = [
   {
+    value: 'ai-scoring',
     question: 'Hoe werkt de AI scoring?',
     answer:
-      'Onze AI analyseert elk inkomend lead op basis van gedrag, bedrijfsgrootte, sector en intentiesignalen. Elk lead krijgt een score van 0–100 en een prioriteitslabel: Hoog, Middel of Laag.',
+      'Onze AI analyseert elk inkomend lead op basis van gedrag, bedrijfsgrootte, sector en intentiesignalen. Elk lead krijgt een score van 0–10 en een prioriteitslabel: Hoog, Middel of Laag.',
   },
   {
-    question: 'Welke CRM\'s integreren jullie?',
+    value: 'crm',
+    question: "Welke CRM's integreren jullie?",
     answer:
       'We integreren met HubSpot, Salesforce, Pipedrive, ActiveCampaign en meer dan 50 andere tools via onze native integraties en Zapier/Make connectoren.',
   },
   {
+    value: 'setup',
     question: 'Hoe lang duurt de setup?',
     answer:
       'De gemiddelde setup duurt minder dan 10 minuten. Je koppelt je formulier, verbindt je CRM en de automatisering staat live. Geen technische kennis vereist.',
   },
   {
+    value: 'data',
     question: 'Wat gebeurt er met mijn leaddata?',
     answer:
       'Jouw data blijft van jou. We slaan leads op in een beveiligde database (Supabase) binnen de EU, voldoen aan AVG/GDPR en verkopen nooit data aan derden.',
   },
   {
+    value: 'trial',
     question: 'Is er een gratis proefperiode?',
     answer:
       'Ja, de Gratis tier is permanent gratis tot 50 leads per maand. De betaalde plannen hebben een 14-daagse gratis proefperiode zonder creditcard.',
   },
   {
+    value: 'cancel',
     question: 'Kan ik op elk moment opzeggen?',
     answer:
       'Ja, je kunt je abonnement op elk moment opzeggen zonder opzegtermijn. Je behoudt toegang tot het einde van de betaalperiode.',
   },
 ]
-
-function ChevronIcon({ open }: { open: boolean }) {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 18 18"
-      fill="none"
-      className="flex-shrink-0 transition-transform duration-200"
-      style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
-    >
-      <path
-        d="M4.5 6.75L9 11.25L13.5 6.75"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function FAQItem({ faq, index }: { faq: (typeof faqs)[number]; index: number }) {
-  const [open, setOpen] = useState(false)
-
-  return (
-    <motion.div
-      initial={{ opacity: 0.15, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.4, delay: index * 0.06 }}
-      style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
-    >
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between gap-4 py-5 text-left"
-        aria-expanded={open}
-      >
-        <span className="text-sm font-medium text-white">{faq.question}</span>
-        <span style={{ color: 'var(--text-2)' }}>
-          <ChevronIcon open={open} />
-        </span>
-      </button>
-      {open && (
-        <div className="pb-5">
-          <p className="text-sm leading-relaxed" style={{ color: 'var(--text-2)' }}>
-            {faq.answer}
-          </p>
-        </div>
-      )}
-    </motion.div>
-  )
-}
 
 export default function FAQ() {
   return (
@@ -120,11 +78,30 @@ export default function FAQ() {
         </motion.div>
 
         {/* Accordion */}
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          {faqs.map((faq, i) => (
-            <FAQItem key={faq.question} faq={faq} index={i} />
-          ))}
-        </div>
+        <motion.div
+          initial={{ opacity: 0.15, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          <Accordion type="single" collapsible className="w-full">
+            {faqs.map((faq) => (
+              <AccordionItem
+                key={faq.value}
+                value={faq.value}
+                style={{ borderColor: 'rgba(255,255,255,0.06)' }}
+              >
+                <AccordionTrigger>{faq.question}</AccordionTrigger>
+                <AccordionContent>
+                  <p className="text-sm leading-relaxed" style={{ color: '#8A8FA8' }}>
+                    {faq.answer}
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </motion.div>
       </div>
     </section>
   )
