@@ -3,24 +3,31 @@ import type { Lead } from '../page'
 const COLORS = ['#5B6EF5', '#3ECF8E', '#ECB22E', '#E8507A', '#7B6FF0']
 
 function DonutChart({ segments }: { segments: { pct: number; color: string }[] }) {
-  const R = 40
-  const stroke = 10
-  const cx = 55
-  const cy = 55
+  const R = 62
+  const stroke = 14
+  const cx = 80
+  const cy = 80
+  const size = 160
   const circumference = 2 * Math.PI * R
+  const gap = 3 // gap between segments in SVG units
 
   let offset = 0
   const arcs = segments.map(({ pct, color }) => {
-    const len = (pct / 100) * circumference
+    const len = Math.max((pct / 100) * circumference - gap, 0)
     const arc = { offset, len, color }
-    offset += len
+    offset += (pct / 100) * circumference
     return arc
   })
 
   return (
-    <svg width="110" height="110" viewBox="0 0 110 110">
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
       {/* Background ring */}
-      <circle cx={cx} cy={cy} r={R} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={stroke} />
+      <circle
+        cx={cx} cy={cy} r={R}
+        fill="none"
+        stroke="rgba(255,255,255,0.06)"
+        strokeWidth={stroke}
+      />
       {arcs.map((arc, i) => (
         <circle
           key={i}
@@ -60,7 +67,7 @@ export default function LeadSourceCard({ leads }: { leads: Lead[] }) {
       className="rounded-xl p-5 flex flex-col h-full"
       style={{ background: '#12141A', border: '1px solid rgba(255,255,255,0.06)' }}
     >
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-5">
         <div>
           <h2 className="text-sm font-semibold text-white">Lead Source</h2>
           <p className="text-xs mt-0.5" style={{ color: '#5A5E82' }}>Herkomst van je leads</p>
@@ -77,33 +84,32 @@ export default function LeadSourceCard({ leads }: { leads: Lead[] }) {
           <p className="text-sm" style={{ color: '#5A5E82' }}>Nog geen leads</p>
         </div>
       ) : (
-        <>
-          {/* Donut + legend side by side */}
-          <div className="flex items-center gap-4 mb-4">
-            <div className="shrink-0 relative">
-              <DonutChart segments={segments} />
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="font-bricolage font-bold text-white text-lg">{total}</span>
-                <span className="text-xs" style={{ color: '#5A5E82' }}>totaal</span>
-              </div>
-            </div>
-
-            <div className="space-y-2 flex-1 min-w-0">
-              {sorted.map(([label, count], i) => {
-                const pct = Math.round((count / total) * 100)
-                return (
-                  <div key={label} className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
-                      <span className="text-xs truncate" style={{ color: '#8A8FA8' }}>{label}</span>
-                    </div>
-                    <span className="text-xs font-semibold shrink-0" style={{ color: '#5A5E82' }}>{pct}%</span>
-                  </div>
-                )
-              })}
+        <div className="flex-1 flex flex-col items-center justify-center gap-5">
+          {/* Donut */}
+          <div className="relative shrink-0">
+            <DonutChart segments={segments} />
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="font-bricolage font-bold text-white" style={{ fontSize: 28, lineHeight: 1 }}>{total}</span>
+              <span className="text-xs mt-1" style={{ color: '#5A5E82' }}>totaal</span>
             </div>
           </div>
-        </>
+
+          {/* Legend */}
+          <div className="w-full space-y-2.5">
+            {sorted.map(([label, count], i) => {
+              const pct = Math.round((count / total) * 100)
+              return (
+                <div key={label} className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
+                    <span className="text-xs truncate" style={{ color: '#8A8FA8' }}>{label}</span>
+                  </div>
+                  <span className="text-xs font-semibold shrink-0" style={{ color: '#5A5E82' }}>{pct}%</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
       )}
     </div>
   )

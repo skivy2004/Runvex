@@ -24,7 +24,6 @@ function buildPath(points: ChartPoint[], key: 'count' | 'hoog', W: number, H: nu
 function buildArea(points: ChartPoint[], key: 'count' | 'hoog', W: number, H: number, pad: { l: number; r: number; t: number; b: number }) {
   const path = buildPath(points, key, W, H, pad)
   if (!path) return ''
-  const n = points.length
   const pw = W - pad.l - pad.r
   const lastX = pad.l + pw
   const baseY = H - pad.b
@@ -35,9 +34,9 @@ export default function LeadChart({ data }: { data: ChartPoint[] }) {
   const [hovered, setHovered] = useState<ChartPoint | null>(null)
   const [hoverX, setHoverX] = useState(0)
 
-  const W = 700
-  const H = 180
-  const pad = { l: 36, r: 16, t: 16, b: 32 }
+  const W = 1000
+  const H = 220
+  const pad = { l: 40, r: 8, t: 20, b: 36 }
   const pw = W - pad.l - pad.r
 
   const maxVal = Math.max(...data.map(p => p.count), 1)
@@ -47,10 +46,7 @@ export default function LeadChart({ data }: { data: ChartPoint[] }) {
   const hoogPath = buildPath(data, 'hoog', W, H, pad)
   const countArea = buildArea(data, 'count', W, H, pad)
 
-  // X positions
   const xs = data.map((_, i) => pad.l + (i / Math.max(data.length - 1, 1)) * pw)
-
-  // Show every 7th label
   const labelIndices = data.map((_, i) => i).filter(i => i % 7 === 0 || i === data.length - 1)
 
   return (
@@ -67,19 +63,20 @@ export default function LeadChart({ data }: { data: ChartPoint[] }) {
         </div>
       </div>
 
-      {/* SVG chart */}
-      <div className="relative overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)' }}>
+      {/* SVG chart — full width, no padding */}
+      <div className="relative" style={{ paddingBottom: 16 }}>
         <svg
           viewBox={`0 0 ${W} ${H}`}
-          className="w-full"
-          style={{ height: 180, display: 'block' }}
+          preserveAspectRatio="none"
+          className="w-full block"
+          style={{ height: 200 }}
           onMouseMove={(e) => {
             const rect = e.currentTarget.getBoundingClientRect()
             const relX = ((e.clientX - rect.left) / rect.width) * W
             const idx = Math.round(((relX - pad.l) / pw) * (data.length - 1))
             const clamped = Math.max(0, Math.min(data.length - 1, idx))
             setHovered(data[clamped])
-            setHoverX(xs[clamped])
+            setHoverX(xs[clamped] / W * 100)
           }}
           onMouseLeave={() => setHovered(null)}
         >
@@ -90,9 +87,9 @@ export default function LeadChart({ data }: { data: ChartPoint[] }) {
               : pad.t + (H - pad.t - pad.b) - (v / maxVal) * (H - pad.t - pad.b)
             return (
               <g key={v}>
-                <line x1={pad.l} y1={y} x2={W - pad.r} y2={y} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+                <line x1={pad.l} y1={y} x2={W - pad.r} y2={y} stroke="rgba(255,255,255,0.05)" strokeWidth="1.5" />
                 {v > 0 && (
-                  <text x={pad.l - 6} y={y + 4} textAnchor="end" fontSize="9" fill="rgba(255,255,255,0.2)">{v}</text>
+                  <text x={pad.l - 8} y={y + 4} textAnchor="end" fontSize="11" fill="rgba(255,255,255,0.2)">{v}</text>
                 )}
               </g>
             )
@@ -100,40 +97,49 @@ export default function LeadChart({ data }: { data: ChartPoint[] }) {
 
           {/* Area fill */}
           {countArea && (
-            <path d={countArea} fill="url(#areaGrad)" opacity="0.4" />
+            <path d={countArea} fill="url(#areaGrad)" opacity="0.35" />
           )}
 
           {/* Lines */}
-          {countPath && <path d={countPath} fill="none" stroke="#5B6EF5" strokeWidth="2" strokeLinecap="round" />}
-          {hoogPath && <path d={hoogPath} fill="none" stroke="#ECB22E" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="4 3" />}
+          {countPath && <path d={countPath} fill="none" stroke="#5B6EF5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
+          {hoogPath && <path d={hoogPath} fill="none" stroke="#ECB22E" strokeWidth="2" strokeLinecap="round" strokeDasharray="6 4" />}
 
           {/* X axis labels */}
           {labelIndices.map((i) => (
-            <text key={i} x={xs[i]} y={H - 6} textAnchor="middle" fontSize="9" fill="rgba(255,255,255,0.25)">
+            <text key={i} x={xs[i]} y={H - 8} textAnchor="middle" fontSize="11" fill="rgba(255,255,255,0.25)">
               {data[i]?.label}
             </text>
           ))}
 
-          {/* Hover line */}
-          {hovered && (
-            <line x1={hoverX} y1={pad.t} x2={hoverX} y2={H - pad.b} stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
-          )}
-
           {/* Gradient */}
           <defs>
             <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#5B6EF5" stopOpacity="0.3" />
+              <stop offset="0%" stopColor="#5B6EF5" stopOpacity="0.4" />
               <stop offset="100%" stopColor="#5B6EF5" stopOpacity="0" />
             </linearGradient>
           </defs>
         </svg>
 
+        {/* Hover line (CSS positioned) */}
+        {hovered && (
+          <div
+            className="absolute top-0 pointer-events-none"
+            style={{
+              left: hoverX + '%',
+              top: 0,
+              bottom: 16,
+              width: 1,
+              background: 'rgba(255,255,255,0.1)',
+            }}
+          />
+        )}
+
         {/* Tooltip */}
         {hovered && (
           <div
-            className="absolute top-3 pointer-events-none px-3 py-2 rounded-lg text-xs"
+            className="absolute top-3 pointer-events-none px-3 py-2 rounded-lg text-xs z-10"
             style={{
-              left: Math.min(hoverX / W * 100, 70) + '%',
+              left: Math.min(hoverX, 70) + '%',
               background: '#1A1C2E',
               border: '1px solid rgba(91,110,245,0.3)',
               color: '#fff',
