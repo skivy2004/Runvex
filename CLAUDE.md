@@ -2,6 +2,25 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Memory system
+
+**At the start of every session**, read these files before doing anything else:
+
+```
+memory/user.md         — who Jeremy is and how he works
+memory/preferences.md  — code conventions, design system, deployment workflow, n8n quirks
+memory/decisions.md    — why things are built the way they are
+memory/people.md       — people and test data context
+```
+
+**At the end of a session** (or when something significant changes), update the relevant file:
+- New architectural decision → `decisions.md`
+- New preference or convention discovered → `preferences.md`
+- New person or change in test data → `people.md`
+- Change in Jeremy's working style or contact info → `user.md`
+
+Keep entries concise and factual. Add a `## Updated: YYYY-MM-DD` note when editing a file.
+
 ## Commands
 
 ```bash
