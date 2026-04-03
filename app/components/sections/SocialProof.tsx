@@ -1,6 +1,6 @@
 export default function SocialProof() {
   const items = [
-    '✦ 142+ leads verwerkt',
+    '✦ 500+ leads verwerkt',
     '✦ Gemiddelde responstijd: < 3 sec',
     '✦ Setup in minder dan 10 minuten',
     '✦ Gebruikt door freelancers & MKB in Nederland',

@@ -5,23 +5,35 @@ import { motion } from 'framer-motion'
 const testimonials = [
   {
     name: 'Lars van den Berg',
-    role: 'Growth Manager bij TechFlow B.V.',
+    initials: 'LB',
+    role: 'Growth Manager',
+    company: 'TechFlow B.V.',
+    avatarBg: 'linear-gradient(135deg, #5B6EF5, #3B4FD5)',
     quote:
       'Runvex heeft ons leadproces volledig getransformeerd. We besparen nu 8 uur per week en onze opvolging is 3x sneller.',
+    stars: 5,
     highlight: true,
   },
   {
     name: 'Sanne Dijkstra',
-    role: 'Directeur bij MarketPro Amsterdam',
+    initials: 'SD',
+    role: 'Directeur',
+    company: 'MarketPro Amsterdam',
+    avatarBg: 'linear-gradient(135deg, #3ECF8E, #27A870)',
     quote:
       'De AI scoring is ongelooflijk accuraat. We focussen nu alleen op leads met een hoge score en onze conversie is met 40% gestegen.',
+    stars: 5,
     highlight: false,
   },
   {
     name: 'Daan Vermeer',
-    role: 'Sales Lead bij Groei.io',
+    initials: 'DV',
+    role: 'Sales Lead',
+    company: 'Groei.io',
+    avatarBg: 'linear-gradient(135deg, #F5A623, #E08000)',
     quote:
       'Setup was klaar in 5 minuten. Geen gedoe, gewoon werken. Runvex is de beste investering die we dit jaar hebben gedaan.',
+    stars: 5,
     highlight: false,
   },
 ]
@@ -29,6 +41,18 @@ const testimonials = [
 // Split into two columns for masonry
 const col1 = testimonials.filter((_, i) => i % 2 === 0)
 const col2 = testimonials.filter((_, i) => i % 2 === 1)
+
+function Stars({ count }: { count: number }) {
+  return (
+    <div className="flex items-center gap-0.5 mb-4">
+      {Array.from({ length: count }).map((_, i) => (
+        <svg key={i} width="14" height="14" viewBox="0 0 24 24" fill="#F5A623">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+        </svg>
+      ))}
+    </div>
+  )
+}
 
 function TestimonialCard({
   t,
@@ -54,6 +78,8 @@ function TestimonialCard({
           : 'none',
       }}
     >
+      <Stars count={t.stars} />
+
       {/* Quote */}
       <p
         className="text-sm leading-relaxed mb-5"
@@ -64,18 +90,27 @@ function TestimonialCard({
 
       {/* Author */}
       <div className="flex items-center gap-3">
-        <div
-          className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-semibold text-white"
-          style={{
-            background: 'linear-gradient(135deg, #5B6EF5, #7B8FF8)',
-          }}
-        >
-          {t.name.charAt(0)}
+        <div className="relative flex-shrink-0">
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-bold text-white"
+            style={{ background: t.avatarBg }}
+          >
+            {t.initials}
+          </div>
+          {/* Verified badge */}
+          <div
+            className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center"
+            style={{ background: '#5B6EF5', border: '1.5px solid var(--bg-2)' }}
+          >
+            <svg width="8" height="8" viewBox="0 0 12 12" fill="none">
+              <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
         </div>
         <div>
-          <div className="text-sm font-medium text-white">{t.name}</div>
+          <div className="text-sm font-semibold text-white">{t.name}</div>
           <div className="text-xs" style={{ color: 'var(--text-3)' }}>
-            {t.role}
+            {t.role} · <span style={{ color: 'var(--text-2)' }}>{t.company}</span>
           </div>
         </div>
       </div>
