@@ -18,30 +18,34 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Lead niet gevonden' }, { status: 404 })
   }
 
-  // Stuur follow-up via Resend
-  const emailRes = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: process.env.BEDRIJF_EMAIL,
-      to: lead.email,
-      subject: 'Heb je nog vragen?',
-      text: `Hoi ${lead.naam.split(' ')[0]},\n\nWe wilden even checken of je nog vragen hebt naar aanleiding van je eerdere bericht over "${lead.bericht}".\n\nLaat het ons weten, we helpen je graag verder!\n\nMet vriendelijke groet,\nHet Runvex team`,
-    }),
-  })
-
-  if (!emailRes.ok) {
-    return NextResponse.json({ error: 'Email versturen mislukt' }, { status: 502 })
+  // Probeer follow-up email te sturen (niet fataal als het mislukt)
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: process.env.BEDRIJF_EMAIL,
+        to: lead.email,
+        subject: 'Heb je nog vragen?',
+        text: `Hoi ${lead.naam.split(' ')[0]},\n\nWe wilden even checken of je nog vragen hebt naar aanleiding van je eerdere bericht.\n\nLaat het ons weten, we helpen je graag verder!\n\nMet vriendelijke groet,\nHet Runvex team`,
+      }),
+    })
+  } catch {
+    // Email versturen mislukt — we updaten de DB toch
   }
 
-  // Update status in Supabase
-  await supabase
+  // Altijd de DB updaten
+  const { error: updateError } = await supabase
     .from('leads')
     .update({ follow_up_verstuurd: true, status: 'follow_up_verstuurd' })
     .eq('id', leadId)
+
+  if (updateError) {
+    return NextResponse.json({ error: updateError.message }, { status: 500 })
+  }
 
   return NextResponse.json({ ok: true })
 }

@@ -9,27 +9,50 @@ export default function LeadDetail({ lead, onClose }: { lead: Lead; onClose: () 
   const [followupLoading, setFollowupLoading] = useState(false)
   const [behandeldLoading, setBehandeldLoading] = useState(false)
   const [followupDone, setFollowupDone] = useState(lead.follow_up_verstuurd)
-  const [behandeld, setBehandeld] = useState(false)
+  const [behandeld, setBehandeld] = useState(lead.status === 'behandeld')
+  const [error, setError] = useState<string | null>(null)
 
   async function sendFollowup() {
     setFollowupLoading(true)
-    const res = await fetch('/api/leads/followup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ leadId: lead.id }),
-    })
-    if (res.ok) { setFollowupDone(true); router.refresh() }
+    setError(null)
+    try {
+      const res = await fetch('/api/leads/followup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leadId: lead.id }),
+      })
+      if (res.ok) {
+        setFollowupDone(true)
+        router.refresh()
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error || 'Follow-up versturen mislukt')
+      }
+    } catch {
+      setError('Verbindingsfout — probeer opnieuw')
+    }
     setFollowupLoading(false)
   }
 
   async function markBehandeld() {
     setBehandeldLoading(true)
-    const res = await fetch('/api/leads/behandeld', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ leadId: lead.id }),
-    })
-    if (res.ok) { setBehandeld(true); router.refresh() }
+    setError(null)
+    try {
+      const res = await fetch('/api/leads/behandeld', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leadId: lead.id }),
+      })
+      if (res.ok) {
+        setBehandeld(true)
+        router.refresh()
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error || 'Opslaan mislukt')
+      }
+    } catch {
+      setError('Verbindingsfout — probeer opnieuw')
+    }
     setBehandeldLoading(false)
   }
 
@@ -45,8 +68,8 @@ export default function LeadDetail({ lead, onClose }: { lead: Lead; onClose: () 
       >
         {/* Header */}
         <div
-          className="p-6 flex items-start justify-between"
-          style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+          className="p-6 flex items-start justify-between sticky top-0"
+          style={{ background: '#12141A', borderBottom: '1px solid rgba(255,255,255,0.06)', zIndex: 1 }}
         >
           <div>
             <h2 className="text-lg font-bold text-white">
@@ -126,37 +149,58 @@ export default function LeadDetail({ lead, onClose }: { lead: Lead; onClose: () 
               <span style={{ color: '#8A8FA8' }}>Follow-up: </span>
               <span
                 className="font-medium"
-                style={{ color: lead.follow_up_verstuurd ? '#3ECF8E' : '#5A5E82' }}
+                style={{ color: followupDone ? '#3ECF8E' : '#5A5E82' }}
               >
-                {lead.follow_up_verstuurd ? 'Verstuurd' : 'Nog niet verstuurd'}
+                {followupDone ? 'Verstuurd' : 'Nog niet verstuurd'}
+              </span>
+            </div>
+            <div>
+              <span style={{ color: '#8A8FA8' }}>Status: </span>
+              <span
+                className="font-medium"
+                style={{ color: behandeld ? '#3ECF8E' : '#5A5E82' }}
+              >
+                {behandeld ? 'Behandeld' : lead.status || 'Nieuw'}
               </span>
             </div>
           </div>
+
+          {/* Error */}
+          {error && (
+            <div
+              className="text-xs px-3 py-2 rounded-lg"
+              style={{ background: 'rgba(232,80,122,0.1)', border: '1px solid rgba(232,80,122,0.2)', color: '#E8507A' }}
+            >
+              {error}
+            </div>
+          )}
 
           <div className="flex gap-3 pt-2">
             <button
               onClick={sendFollowup}
               disabled={followupLoading || followupDone}
-              className="flex-1 py-2.5 text-white text-sm font-medium rounded-lg transition-colors"
+              className="flex-1 py-2.5 text-white text-sm font-medium rounded-lg transition-opacity"
               style={{
                 background: followupDone ? 'rgba(91,110,245,0.3)' : '#5B6EF5',
                 opacity: followupLoading ? 0.6 : 1,
+                cursor: followupDone ? 'default' : 'pointer',
               }}
             >
-              {followupLoading ? 'Verzenden...' : followupDone ? '✓ Follow-up verstuurd' : 'Stuur nu follow-up'}
+              {followupLoading ? 'Verzenden…' : followupDone ? '✓ Follow-up verstuurd' : 'Stuur follow-up'}
             </button>
             <button
               onClick={markBehandeld}
               disabled={behandeldLoading || behandeld}
-              className="flex-1 py-2.5 text-sm font-medium rounded-lg transition-colors"
+              className="flex-1 py-2.5 text-sm font-medium rounded-lg transition-opacity"
               style={{
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.08)',
+                background: behandeld ? 'rgba(62,207,142,0.1)' : 'rgba(255,255,255,0.05)',
+                border: `1px solid ${behandeld ? 'rgba(62,207,142,0.3)' : 'rgba(255,255,255,0.08)'}`,
                 color: behandeld ? '#3ECF8E' : '#8A8FA8',
                 opacity: behandeldLoading ? 0.6 : 1,
+                cursor: behandeld ? 'default' : 'pointer',
               }}
             >
-              {behandeldLoading ? 'Opslaan...' : behandeld ? '✓ Behandeld' : 'Markeer als behandeld'}
+              {behandeldLoading ? 'Opslaan…' : behandeld ? '✓ Behandeld' : 'Markeer behandeld'}
             </button>
           </div>
         </div>
