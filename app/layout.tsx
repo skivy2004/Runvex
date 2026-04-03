@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { Bricolage_Grotesque, DM_Sans } from 'next/font/google'
 import './globals.css'
 import CookieBanner from './components/CookieBanner'
+import CrispChat from './components/CrispChat'
+import ExitIntentPopup from './components/ExitIntentPopup'
 
 const bricolage = Bricolage_Grotesque({
   subsets: ['latin'],
@@ -48,6 +50,8 @@ export default function RootLayout({
       <body style={{ fontFamily: 'var(--font-dm-sans)' }}>
         {children}
         <CookieBanner />
+        <CrispChat />
+        <ExitIntentPopup />
       </body>
     </html>
   )

@@ -11,10 +11,12 @@ export default function Footer() {
   ]
   const companyLinks = [
     { label: 'Blog', href: '/blog' },
-    { label: 'Demo proberen', href: '/#demos' },
-    { label: 'Integraties', href: '/#integraties' },
+    { label: 'Case studies', href: '/case-studies' },
+    { label: 'Roadmap', href: '/roadmap' },
+    { label: 'Partners', href: '/partners' },
+    { label: 'Help center', href: '/help' },
+    { label: 'API docs', href: '/developers' },
     { label: 'Contact', href: '/contact' },
-    { label: 'Dashboard', href: '/demos/lead-automation/dashboard' },
   ]
   const legalLinks = [
     { label: 'Privacybeleid', href: '/privacybeleid' },
