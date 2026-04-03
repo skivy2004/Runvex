@@ -75,7 +75,7 @@ function CheckIcon() {
 
 export default function Pricing() {
   return (
-    <section id="pricing" className="py-24 md:py-32">
+    <section id="pricing" className="py-14 md:py-20">
       <div className="max-w-5xl mx-auto px-6">
         {/* Header */}
         <motion.div

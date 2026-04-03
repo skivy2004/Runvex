@@ -160,7 +160,7 @@ export default function Footer() {
           © {new Date().getFullYear()} Runvex B.V. · Alle rechten voorbehouden.
         </p>
         <p className="text-xs text-center mt-1" style={{ color: 'rgba(139,143,179,0.5)' }}>
-          Runvex B.V. (i.o.) · KvK: [PLACEHOLDER] · BTW: [PLACEHOLDER]
+          Runvex B.V. (i.o.) · Nederland
         </p>
       </div>
     </footer>

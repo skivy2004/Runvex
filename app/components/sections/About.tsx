@@ -1,6 +1,6 @@
 export default function About() {
   return (
-    <section id="over" className="py-24 md:py-32" style={{ background: '#0A0B0F' }}>
+    <section id="over" className="py-14 md:py-20" style={{ background: '#0A0B0F' }}>
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
           {/* Left column — avatar */}

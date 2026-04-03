@@ -30,7 +30,7 @@ export default function HowItWorks() {
   return (
     <section
       id="hoe-het-werkt"
-      className="py-24 md:py-32 relative"
+      className="py-14 md:py-20 relative"
       style={{
         background:
           'radial-gradient(ellipse 80% 60% at 50% 50%, rgba(91,110,245,0.12) 0%, transparent 70%)',

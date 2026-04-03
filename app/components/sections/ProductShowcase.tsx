@@ -206,7 +206,7 @@ const block2Checks = [
 
 export default function ProductShowcase() {
   return (
-    <section className="py-24 md:py-32">
+    <section className="py-14 md:py-20">
       <div className="max-w-7xl mx-auto px-6 space-y-24 md:space-y-32">
         {/* Block 1: text left, mockup right */}
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
