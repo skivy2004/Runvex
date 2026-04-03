@@ -1,0 +1,5 @@
+date,decision,reasoning,expected_outcome,review_date,status
+2026-04-03,Remove ISR caching from dashboard (revalidate=0),Vercel served stale pages for 60s after deploys hiding visual changes during development,Dashboard always shows fresh data immediately after deploy,2026-05-03,
+2026-04-03,Use bron!=waitlist filter instead of form_token,All leads had null form_token because env var was never set in Vercel — token filter returned zero results,Dashboard shows all real leads without needing env var config,2026-05-03,
+2026-04-03,Add Code prep node before Claude in n8n scoring,Complex JSON.stringify expressions with $() references failed silently causing identical scores for all leads,New leads receive accurate AI scores based on actual message content,2026-05-03,
+2026-04-03,In-memory rate limiting on all API routes,Simplest protection against abuse for a demo project — no external dependencies needed,API endpoints protected from basic spam without adding Redis complexity,2026-05-03,
