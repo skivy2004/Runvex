@@ -10,6 +10,7 @@ import Integrations from './components/sections/Integrations'
 import DemoCards from './components/sections/DemoCards'
 import ProductShowcase from './components/sections/ProductShowcase'
 import Testimonials from './components/sections/Testimonials'
+import ROICalculator from './components/sections/ROICalculator'
 import Pricing from './components/sections/Pricing'
 import FAQ from './components/sections/FAQ'
 import About from './components/sections/About'
@@ -31,6 +32,7 @@ export default function Home() {
         <DemoCards />
         <ProductShowcase />
         <Testimonials />
+        <ROICalculator />
         <Pricing />
         <FAQ />
         <About />
