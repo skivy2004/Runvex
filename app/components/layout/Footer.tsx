@@ -1,3 +1,5 @@
+'use client'
+
 import Link from 'next/link'
 
 export default function Footer() {
@@ -8,6 +10,7 @@ export default function Footer() {
     { label: 'Prijzen', href: '/#pricing' },
   ]
   const companyLinks = [
+    { label: 'Blog', href: '/blog' },
     { label: 'Demo proberen', href: '/#demos' },
     { label: 'Integraties', href: '/#integraties' },
     { label: 'Contact', href: '/contact' },
