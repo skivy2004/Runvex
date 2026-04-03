@@ -1,6 +1,8 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit, getIp, tooManyRequests } from '@/app/lib/rate-limit'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (!rateLimit(`availability:${getIp(req)}`, 20, 60 * 1000)) return tooManyRequests()
   try {
     const res = await fetch(process.env.N8N_BOOKING_AVAILABILITY_URL!, {
       method: 'GET',
