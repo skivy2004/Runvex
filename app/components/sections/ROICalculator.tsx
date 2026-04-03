@@ -3,57 +3,37 @@
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import { Slider } from '@/app/components/ui/slider'
 
-function Slider({
-  label,
-  value,
-  min,
-  max,
-  step,
-  format,
-  onChange,
-}: {
-  label: string
-  value: number
-  min: number
-  max: number
-  step: number
-  format: (v: number) => string
-  onChange: (v: number) => void
-}) {
-  const pct = ((value - min) / (max - min)) * 100
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm" style={{ color: 'var(--text-2)' }}>
-          {label}
-        </span>
-        <span className="text-sm font-semibold text-white tabular-nums">{format(value)}</span>
-      </div>
-      <div className="relative h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
-        <div
-          className="absolute left-0 top-0 h-full rounded-full"
-          style={{ width: `${pct}%`, background: 'var(--purple)' }}
-        />
-        <input
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-          style={{ margin: 0 }}
-        />
-        <div
-          className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-white"
-          style={{ left: `calc(${pct}% - 8px)`, background: 'var(--purple)' }}
-        />
-      </div>
-    </div>
-  )
-}
+const SLIDERS = [
+  {
+    key: 'leads' as const,
+    label: 'Leads per maand',
+    min: 5,
+    max: 500,
+    step: 5,
+    format: (v: number) => `${v} leads`,
+    ticks: ['5', '250', '500'],
+  },
+  {
+    key: 'minPerLead' as const,
+    label: 'Tijd per lead (handmatig)',
+    min: 5,
+    max: 60,
+    step: 5,
+    format: (v: number) => `${v} min`,
+    ticks: ['5 min', '30 min', '60 min'],
+  },
+  {
+    key: 'uurtarief' as const,
+    label: 'Jouw uurtarief',
+    min: 25,
+    max: 200,
+    step: 5,
+    format: (v: number) => `€${v}`,
+    ticks: ['€25', '€100', '€200'],
+  },
+]
 
 function StatCard({
   label,
@@ -93,14 +73,14 @@ export default function ROICalculator() {
   const [minPerLead, setMinPerLead] = useState(20)
   const [uurtarief, setUurtarief] = useState(75)
 
+  const values = { leads, minPerLead, uurtarief }
+  const setters = { leads: setLeads, minPerLead: setMinPerLead, uurtarief: setUurtarief }
+
   const stats = useMemo(() => {
-    // Runvex automates ~85% of manual follow-up time
     const savedMinutes = leads * minPerLead * 0.85
     const savedHours = savedMinutes / 60
     const savedMoney = savedHours * uurtarief
-    // Conservative 15% conversion uplift from faster follow-up
     const extraLeads = Math.round(leads * 0.15)
-
     return {
       savedHours: savedHours.toFixed(1),
       savedMoney: Math.round(savedMoney),
@@ -152,39 +132,45 @@ export default function ROICalculator() {
             className="rounded-2xl p-6 md:p-8 space-y-8"
             style={{ background: 'var(--bg-2)', border: '1px solid var(--border)' }}
           >
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-wider mb-6" style={{ color: 'var(--text-3)' }}>
-                Jouw situatie
-              </div>
-              <div className="space-y-8">
-                <Slider
-                  label="Leads per maand"
-                  value={leads}
-                  min={5}
-                  max={500}
-                  step={5}
-                  format={(v) => `${v} leads`}
-                  onChange={setLeads}
-                />
-                <Slider
-                  label="Tijd per lead (handmatig)"
-                  value={minPerLead}
-                  min={5}
-                  max={60}
-                  step={5}
-                  format={(v) => `${v} min`}
-                  onChange={setMinPerLead}
-                />
-                <Slider
-                  label="Jouw uurtarief"
-                  value={uurtarief}
-                  min={25}
-                  max={200}
-                  step={5}
-                  format={(v) => `€${v}`}
-                  onChange={setUurtarief}
-                />
-              </div>
+            <div className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-3)' }}>
+              Jouw situatie
+            </div>
+
+            <div className="space-y-8">
+              {SLIDERS.map((s) => {
+                const current = values[s.key]
+                return (
+                  <div key={s.key}>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm" style={{ color: 'var(--text-2)' }}>
+                        {s.label}
+                      </span>
+                      <span
+                        className="text-sm font-bold tabular-nums px-2 py-0.5 rounded-md"
+                        style={{ color: '#5B6EF5', background: 'rgba(91,110,245,0.1)' }}
+                      >
+                        {s.format(current)}
+                      </span>
+                    </div>
+                    <Slider
+                      value={[current]}
+                      min={s.min}
+                      max={s.max}
+                      step={s.step}
+                      showTooltip
+                      tooltipContent={(v) => s.format(v)}
+                      onValueChange={([v]) => setters[s.key](v)}
+                    />
+                    <div className="flex justify-between mt-2">
+                      {s.ticks.map((t) => (
+                        <span key={t} className="text-[10px]" style={{ color: 'var(--text-3)' }}>
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
 
             <div
@@ -195,7 +181,7 @@ export default function ROICalculator() {
                 color: 'var(--text-3)',
               }}
             >
-              Berekening: Runvex automatiseert gemiddeld 85% van het handmatige opvolgwerk en verhoogt conversie met 15% door snellere reactietijd.
+              Runvex automatiseert 85% van handmatig opvolgwerk en verhoogt conversie met 15% door snellere reactietijd.
             </div>
           </div>
 
@@ -220,10 +206,8 @@ export default function ROICalculator() {
 
             <Link
               href="/contact"
-              className="mt-2 w-full flex items-center justify-center gap-2 py-3 px-6 rounded-lg text-sm font-semibold text-white transition-all duration-150"
+              className="mt-2 w-full flex items-center justify-center gap-2 py-3 px-6 rounded-lg text-sm font-semibold text-white transition-colors hover:bg-[#6B5FF8]"
               style={{ background: 'var(--purple)' }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = '#6B5FF8')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--purple)')}
             >
               Start gratis — zie het zelf
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
