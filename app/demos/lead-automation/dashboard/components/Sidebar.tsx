@@ -91,8 +91,9 @@ export default function Sidebar() {
       }}
     >
       {/* Logo */}
-      <div
-        className="flex items-center gap-2.5 px-5 shrink-0"
+      <Link
+        href="/"
+        className="flex items-center gap-2.5 px-5 shrink-0 transition-opacity hover:opacity-80"
         style={{ height: 56, borderBottom: '1px solid rgba(255,255,255,0.06)' }}
       >
         <div
@@ -100,7 +101,7 @@ export default function Sidebar() {
           style={{ background: 'linear-gradient(135deg,#5B6EF5,#7B6FF0)' }}
         >R</div>
         <span className="font-bricolage font-bold text-white text-base tracking-tight">Runvex</span>
-      </div>
+      </Link>
 
       {/* Search */}
       <div className="px-3 pt-4 pb-2">
