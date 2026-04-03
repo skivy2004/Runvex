@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import Sidebar from './components/Sidebar'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -37,9 +38,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               >2</span>
             </button>
 
-            {/* User chip */}
-            <div
-              className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg"
+            {/* User chip → homepage */}
+            <Link
+              href="/"
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg transition-opacity hover:opacity-80"
               style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
             >
               <div
@@ -53,7 +55,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <svg width="12" height="12" fill="none" stroke="#5A5E82" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
-            </div>
+            </Link>
           </div>
         </header>
 
