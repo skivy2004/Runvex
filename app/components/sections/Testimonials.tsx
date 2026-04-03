@@ -120,7 +120,7 @@ function TestimonialCard({
 
 export default function Testimonials() {
   return (
-    <section id="testimonials" className="py-24 md:py-32">
+    <section id="testimonials" className="py-14 md:py-20">
       <div className="max-w-5xl mx-auto px-6">
         <motion.div
           className="text-center mb-16"

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 
 export default function CTASection() {
   return (
-    <section className="py-24 md:py-32">
+    <section className="py-14 md:py-20">
       <div className="max-w-7xl mx-auto px-6">
         <motion.div
           className="relative rounded-3xl overflow-hidden text-center mx-auto"
@@ -65,13 +65,13 @@ export default function CTASection() {
 
             <div className="flex flex-wrap items-center justify-center gap-4">
               <a
-                href="/demos/lead-automation/contact"
+                href="/contact"
                 className="group inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-medium text-white transition-all duration-150"
                 style={{ background: 'var(--purple)' }}
                 onMouseEnter={(e) => (e.currentTarget.style.background = '#6B5FF8')}
                 onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--purple)')}
               >
-                Probeer de demo
+                Start gratis
                 <svg
                   width="14"
                   height="14"
@@ -89,7 +89,7 @@ export default function CTASection() {
                 </svg>
               </a>
               <a
-                href="/#hoe-het-werkt"
+                href="/#booking"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-medium text-white transition-all duration-150"
                 style={{ border: '1px solid rgba(255,255,255,0.18)' }}
                 onMouseEnter={(e) =>
@@ -99,7 +99,7 @@ export default function CTASection() {
                   (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)')
                 }
               >
-                Hoe het werkt
+                Boek een call
               </a>
             </div>
           </div>

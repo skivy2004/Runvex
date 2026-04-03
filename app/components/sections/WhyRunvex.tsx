@@ -57,7 +57,7 @@ const fadeUp = {
 
 export default function WhyRunvex() {
   return (
-    <section id="features" className="py-24 md:py-32">
+    <section id="features" className="py-14 md:py-20">
       <div className="max-w-7xl mx-auto px-6">
         {/* Section header */}
         <motion.div {...fadeUp} className="text-center mb-16">

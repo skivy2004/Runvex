@@ -30,7 +30,7 @@ export default function HeroSection() {
       </div>
 
       <section>
-        <div className="relative pt-32 md:pt-44">
+        <div className="relative pt-24 md:pt-32">
           {/* Night background image */}
           <AnimatedGroup
             variants={{
@@ -103,7 +103,7 @@ export default function HeroSection() {
 
                 {/* Headline */}
                 <h1
-                  className="mt-8 font-bricolage font-extrabold text-balance text-5xl md:text-7xl lg:mt-14 xl:text-[5.25rem] text-white lg:max-w-5xl mx-auto"
+                  className="mt-6 font-bricolage font-extrabold text-balance text-4xl md:text-6xl xl:text-[4.5rem] text-white lg:max-w-5xl mx-auto"
                   style={{ letterSpacing: '-0.03em', lineHeight: 1.1 }}
                 >
                   Laat geen enkele lead{' '}
@@ -112,7 +112,7 @@ export default function HeroSection() {
 
                 {/* Subtitle */}
                 <p
-                  className="mx-auto mt-8 max-w-2xl text-balance text-lg"
+                  className="mx-auto mt-5 max-w-2xl text-balance text-lg"
                   style={{ color: '#8A8FA8' }}
                 >
                   Runvex scoort, opvolgt en beheert al je leads automatisch met Claude AI —
@@ -130,7 +130,7 @@ export default function HeroSection() {
                   },
                   ...transitionVariants,
                 }}
-                className="mt-10 flex flex-col items-center justify-center gap-3 md:flex-row"
+                className="mt-7 flex flex-col items-center justify-center gap-3 md:flex-row"
               >
                 <div
                   className="rounded-[14px] border p-0.5"
