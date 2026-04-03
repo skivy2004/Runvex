@@ -90,6 +90,19 @@
     },
     {
       "parameters": {
+        "jsCode": "const body = $('Webhook: Lead Intake').first().json.body;\nconst naam = body.naam || '';\nconst bedrijf = body.bedrijf || 'Niet opgegeven';\nconst bericht = body.bericht || 'Geen bericht';\nconst bron = body.bron || 'Onbekend';\n\nconst prompt = 'Analyseer deze lead en geef een JSON terug met deze exacte velden:\\n{\\n  \"score\": \"hoog\" of \"middel\" of \"laag\",\\n  \"sector\": \"string (bijv. IT, Bouw, Marketing, Consultancy, Bouw, SaaS, E-commerce, Zorg, etc.)\",\\n  \"samenvatting\": \"1 zin over de lead\",\\n  \"prioriteit\": getal van 1 tot 10\\n}\\n\\nScoreregels:\\n- hoog: heeft bedrijfsnaam, concreet verzoek, meerdere diensten of hoge urgentie (prioriteit 8-10)\\n- middel: serieuze interesse maar minder specifiek (prioriteit 5-7)\\n- laag: oriënterend, geen bedrijf, vaag bericht (prioriteit 1-4)\\n\\nLead data:\\nNaam: ' + naam + '\\nBedrijf: ' + bedrijf + '\\nBericht: ' + bericht + '\\nGevraagde diensten: ' + bron + '\\n\\nGeef ALLEEN de JSON terug, geen uitleg.';\n\nreturn [{ json: { naam, bedrijf, bericht, bron, prompt } }];"
+      },
+      "id": "node-prep-score",
+      "name": "Code: Bereid Score Data Voor",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        300
+      ]
+    },
+    {
+      "parameters": {
         "method": "POST",
         "url": "https://api.anthropic.com/v1/messages",
         "sendHeaders": true,
@@ -111,7 +124,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: 'claude-opus-4-5', max_tokens: 300, messages: [{ role: 'user', content: 'Analyseer deze lead en geef een JSON terug met deze exacte velden:\\n{\\n  \"score\": \"hoog\" of \"middel\" of \"laag\",\\n  \"sector\": \"string (bijv. IT, Bouw, Marketing, etc.)\",\\n  \"samenvatting\": \"1 zin over de lead\",\\n  \"prioriteit\": getal van 1 tot 10\\n}\\n\\nLead data:\\nNaam: ' + $('Webhook: Lead Intake').first().json.body.naam + '\\nBedrijf: ' + ($('Webhook: Lead Intake').first().json.body.bedrijf || 'Niet opgegeven') + '\\nBericht: ' + $('Webhook: Lead Intake').first().json.body.bericht + '\\nBron: ' + ($('Webhook: Lead Intake').first().json.body.bron || 'Onbekend') + '\\n\\nGeef ALLEEN de JSON terug, geen uitleg.' }] }) }}",
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 300, messages: [{ role: 'user', content: $json.prompt }] }) }}",
         "options": {}
       },
       "id": "node-claude-score",
@@ -119,7 +132,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        720,
+        840,
         300
       ]
     },
@@ -622,6 +635,17 @@
       ]
     },
     "Supabase: Lead Opslaan": {
+      "main": [
+        [
+          {
+            "node": "Code: Bereid Score Data Voor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Bereid Score Data Voor": {
       "main": [
         [
           {
