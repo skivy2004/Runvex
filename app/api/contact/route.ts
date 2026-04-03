@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit, getIp, tooManyRequests } from '@/app/lib/rate-limit'
 
 export async function GET() {
   return NextResponse.json({ status: 'ok', method: 'GET' })
 }
 
 export async function POST(req: NextRequest) {
+  if (!rateLimit(`contact:${getIp(req)}`, 5, 15 * 60 * 1000)) return tooManyRequests()
+
   const webhookUrl = process.env.N8N_WEBHOOK_URL
 
   if (!webhookUrl) {
