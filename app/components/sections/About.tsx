@@ -4,9 +4,9 @@ export default function About() {
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
           {/* Left column — avatar */}
-          <div className="flex justify-center md:justify-start">
+          <div className="flex justify-center md:justify-start overflow-hidden">
             <div
-              className="w-48 h-48 md:w-64 md:h-64 rounded-2xl flex items-center justify-center font-bricolage font-bold text-5xl md:text-6xl"
+              className="w-48 h-48 md:w-64 md:h-64 rounded-2xl flex items-center justify-center font-bricolage font-bold text-5xl md:text-6xl flex-shrink-0"
               style={{
                 background: '#12141A',
                 border: '1px solid rgba(91,110,245,0.4)',
@@ -27,7 +27,7 @@ export default function About() {
                 color: '#5B6EF5',
               }}
             >
-              OVER RUNVEX
+              Over Runvex
             </div>
             <h2
               className="font-bricolage font-extrabold text-2xl md:text-4xl text-white mb-6"
