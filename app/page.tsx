@@ -8,6 +8,7 @@ import WhyRunvex from './components/sections/WhyRunvex'
 import HowItWorks from './components/sections/HowItWorks'
 import Integrations from './components/sections/Integrations'
 import DemoCards from './components/sections/DemoCards'
+import DemoVideo from './components/sections/DemoVideo'
 import ProductShowcase from './components/sections/ProductShowcase'
 import Testimonials from './components/sections/Testimonials'
 import ROICalculator from './components/sections/ROICalculator'
@@ -30,6 +31,7 @@ export default function Home() {
         <HowItWorks />
         <Integrations />
         <DemoCards />
+        <DemoVideo />
         <ProductShowcase />
         <Testimonials />
         <ROICalculator />
