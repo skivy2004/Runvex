@@ -4,6 +4,7 @@ import LeadTable from './components/LeadTable'
 import LeadSourceCard from './components/LeadSourceCard'
 import ActivityFeed from './components/ActivityFeed'
 import LeadChart from './components/LeadChart'
+import OnboardingWizard from './components/OnboardingWizard'
 
 export const revalidate = 0
 
@@ -131,6 +132,9 @@ export default async function DashboardPage() {
           Formulier bekijken
         </a>
       </div>
+
+      {/* Onboarding wizard — toon alleen als er nog geen leads zijn */}
+      {leads.length === 0 && <OnboardingWizard />}
 
       {/* Stats */}
       <StatsBar leads={leads} />
