@@ -10,7 +10,15 @@ function getSupabase() {
   )
 }
 
+function isAuthorized(req: NextRequest): boolean {
+  const secret = req.headers.get('x-report-secret')
+  return !!secret && secret === process.env.REPORT_SECRET
+}
+
 export async function GET(req: NextRequest) {
+  if (!isAuthorized(req)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   const key = req.nextUrl.searchParams.get('key')
   const supabase = getSupabase()
   const query = supabase.from('settings').select('key, value')
@@ -21,6 +29,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  if (!isAuthorized(req)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   const { key, value } = await req.json()
   if (!key) return NextResponse.json({ error: 'key required' }, { status: 400 })
   const supabase = getSupabase()
