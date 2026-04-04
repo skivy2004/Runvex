@@ -36,7 +36,7 @@ export default function LeadChart({ data }: { data: ChartPoint[] }) {
 
   const W = 1000
   const H = 220
-  const pad = { l: 40, r: 8, t: 20, b: 36 }
+  const pad = { l: 40, r: 24, t: 20, b: 36 }
   const pw = W - pad.l - pad.r
 
   const maxVal = Math.max(...data.map(p => p.count), 1)
@@ -47,7 +47,7 @@ export default function LeadChart({ data }: { data: ChartPoint[] }) {
   const countArea = buildArea(data, 'count', W, H, pad)
 
   const xs = data.map((_, i) => pad.l + (i / Math.max(data.length - 1, 1)) * pw)
-  const labelIndices = data.map((_, i) => i).filter(i => i % 7 === 0 || i === data.length - 1)
+  const labelIndices = data.map((_, i) => i).filter(i => i % 7 === 0)
 
   return (
     <div className="relative w-full" style={{ userSelect: 'none' }}>
@@ -67,9 +67,9 @@ export default function LeadChart({ data }: { data: ChartPoint[] }) {
       <div className="relative" style={{ paddingBottom: 16 }}>
         <svg
           viewBox={`0 0 ${W} ${H}`}
-          preserveAspectRatio="none"
+          preserveAspectRatio="xMidYMid meet"
           className="w-full block"
-          style={{ height: 200 }}
+          style={{ height: 'auto', maxHeight: 200 }}
           onMouseMove={(e) => {
             const rect = e.currentTarget.getBoundingClientRect()
             const relX = ((e.clientX - rect.left) / rect.width) * W
