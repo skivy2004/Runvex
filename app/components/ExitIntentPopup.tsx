@@ -12,6 +12,7 @@ export default function ExitIntentPopup() {
   useEffect(() => {
     if (typeof window === 'undefined') return
     if (sessionStorage.getItem('exit-popup-dismissed')) return
+    if (localStorage.getItem('exit-popup-disabled')) return
 
     const handleMouseLeave = (e: MouseEvent) => {
       if (e.clientY <= 0 && !dismissed) {
@@ -89,7 +90,22 @@ export default function ExitIntentPopup() {
                 Stuur mij de checklist →
               </button>
             </form>
-            <p className="text-center text-xs mt-3" style={{ color: 'var(--text-3)' }}>Geen spam. Uitschrijven kan altijd.</p>
+            <div className="flex items-center justify-between mt-3">
+              <p className="text-xs" style={{ color: 'var(--text-3)' }}>Geen spam. Uitschrijven kan altijd.</p>
+              <button
+                type="button"
+                onClick={() => {
+                  localStorage.setItem('exit-popup-disabled', '1')
+                  dismiss()
+                }}
+                className="text-xs underline underline-offset-2 transition-colors"
+                style={{ color: 'var(--text-3)' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#8A8FA8')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-3)')}
+              >
+                Niet meer tonen
+              </button>
+            </div>
           </>
         )}
       </div>
