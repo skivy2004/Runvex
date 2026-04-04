@@ -4,6 +4,7 @@ import './globals.css'
 import CookieBanner from './components/CookieBanner'
 import CrispChat from './components/CrispChat'
 import ExitIntentPopup from './components/ExitIntentPopup'
+import ChatWidget from './components/ChatWidget'
 
 const bricolage = Bricolage_Grotesque({
   subsets: ['latin'],
@@ -52,6 +53,7 @@ export default function RootLayout({
         <CookieBanner />
         <CrispChat />
         <ExitIntentPopup />
+        <ChatWidget />
       </body>
     </html>
   )
