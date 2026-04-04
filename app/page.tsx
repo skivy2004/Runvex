@@ -12,7 +12,6 @@ import DemoVideo from './components/sections/DemoVideo'
 import ProductShowcase from './components/sections/ProductShowcase'
 import Testimonials from './components/sections/Testimonials'
 import ROICalculator from './components/sections/ROICalculator'
-import Pricing from './components/sections/Pricing'
 import FAQ from './components/sections/FAQ'
 import About from './components/sections/About'
 import BookingSection from './components/sections/BookingSection'
@@ -35,7 +34,6 @@ export default function Home() {
         <ProductShowcase />
         <Testimonials />
         <ROICalculator />
-        <Pricing />
         <FAQ />
         <About />
         <BookingSection />
