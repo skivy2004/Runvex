@@ -1,0 +1,147 @@
+{
+  "name": "Runvex Weekrapport",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Elke maandag 08:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://runvex.app/api/weekly-report",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-report-secret",
+              "value": "931c7dca2501d1a6b025ccab05f55d71bd7f54721e7ff563"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "http-request",
+      "name": "Stuur weekrapport",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "success-check",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-success",
+      "name": "Gelukt?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "message": "=✅ Weekrapport verstuurd — {{ $('Stuur weekrapport').item.json.totaal }} leads, {{ $('Stuur weekrapport').item.json.hoog }} hoge prioriteit",
+        "additionalFields": {}
+      },
+      "id": "success-log",
+      "name": "Succes log",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [960, 220]
+    },
+    {
+      "parameters": {
+        "message": "=❌ Weekrapport mislukt: {{ $('Stuur weekrapport').item.json.error }}",
+        "additionalFields": {}
+      },
+      "id": "error-log",
+      "name": "Fout log",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [960, 400]
+    }
+  ],
+  "connections": {
+    "Elke maandag 08:00": {
+      "main": [
+        [
+          {
+            "node": "Stuur weekrapport",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stuur weekrapport": {
+      "main": [
+        [
+          {
+            "node": "Gelukt?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gelukt?": {
+      "main": [
+        [
+          {
+            "node": "Succes log",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fout log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}
