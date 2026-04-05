@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 
 export default function HunterClient() {
   const [apiKey, setApiKey]   = useState('')
+  const [isSet, setIsSet]     = useState(false)
   const [saved, setSaved]     = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -12,8 +13,8 @@ export default function HunterClient() {
       try {
         const r = await fetch('/api/hunter-settings')
         const d = await r.json()
-        const entry = Array.isArray(d) ? d.find((s: { key: string; value: string }) => s.key === 'hunter_api_key') : null
-        if (entry) setApiKey(entry.value)
+        const entry = Array.isArray(d) ? d.find((s: { key: string }) => s.key === 'hunter_api_key') : null
+        if (entry?.is_set) setIsSet(true)
       } catch {}
       setLoading(false)
     }
@@ -26,6 +27,8 @@ export default function HunterClient() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ value: apiKey }),
     })
+    if (apiKey) setIsSet(true)
+    setApiKey('')
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }
@@ -49,16 +52,16 @@ export default function HunterClient() {
 
       {/* Status banner */}
       <div className="flex items-center gap-3 rounded-xl px-4 py-3 mb-5" style={{
-        background: apiKey ? 'rgba(62,207,142,0.08)' : 'rgba(236,178,46,0.08)',
-        border: `1px solid ${apiKey ? 'rgba(62,207,142,0.2)' : 'rgba(236,178,46,0.2)'}`,
+        background: isSet ? 'rgba(62,207,142,0.08)' : 'rgba(236,178,46,0.08)',
+        border: `1px solid ${isSet ? 'rgba(62,207,142,0.2)' : 'rgba(236,178,46,0.2)'}`,
       }}>
-        <span style={{ fontSize: 18 }}>{apiKey ? '✓' : '⚠'}</span>
+        <span style={{ fontSize: 18 }}>{isSet ? '✓' : '⚠'}</span>
         <div>
-          <div className="text-sm font-semibold" style={{ color: apiKey ? '#3ECF8E' : '#ECB22E' }}>
-            {apiKey ? 'Hunter.io integratie actief' : 'Nog niet geconfigureerd'}
+          <div className="text-sm font-semibold" style={{ color: isSet ? '#3ECF8E' : '#ECB22E' }}>
+            {isSet ? 'Hunter.io integratie actief' : 'Nog niet geconfigureerd'}
           </div>
           <div className="text-xs mt-0.5" style={{ color: '#5A5E82' }}>
-            {apiKey ? 'Klik op "Verrijk lead" in een lead-kaart om bedrijfsdata op te halen' : 'Voer je Hunter.io API key in om te starten'}
+            {isSet ? 'Klik op "Verrijk lead" in een lead-kaart om bedrijfsdata op te halen' : 'Voer je Hunter.io API key in om te starten'}
           </div>
         </div>
       </div>
