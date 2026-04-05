@@ -36,7 +36,7 @@ export default function Footer() {
                 alt="Runvex"
                 width={32}
                 height={32}
-                className="w-8 h-8 rounded-lg"
+                className="w-8 h-8"
                 style={{ objectFit: 'contain' }}
               />
               <span

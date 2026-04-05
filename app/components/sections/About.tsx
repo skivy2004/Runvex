@@ -3,18 +3,14 @@ export default function About() {
     <section id="over" className="py-14 md:py-20" style={{ background: '#0A0B0F' }}>
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
-          {/* Left column — avatar */}
-          <div className="flex justify-center md:justify-start overflow-hidden">
-            <div
-              className="w-48 h-48 md:w-64 md:h-64 rounded-2xl flex items-center justify-center font-bricolage font-bold text-5xl md:text-6xl flex-shrink-0"
-              style={{
-                background: '#12141A',
-                border: '1px solid rgba(91,110,245,0.4)',
-                color: '#5B6EF5',
-              }}
-            >
-              JC
-            </div>
+          {/* Left column — photo */}
+          <div className="flex justify-center md:justify-start">
+            <img
+              src="/jeremy.jpg"
+              alt="Jeremy — oprichter Runvex"
+              className="w-64 h-80 md:w-80 md:h-96 object-cover rounded-2xl flex-shrink-0"
+              style={{ border: '1px solid rgba(91,110,245,0.2)' }}
+            />
           </div>
 
           {/* Right column — copy */}
