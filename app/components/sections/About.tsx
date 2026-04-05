@@ -2,7 +2,7 @@ export default function About() {
   return (
     <section id="over" className="py-14 md:py-20" style={{ background: '#0A0B0F' }}>
       <div className="max-w-7xl mx-auto px-6">
-        <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
+        <div className="grid md:grid-cols-[auto_1fr] gap-8 md:gap-10 items-center">
           {/* Left column — photo */}
           <div className="flex justify-center md:justify-start">
             <img

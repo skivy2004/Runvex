@@ -4,7 +4,7 @@ Runvex Control Dashboard — local web server
 Run:  python3 tools/todo/server.py
 Open: http://localhost:7001
 """
-import json, os, uuid, datetime, re, threading, subprocess
+import json, os, uuid, datetime, re, threading, subprocess, base64, tempfile
 from http.server import HTTPServer, BaseHTTPRequestHandler
 try:
     from urllib.request import urlopen, Request
@@ -180,7 +180,25 @@ def build_prompt(agent_type, instruction):
             hist_lines.append(f'{role}: {msg["content"]}')
         sections.append('# GESPREKSGESCHIEDENIS\n' + '\n\n'.join(hist_lines))
 
-    # 6. Memory update instruction
+    # 6. Task management API
+    tasks = load_tasks()
+    open_tasks = [t for t in tasks if t['status'] in ('pending', 'in_progress')]
+    task_list = '\n'.join(
+        f"- id:{t['id']}  [{t['status']}]  P{t['priority']}  {t['title']}"
+        for t in open_tasks[:20]
+    ) or '(geen open taken)'
+    sections.append(
+        '# TAKENBEHEER\n'
+        f'Openstaande taken in het systeem:\n{task_list}\n\n'
+        'Je kunt taken beheren via curl naar http://localhost:7001:\n'
+        '  Starten:   curl -s -X PUT http://localhost:7001/api/tasks/TASK_ID -H \'Content-Type: application/json\' -d \'{"status":"in_progress"}\'\n'
+        '  Afronden:  curl -s -X PUT http://localhost:7001/api/tasks/TASK_ID -H \'Content-Type: application/json\' -d \'{"status":"complete","work_log":"wat je gedaan hebt"}\'\n'
+        '  Mislukt:   curl -s -X PUT http://localhost:7001/api/tasks/TASK_ID -H \'Content-Type: application/json\' -d \'{"status":"failed","work_log":"reden"}\'\n\n'
+        'Als de opdracht een specifieke taak-id vermeldt: markeer die taak als in_progress zodra je begint '
+        'en als complete (of failed) zodra je klaar bent.'
+    )
+
+    # 7. Memory update instruction
     sections.append(
         '# MEMORY INSTRUCTIE\n'
         'Als je iets wilt onthouden voor toekomstige gesprekken, voeg dan aan het EINDE van je antwoord toe:\n'
@@ -188,7 +206,7 @@ def build_prompt(agent_type, instruction):
         '{wat je wilt onthouden — kort en feitelijk}'
     )
 
-    # 7. Current task
+    # 8. Current task
     sections.append(f'# HUIDIGE OPDRACHT\n{instruction}')
 
     return '\n\n---\n\n'.join(sections)
@@ -221,33 +239,203 @@ def parse_output(agent_type, raw_output, instruction):
     return clean, dispatches
 
 
+# ── Live streaming helpers ────────────────────────────────────────────────────
+
+TOOL_ICONS = {
+    'Read': ('📄', '#5B6EF5'), 'Bash': ('⚡', '#ECB22E'), 'Edit': ('✏️', '#3ECF8E'),
+    'Write': ('📝', '#3ECF8E'), 'Grep': ('🔍', '#9B6EF5'), 'Glob': ('📁', '#8A8FA8'),
+    'WebSearch': ('🌐', '#5B6EF5'), 'WebFetch': ('🌐', '#5B6EF5'),
+    'Agent': ('🤖', '#E8507A'), 'Task': ('📋', '#ECB22E'),
+}
+
+def _format_tool_event(name, inp):
+    icon, color = TOOL_ICONS.get(name, ('🔧', '#8A8FA8'))
+    if name == 'Read':
+        path = inp.get('file_path', '')
+        label = os.path.relpath(path, PROJECT_ROOT) if (path and path.startswith(PROJECT_ROOT)) else path
+        return {'icon': icon, 'color': color, 'tool': name, 'label': label}
+    elif name == 'Bash':
+        cmd = inp.get('command', '')
+        # Truncate long pipes
+        label = cmd[:120] + ('…' if len(cmd) > 120 else '')
+        return {'icon': icon, 'color': color, 'tool': name, 'label': label}
+    elif name in ('Edit', 'Write'):
+        path = inp.get('file_path', '')
+        label = os.path.relpath(path, PROJECT_ROOT) if (path and path.startswith(PROJECT_ROOT)) else path
+        return {'icon': icon, 'color': color, 'tool': name, 'label': label}
+    elif name == 'Grep':
+        pattern = inp.get('pattern', '')
+        path = inp.get('path', '') or inp.get('glob', '')
+        label = f"'{pattern}'" + (f'  in {path}' if path else '')
+        return {'icon': icon, 'color': color, 'tool': name, 'label': label}
+    elif name == 'Glob':
+        return {'icon': icon, 'color': color, 'tool': name, 'label': inp.get('pattern', '')}
+    elif name in ('WebSearch', 'WebFetch'):
+        label = inp.get('query', inp.get('url', ''))[:100]
+        return {'icon': icon, 'color': color, 'tool': name, 'label': label}
+    else:
+        first_val = next((str(v) for v in inp.values() if v), '') if inp else ''
+        return {'icon': icon, 'color': color, 'tool': name, 'label': first_val[:100]}
+
+def _process_stream_line(line, job_id):
+    try:
+        event = json.loads(line)
+    except json.JSONDecodeError:
+        return
+    etype = event.get('type')
+    if etype == 'assistant':
+        for block in event.get('message', {}).get('content', []):
+            if block.get('type') == 'tool_use':
+                entry = _format_tool_event(block.get('name', ''), block.get('input', {}))
+                AGENT_JOBS[job_id]['live_log'].append(entry)
+            elif block.get('type') == 'thinking':
+                t = block.get('thinking', '').strip()
+                if t:
+                    AGENT_JOBS[job_id]['live_log'].append({
+                        'icon': '💭', 'color': '#8A8FA8', 'tool': 'thinking',
+                        'label': t[:150] + ('…' if len(t) > 150 else ''),
+                    })
+
+def _extract_final_text(raw_lines):
+    # Prefer the top-level result event
+    for line in reversed(raw_lines):
+        try:
+            ev = json.loads(line)
+            if ev.get('type') == 'result' and ev.get('subtype') == 'success':
+                return ev.get('result', '')
+        except Exception:
+            pass
+    # Fallback: concatenate all assistant text blocks
+    texts = []
+    for line in raw_lines:
+        try:
+            ev = json.loads(line)
+            if ev.get('type') == 'assistant':
+                for block in ev.get('message', {}).get('content', []):
+                    if block.get('type') == 'text':
+                        texts.append(block['text'])
+        except Exception:
+            pass
+    return ''.join(texts)
+
+
+# ── Model routing ────────────────────────────────────────────────────────────
+
+MODEL_MAP = {
+    'haiku':  'claude-haiku-4-5-20251001',
+    'sonnet': 'claude-sonnet-4-6',
+    'opus':   'claude-opus-4-6',
+}
+MODEL_COLORS = {
+    'haiku':  '#3ECF8E',   # green  — goedkoop
+    'sonnet': '#5B6EF5',   # blauw  — standaard
+    'opus':   '#ECB22E',   # amber  — krachtig
+}
+
+def select_model(instruction, agent_type):
+    """Roep Haiku aan om te beslissen welk model de hoofdtaak het beste uitvoert."""
+    routing_prompt = (
+        "Je bent een AI model router. Kies het meest geschikte Claude model voor deze taak.\n\n"
+        f"Agent: {agent_type}\n"
+        f"Taak: {instruction[:600]}\n\n"
+        "Opties:\n"
+        "- haiku:  eenvoudige taken — tekst schrijven, uitleg geven, copy, korte lookups, simpele vragen\n"
+        "- sonnet: standaard codeer- en bouwtaken — features, bugfixes, componenten, API routes, refactors\n"
+        "- opus:   complexe taken — grote architectuurbeslissingen, uitgebreide security-audits, "
+        "kritieke multi-file refactors, alles waarbij fouten grote gevolgen hebben\n\n"
+        'Antwoord ALLEEN met geldig JSON op één regel: {"model":"haiku|sonnet|opus","reason":"één zin in het Nederlands"}'
+    )
+    try:
+        res = subprocess.run(
+            ['claude', '-p', routing_prompt, '--model', MODEL_MAP['haiku']],
+            capture_output=True, text=True, timeout=20, cwd=PROJECT_ROOT,
+        )
+        text = res.stdout.strip()
+        m = re.search(r'\{[^{}]+\}', text)
+        if m:
+            data = json.loads(m.group())
+            key = data.get('model', 'sonnet')
+            if key not in MODEL_MAP:
+                key = 'sonnet'
+            return key, data.get('reason', '')
+    except Exception:
+        pass
+    return 'sonnet', 'Fallback naar standaard model'
+
+
 # ── Agent runner ──────────────────────────────────────────────────────────────
 
-def run_agent_bg(job_id, agent_type, instruction):
-    AGENT_JOBS[job_id]['status'] = 'running'
+def run_agent_bg(job_id, agent_type, instruction, uploaded_files=None):
+    AGENT_JOBS[job_id]['status']   = 'running'
+    AGENT_JOBS[job_id]['live_log'] = []
     LATEST_JOB_BY_AGENT[agent_type] = job_id
 
-    # Build conversation entry
+    # Write uploaded files to temp dir and append paths to instruction
+    temp_paths = []
+    if uploaded_files:
+        for f in uploaded_files:
+            try:
+                name     = f.get('name', 'upload')
+                data_url = f.get('data', '')
+                if ',' in data_url:
+                    _, b64 = data_url.split(',', 1)
+                else:
+                    b64 = data_url
+                raw  = base64.b64decode(b64)
+                ext  = os.path.splitext(name)[1] or ''
+                tmp  = tempfile.NamedTemporaryFile(delete=False, suffix=ext, prefix=f'runvex-{job_id}-')
+                tmp.write(raw)
+                tmp.close()
+                temp_paths.append((name, tmp.name))
+            except Exception as e:
+                pass  # skip bad file silently
+        if temp_paths:
+            note = '\n\nBijgevoegde bestanden (gebruik je Read tool om ze te lezen):\n'
+            note += '\n'.join(f'- {orig} → {path}' for orig, path in temp_paths)
+            instruction = instruction + note
+
     history = get_conversation(agent_type)
     history.append({'role': 'user', 'content': instruction, 'ts': now_iso()})
-
     full_prompt = build_prompt(agent_type, instruction)
 
+    # ── Model routing ──
+    model_key, model_reason = select_model(instruction, agent_type)
+    model_id = MODEL_MAP[model_key]
+    AGENT_JOBS[job_id]['model']        = model_key
+    AGENT_JOBS[job_id]['model_reason'] = model_reason
+    AGENT_JOBS[job_id]['live_log'].append({
+        'icon': '🧩', 'color': MODEL_COLORS[model_key], 'tool': model_key,
+        'label': model_reason,
+    })
+    log_event(f"MODEL    [{agent_type}] → {model_key} — {model_reason[:60]}")
+
     try:
-        result = subprocess.run(
-            ['claude', '-p', full_prompt],
-            capture_output=True, text=True, timeout=300,
-            cwd=PROJECT_ROOT,
+        proc = subprocess.Popen(
+            ['claude', '-p', full_prompt, '--output-format', 'stream-json', '--verbose',
+             '--model', model_id],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            text=True, bufsize=1, cwd=PROJECT_ROOT,
         )
-        raw = result.stdout.strip()
+
+        raw_lines = []
+        for line in proc.stdout:
+            line = line.rstrip('\n')
+            if not line:
+                continue
+            raw_lines.append(line)
+            _process_stream_line(line, job_id)
+
+        proc.wait(timeout=300)
+        stderr_out = proc.stderr.read().strip()
+
+        raw = _extract_final_text(raw_lines)
         clean, dispatches = parse_output(agent_type, raw, instruction)
 
         AGENT_JOBS[job_id]['output']     = clean
-        AGENT_JOBS[job_id]['error']      = result.stderr.strip()
+        AGENT_JOBS[job_id]['error']      = stderr_out
         AGENT_JOBS[job_id]['dispatches'] = dispatches
-        AGENT_JOBS[job_id]['status']     = 'done' if result.returncode == 0 else 'failed'
+        AGENT_JOBS[job_id]['status']     = 'done' if proc.returncode == 0 else 'failed'
 
-        # Save to conversation
         history.append({'role': 'assistant', 'content': clean, 'ts': now_iso()})
         save_conversation(agent_type, history)
 
@@ -260,7 +448,8 @@ def run_agent_bg(job_id, agent_type, instruction):
                 AGENT_JOBS[sub_id] = {
                     'id': sub_id, 'agent': sub_agent, 'prompt': sub_instr,
                     'status': 'pending', 'output': '', 'error': '',
-                    'dispatches': [], 'started': now_iso(), 'finished': None,
+                    'live_log': [], 'dispatches': [],
+                    'started': now_iso(), 'finished': None,
                     'dispatched_by': 'orchestrator',
                 }
                 t = threading.Thread(target=run_agent_bg, args=(sub_id, sub_agent, sub_instr), daemon=True)
@@ -268,6 +457,7 @@ def run_agent_bg(job_id, agent_type, instruction):
                 log_event(f"DISPATCH [{sub_agent}] via orchestrator — {sub_instr[:50]}")
 
     except subprocess.TimeoutExpired:
+        proc.kill()
         AGENT_JOBS[job_id]['status'] = 'failed'
         AGENT_JOBS[job_id]['error']  = 'Timeout na 5 minuten'
     except FileNotFoundError:
@@ -276,6 +466,11 @@ def run_agent_bg(job_id, agent_type, instruction):
     except Exception as e:
         AGENT_JOBS[job_id]['status'] = 'failed'
         AGENT_JOBS[job_id]['error']  = str(e)
+
+    # Cleanup temp files
+    for _, path in temp_paths:
+        try: os.unlink(path)
+        except: pass
 
     AGENT_JOBS[job_id]['finished'] = now_iso()
     log_event(f"AGENT    [{agent_type}] {AGENT_JOBS[job_id]['status']} — {instruction[:50]}")
@@ -360,6 +555,19 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
 
+        elif p == '/logo.png':
+            logo_path = os.path.join(BASE, 'logo.png')
+            if os.path.exists(logo_path):
+                with open(logo_path, 'rb') as f: body = f.read()
+                self.send_response(200)
+                self.send_header('Content-Type', 'image/png')
+                self.send_header('Content-Length', str(len(body)))
+                self.send_header('Cache-Control', 'public, max-age=86400')
+                self.end_headers()
+                self.wfile.write(body)
+            else:
+                self.send_error(404)
+
         elif p == '/api/tasks':
             self.send_json(load_tasks())
 
@@ -407,6 +615,23 @@ class Handler(BaseHTTPRequestHandler):
             agent_type = p.split('/')[-1]
             self.send_json(get_conversation(agent_type))
 
+        # Agent: all current states (for cross-tab sync)
+        elif p == '/api/agent/states':
+            result = {}
+            for a in ALL_AGENTS + ['orchestrator']:
+                job_id = LATEST_JOB_BY_AGENT.get(a)
+                job = AGENT_JOBS.get(job_id) if job_id else None
+                result[a] = {
+                    'status':       job['status']                if job else 'idle',
+                    'job_id':       job_id,
+                    'live_log':     job.get('live_log', [])      if job else [],
+                    'prompt':       job.get('prompt', '')        if job else '',
+                    'started':      job.get('started', '')       if job else '',
+                    'model':        job.get('model', '')         if job else '',
+                    'model_reason': job.get('model_reason', '')  if job else '',
+                }
+            self.send_json(result)
+
         # Agent: latest job by type
         elif p.startswith('/api/agent/latest/'):
             agent_type = p.split('/')[-1]
@@ -451,15 +676,24 @@ class Handler(BaseHTTPRequestHandler):
             data        = json.loads(self.read_body())
             agent_type  = data.get('agent', 'fullstack')
             instruction = data.get('instruction', '').strip()
+            files       = data.get('files', [])
             if not instruction:
                 self.send_json({'error': 'instruction required'}, 400); return
+
+            # Reject if this agent is already running (prevents double-runs from multiple tabs)
+            existing_id  = LATEST_JOB_BY_AGENT.get(agent_type)
+            existing_job = AGENT_JOBS.get(existing_id) if existing_id else None
+            if existing_job and existing_job.get('status') in ('pending', 'running'):
+                self.send_json({'already_running': True, 'job_id': existing_id}, 409); return
+
             job_id = str(uuid.uuid4())[:8]
             AGENT_JOBS[job_id] = {
                 'id': job_id, 'agent': agent_type, 'prompt': instruction,
                 'status': 'pending', 'output': '', 'error': '',
-                'dispatches': [], 'started': now_iso(), 'finished': None,
+                'live_log': [], 'dispatches': [],
+                'started': now_iso(), 'finished': None,
             }
-            t = threading.Thread(target=run_agent_bg, args=(job_id, agent_type, instruction), daemon=True)
+            t = threading.Thread(target=run_agent_bg, args=(job_id, agent_type, instruction, files), daemon=True)
             t.start()
             log_event(f"AGENT    [{agent_type}] started — {instruction[:50]}")
             self.send_json({'job_id': job_id}, 201)
@@ -488,11 +722,14 @@ class Handler(BaseHTTPRequestHandler):
         tasks   = load_tasks()
         for task in tasks:
             if task['id'] != task_id: continue
-            if 'title'       in data: task['title']       = data['title'].strip()
-            if 'description' in data: task['description'] = data['description'].strip()
-            if 'priority'    in data: task['priority']    = max(1, min(5, int(data['priority'])))
-            if 'status'      in data: task['status']      = data['status']
-            if 'work_log'    in data: task['work_log']    = data['work_log']
+            if 'title'          in data: task['title']          = data['title'].strip()
+            if 'description'    in data: task['description']    = data['description'].strip()
+            if 'priority'       in data: task['priority']       = max(1, min(5, int(data['priority'])))
+            if 'status'         in data: task['status']         = data['status']
+            if 'work_log'       in data: task['work_log']       = data['work_log']
+            if 'human_only'     in data: task['human_only']     = bool(data['human_only'])
+            if 'agent_runnable' in data: task['agent_runnable'] = bool(data['agent_runnable'])
+            if 'suggested_agent'in data: task['suggested_agent']= data['suggested_agent']
             task['updated'] = now_iso()
             if task['status'] == 'complete' and not task['completed']:
                 task['completed'] = now_iso()

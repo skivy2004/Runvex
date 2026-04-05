@@ -50,10 +50,11 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 }
 .logo-mark {
   width: 32px; height: 32px;
-  background: linear-gradient(135deg, #5B6EF5, #3B4FD5);
   border-radius: 8px;
+  flex-shrink: 0;
+  overflow: hidden;
   display: flex; align-items: center; justify-content: center;
-  font-weight: 800; font-size: 14px; color: white; flex-shrink: 0;
+  background: transparent;
 }
 .logo-text { font-weight: 700; font-size: 15px; }
 .logo-sub  { font-size: 10px; color: var(--muted2); font-weight: 500; letter-spacing: .05em; text-transform: uppercase; }
@@ -137,7 +138,7 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 .health-err  { font-size: 11px; color: var(--red); }
 
 /* ── Tasks ── */
-.tasks-wrap { display: grid; grid-template-columns: 1fr 300px; gap: 0; flex: 1; overflow: hidden; }
+.tasks-wrap { display: grid; grid-template-columns: 1fr 360px; gap: 0; flex: 1; overflow: hidden; }
 .tasks-panel { display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid var(--border); }
 .tasks-toolbar { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: center; }
 .filter-tabs { display: flex; gap: 4px; }
@@ -145,10 +146,15 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 .filter-tab.active { background: var(--border); color: var(--text); }
 .filter-tab:hover:not(.active) { color: var(--text); }
 .tasks-list { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
-.task-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; gap: 12px; align-items: flex-start; transition: border-color .15s; }
-.task-card:hover { border-color: var(--border2); }
+.task-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px 14px; display: flex; gap: 12px; align-items: flex-start;
+  transition: border-color .15s, background .15s; cursor: pointer;
+}
+.task-card:hover { border-color: var(--border2); background: var(--card2); }
+.task-card.selected { border-color: var(--accent); background: rgba(91,110,245,.06); }
 .task-card.status-complete { opacity: .45; }
-.task-card.status-in_progress { border-color: var(--accent); }
+.task-card.status-in_progress { border-color: rgba(91,110,245,.5); }
 .task-priority { flex-shrink: 0; width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
 .p1{background:rgba(232,80,122,.15);color:var(--p1)} .p2{background:rgba(236,178,46,.15);color:var(--p2)}
 .p3{background:rgba(91,110,245,.15);color:var(--p3)} .p4{background:rgba(62,207,142,.15);color:var(--p4)}
@@ -165,7 +171,14 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 .btn-icon { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; transition: all .15s; }
 .btn-icon:hover { border-color: var(--accent); color: var(--accent); background: rgba(91,110,245,.08); }
 .btn-icon.del:hover { border-color: var(--red); color: var(--red); background: rgba(232,80,122,.08); }
-.log-panel { display: flex; flex-direction: column; overflow: hidden; }
+
+/* ── Task meta badges ── */
+.human-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; background: rgba(236,178,46,.12); color: var(--amber); border: 1px solid rgba(236,178,46,.2); }
+.agent-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; background: rgba(91,110,245,.12); color: var(--accent); border: 1px solid rgba(91,110,245,.2); }
+
+/* ── Right side panel (log / detail) ── */
+.right-panel { display: flex; flex-direction: column; overflow: hidden; position: relative; }
+.log-panel { display: flex; flex-direction: column; height: 100%; }
 .log-header { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); display: flex; align-items: center; gap: 8px; }
 .log-body { flex: 1; overflow-y: auto; padding: 8px; font-family: 'SF Mono', monospace; font-size: 11px; line-height: 1.7; }
 .log-line { color: var(--muted); padding: 1px 4px; }
@@ -173,6 +186,91 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 .log-line.added .msg{color:var(--green)} .log-line.updated .msg{color:var(--accent)}
 .log-line.deleted .msg{color:var(--red)} .log-line.server .msg{color:var(--amber)}
 .log-line.worker .msg{color:var(--purple)} .log-line.agent .msg{color:var(--purple)}
+
+/* ── Task Detail Panel ── */
+.detail-panel {
+  display: none; flex-direction: column; height: 100%; overflow: hidden;
+}
+.detail-panel.open { display: flex; }
+.detail-header {
+  padding: 12px 14px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.detail-back-btn {
+  background: transparent; border: 1px solid var(--border); border-radius: 6px;
+  color: var(--muted); cursor: pointer; padding: 4px 10px; font-size: 11px;
+  transition: all .15s; flex-shrink: 0;
+}
+.detail-back-btn:hover { border-color: var(--accent); color: var(--accent); }
+.detail-header-title { flex: 1; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.detail-body { flex: 1; overflow-y: auto; padding: 16px 14px; display: flex; flex-direction: column; gap: 16px; }
+
+.detail-title { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.detail-badges { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+
+.detail-section-label {
+  font-size: 10px; font-weight: 600; color: var(--muted2);
+  text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px;
+}
+.detail-desc {
+  font-size: 12px; line-height: 1.7; color: var(--muted); white-space: pre-wrap;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 12px;
+}
+.detail-work-log {
+  font-size: 12px; line-height: 1.6; color: var(--accent);
+  background: rgba(91,110,245,.06); border: 1px solid rgba(91,110,245,.15);
+  border-radius: 8px; padding: 10px 12px;
+}
+
+/* human / agent blocks */
+.human-block {
+  border-radius: 10px; padding: 12px 14px;
+  background: rgba(236,178,46,.06); border: 1px solid rgba(236,178,46,.2);
+}
+.human-block-icon { font-size: 20px; margin-bottom: 6px; }
+.human-block-title { font-size: 12px; font-weight: 700; color: var(--amber); margin-bottom: 4px; }
+.human-block-text  { font-size: 11px; color: var(--muted); line-height: 1.6; }
+
+.agent-block {
+  border-radius: 10px; padding: 12px 14px;
+  background: rgba(91,110,245,.06); border: 1px solid rgba(91,110,245,.2);
+}
+.agent-block-icon { font-size: 20px; margin-bottom: 6px; }
+.agent-block-title { font-size: 12px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+.agent-block-text  { font-size: 11px; color: var(--muted); line-height: 1.6; margin-bottom: 10px; }
+.agent-select {
+  width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text); font-size: 12px; padding: 6px 10px; outline: none; margin-bottom: 8px;
+}
+.btn-run-agent {
+  width: 100%; padding: 9px; border-radius: 8px; border: none;
+  background: var(--accent); color: white; font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: background .15s;
+}
+.btn-run-agent:hover { background: var(--accent2); }
+
+.btn-uitleg {
+  width: 100%; padding: 10px; border-radius: 8px;
+  border: 1px dashed rgba(155,110,245,.35);
+  background: rgba(155,110,245,.06); color: var(--purple);
+  font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.btn-uitleg:hover { background: rgba(155,110,245,.12); border-color: rgba(155,110,245,.5); }
+
+.detail-actions { display: flex; gap: 6px; flex-wrap: wrap; padding-top: 4px; border-top: 1px solid var(--border); }
+.detail-action-btn {
+  flex: 1; min-width: 80px; padding: 8px 10px; border-radius: 7px;
+  font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--border);
+  background: transparent; color: var(--muted); transition: all .15s; text-align: center;
+}
+.detail-action-btn:hover { border-color: var(--border2); color: var(--text); background: var(--card2); }
+.detail-action-btn.primary { background: var(--accent); color: white; border-color: var(--accent); }
+.detail-action-btn.primary:hover { background: var(--accent2); border-color: var(--accent2); }
+.detail-action-btn.success { background: rgba(62,207,142,.12); color: var(--green); border-color: rgba(62,207,142,.25); }
+.detail-action-btn.danger  { color: var(--red); }
+.detail-action-btn.danger:hover  { border-color: var(--red); background: rgba(232,80,122,.08); }
 
 /* ── Agents parallel grid ── */
 .agents-parallel-grid {
@@ -195,15 +293,29 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 .agent-panel.failed  { border-color: rgba(232,80,122,.3); }
 
 .agent-panel-header {
-  padding: 12px 14px;
+  padding: 11px 14px;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   gap: 10px;
 }
-.agent-panel-icon { font-size: 18px; flex-shrink: 0; }
-.agent-panel-name { font-size: 13px; font-weight: 600; flex: 1; }
-.agent-panel-desc { font-size: 10px; color: var(--muted2); }
+.agent-panel-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 9px;
+  background: rgba(255,255,255,.04);
+}
+.agent-panel-name { font-size: 13px; font-weight: 700; flex: 1; letter-spacing: -.01em; }
+.agent-panel-desc { font-size: 11px; color: var(--muted2); margin-top: 1px; }
+
+/* Per-agent accent colors */
+.agent-panel[data-agent="frontend"]  { border-top: 2px solid #3ECF8E; }
+.agent-panel[data-agent="backend"]   { border-top: 2px solid #5B6EF5; }
+.agent-panel[data-agent="marketing"] { border-top: 2px solid #ECB22E; }
+.agent-panel[data-agent="review"]    { border-top: 2px solid #E8507A; }
+.agent-panel[data-agent="fullstack"] { border-top: 2px solid #9B6EF5; }
 .agent-status-chip {
   font-size: 10px;
   font-weight: 600;
@@ -220,24 +332,141 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 
 .agent-panel-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
 
-.agent-textarea {
-  width: 100%;
+/* ── Chat input wrapper ── */
+.chat-input-wrap {
+  position: relative;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  transition: border-color .15s, box-shadow .15s;
+}
+.chat-input-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(91,110,245,.15);
+}
+.chat-input-wrap textarea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  line-height: 1.55;
+  padding: 10px 8px 10px 14px;
+  resize: none;
+  overflow-y: hidden;
+  min-height: 42px;
+  max-height: 200px;
+}
+.chat-input-wrap textarea::placeholder { color: var(--muted2); }
+.chat-send-btn {
+  flex-shrink: 0;
+  margin: 6px 6px 6px 0;
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: white;
+  font-size: 13px;
+  transition: background .15s, opacity .15s;
+  align-self: flex-end;
+}
+.chat-send-btn:hover { background: var(--accent2); }
+.chat-send-btn:disabled { opacity: .35; cursor: default; }
+
+.attach-btn {
+  flex-shrink: 0;
+  margin: 6px 0 6px 8px;
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  background: transparent;
+  border: 1px solid var(--border2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted);
+  transition: all .15s;
+  align-self: flex-end;
+}
+.attach-btn:hover { background: var(--card2); color: var(--text); border-color: var(--accent); }
+.file-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.file-chips:empty { display: none; }
+.file-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 8px; border-radius: 6px; max-width: 200px;
+  font-size: 11px; font-weight: 500;
+  background: rgba(91,110,245,.1); color: var(--accent);
+  border: 1px solid rgba(91,110,245,.2);
+}
+.file-chip-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.file-chip-rm { cursor: pointer; opacity: .5; flex-shrink: 0; font-size: 10px; }
+.file-chip-rm:hover { opacity: 1; }
+
+.agent-panel-actions { display: flex; gap: 6px; align-items: center; justify-content: flex-end; }
+
+/* ── Live activity log ── */
+.live-log {
+  display: none;
+  flex-direction: column;
+  gap: 2px;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  color: var(--text);
-  font-size: 12px;
-  padding: 8px 12px;
-  outline: none;
-  font-family: inherit;
-  resize: none;
-  line-height: 1.5;
-  transition: border-color .15s;
+  border-radius: 10px;
+  padding: 8px 0;
+  max-height: 260px;
+  overflow-y: auto;
 }
-.agent-textarea:focus { border-color: var(--accent); }
-.agent-textarea::placeholder { color: var(--muted2); }
-
-.agent-panel-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.live-log.visible { display: flex; }
+.live-log-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 12px;
+  font-size: 12px;
+  font-family: 'SF Mono', 'Fira Mono', 'Menlo', monospace;
+  line-height: 1.5;
+  transition: background .1s;
+}
+.live-log-row:hover { background: rgba(255,255,255,.03); }
+.live-log-icon { flex-shrink: 0; font-size: 12px; }
+.live-log-badge {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: .04em;
+  opacity: .85;
+}
+.live-log-label {
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+.live-log-row.latest .live-log-label { color: var(--text); }
+.live-log-spinner {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px;
+  font-size: 11px;
+  color: var(--muted2);
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner-dot {
+  width: 12px; height: 12px;
+  border: 1.5px solid var(--border2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+  flex-shrink: 0;
+}
 
 .agent-output-area {
   background: var(--bg);
@@ -439,7 +668,9 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
   <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-logo">
-      <div class="logo-mark">R</div>
+      <div class="logo-mark">
+        <img src="/logo.png" alt="Runvex" width="32" height="32" style="object-fit:contain;width:32px;height:32px">
+      </div>
       <div>
         <div class="logo-text">Runvex</div>
         <div class="logo-sub">Control</div>
@@ -538,9 +769,20 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
           </div>
           <div class="tasks-list" id="taskList"></div>
         </div>
-        <div class="log-panel">
-          <div class="log-header"><span class="live-dot"></span>Activity log</div>
-          <div class="log-body" id="logBody"></div>
+        <div class="right-panel">
+          <!-- Log view (default) -->
+          <div class="log-panel" id="logPanel">
+            <div class="log-header"><span class="live-dot"></span>Activity log</div>
+            <div class="log-body" id="logBody"></div>
+          </div>
+          <!-- Task detail view -->
+          <div class="detail-panel" id="detailPanel">
+            <div class="detail-header">
+              <button class="detail-back-btn" onclick="closeTaskDetail()">← Terug</button>
+              <span class="detail-header-title">Taak details</span>
+            </div>
+            <div class="detail-body" id="detailBody"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -563,14 +805,28 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
           </div>
           <div style="padding:14px;display:flex;flex-direction:column;gap:10px">
             <div class="conv-history" id="conv-orchestrator"></div>
-            <textarea class="agent-textarea" id="input-orchestrator" rows="3"
-              placeholder="Bijv: Analyseer de site en geef de frontend agent een taak om de hero te verbeteren en de backend agent om de health check te versnellen"
-              onkeydown="if((event.metaKey||event.ctrlKey)&&event.key==='Enter'){runAgentPanel('orchestrator')}"></textarea>
-            <div style="display:flex;gap:6px;justify-content:flex-end;align-items:center">
-              <span style="font-size:11px;color:var(--muted2);margin-right:auto">⌘+Enter om te runnen · DISPATCH: blok activeert sub-agents automatisch</span>
-              <button class="btn btn-ghost btn-sm" onclick="clearConversation('orchestrator')">↺ Gesprek wissen</button>
+            <div class="live-log" id="live-orchestrator"></div>
+            <div class="file-chips" id="chips-orchestrator"></div>
+            <div class="chat-input-wrap">
+              <button class="attach-btn" onclick="document.getElementById('file-input-orchestrator').click()" title="Bestand bijvoegen">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+              </button>
+              <input type="file" id="file-input-orchestrator" multiple style="display:none" onchange="handleFileSelect('orchestrator', this.files)">
+              <textarea
+                id="input-orchestrator"
+                rows="1"
+                placeholder="Bijv: Analyseer de site en geef de frontend agent een taak om de hero te verbeteren en de backend agent om de health check te versnellen"
+                onkeydown="if((event.metaKey||event.ctrlKey)&&event.key==='Enter'){runAgentPanel('orchestrator')}"
+                oninput="autoResizeTextarea(this)"
+              ></textarea>
+              <button class="chat-send-btn" id="btn-orchestrator" onclick="runAgentPanel('orchestrator')" title="Run (⌘+Enter)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+              </button>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <span style="font-size:11px;color:var(--muted2);flex:1">⌘+Enter · DISPATCH-blok activeert sub-agents automatisch</span>
+              <button class="btn btn-ghost btn-sm" onclick="clearConversation('orchestrator')">↺ Wissen</button>
               <button class="btn btn-ghost btn-sm" onclick="showMemoryModal('orchestrator')">◎ Memory</button>
-              <button class="btn btn-primary btn-sm" id="btn-orchestrator" onclick="runAgentPanel('orchestrator')">▶ Run</button>
             </div>
             <div class="agent-output-area" id="out-orchestrator"></div>
             <div id="dispatch-log-orchestrator" style="display:none"></div>
@@ -670,8 +926,9 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 
 <script>
 // ── State ─────────────────────────────────────────────────────────────────────
-let tasks = [], filter = 'all', editId = null, selPriority = 3, logLines = [];
+let tasks = [], filter = 'all', editId = null, selPriority = 3, logLines = [], selectedTaskId = null;
 const statusOrder = { in_progress: 0, pending: 1, complete: 2, failed: 3 };
+const AGENT_LABELS = { frontend:'Frontend', backend:'Backend', marketing:'Marketing', fullstack:'Fullstack', review:'Review', orchestrator:'Orchestrator' };
 
 // ── Navigation ────────────────────────────────────────────────────────────────
 
@@ -680,6 +937,7 @@ function showView(id, btn) {
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   document.getElementById('view-' + id).classList.add('active');
   if (btn) btn.classList.add('active');
+  if (id === 'agents') syncAgentStates();
 
   const titles = { overview:'Overview', tasks:'Tasks', agents:'Agents', memory:'Memory', health:'Health' };
   document.getElementById('topbarTitle').textContent = titles[id] || id;
@@ -783,7 +1041,7 @@ function render() {
     return;
   }
   list.innerHTML = visible.map(t => `
-    <div class="task-card status-${t.status}">
+    <div class="task-card status-${t.status}${selectedTaskId===t.id?' selected':''}" onclick="openTaskDetail('${t.id}')">
       <div class="task-priority p${t.priority}">P${t.priority}</div>
       <div class="task-body">
         <div class="task-title">${esc(t.title)}</div>
@@ -791,14 +1049,10 @@ function render() {
         ${t.work_log ? `<div class="task-desc" style="color:var(--accent);margin-top:3px">↳ ${esc(t.work_log)}</div>` : ''}
         <div class="task-meta">
           <span class="status-chip chip-${t.status}">${t.status.replace('_',' ')}</span>
+          ${t.human_only ? `<span class="human-badge">👤 Jij</span>` : ''}
+          ${t.agent_runnable && !t.human_only ? `<span class="agent-badge">🤖 Agent</span>` : ''}
           <span class="task-date">${fmtDate(t.created)}</span>
         </div>
-      </div>
-      <div class="task-actions">
-        ${t.status==='pending' ? `<button class="btn-icon" title="Bezig" onclick="updateStatus('${t.id}','in_progress')">▶</button>` : ''}
-        ${t.status==='in_progress' ? `<button class="btn-icon" style="color:var(--green)" title="Klaar" onclick="updateStatus('${t.id}','complete')">✓</button>` : ''}
-        ${t.status!=='complete' ? `<button class="btn-icon" title="Bewerken" onclick="openEdit('${t.id}')">✎</button>` : ''}
-        <button class="btn-icon del" title="Verwijderen" onclick="deleteTask('${t.id}')">✕</button>
       </div>
     </div>`).join('');
 
@@ -859,6 +1113,187 @@ function openEdit(id) {
 function closeModal() { document.getElementById('overlay').classList.remove('open'); editId = null; }
 function closeIfBackdrop(e) { if (e.target === document.getElementById('overlay')) closeModal(); }
 
+// ── Task Detail Panel ─────────────────────────────────────────────────────────
+
+function openTaskDetail(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  selectedTaskId = id;
+
+  // Toggle panels
+  document.getElementById('logPanel').style.display    = 'none';
+  document.getElementById('detailPanel').classList.add('open');
+
+  // Re-render list to update selected highlight
+  render();
+
+  // Build detail HTML
+  const pClass = `p${t.priority}`;
+  const canAgent = t.agent_runnable && !t.human_only;
+  const isHuman  = t.human_only;
+  const sugAgent = t.suggested_agent || 'fullstack';
+
+  const agentOptions = ['orchestrator','frontend','backend','marketing','fullstack','review']
+    .map(a => `<option value="${a}"${a===sugAgent?' selected':''}>${AGENT_LABELS[a]||a}</option>`)
+    .join('');
+
+  document.getElementById('detailBody').innerHTML = `
+    <!-- Title + badges -->
+    <div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span class="task-priority ${pClass}" style="width:28px;height:28px;font-size:11px">P${t.priority}</span>
+        <span class="status-chip chip-${t.status}">${t.status.replace('_',' ')}</span>
+        ${isHuman  ? `<span class="human-badge">👤 Alleen jij</span>` : ''}
+        ${canAgent ? `<span class="agent-badge">🤖 Agent kan dit</span>` : ''}
+      </div>
+      <div class="detail-title">${esc(t.title)}</div>
+      <div style="font-size:11px;color:var(--muted2);margin-top:5px">Aangemaakt: ${fmtDate(t.created)}${t.completed?` · Klaar: ${fmtDate(t.completed)}`:''}</div>
+    </div>
+
+    <!-- Description -->
+    ${t.description ? `
+    <div>
+      <div class="detail-section-label">Beschrijving</div>
+      <div class="detail-desc">${esc(t.description)}</div>
+    </div>` : ''}
+
+    <!-- Work log -->
+    ${t.work_log ? `
+    <div>
+      <div class="detail-section-label">Resultaat</div>
+      <div class="detail-work-log">${esc(t.work_log)}</div>
+    </div>` : ''}
+
+    <!-- Human only block -->
+    ${isHuman ? `
+    <div class="human-block">
+      <div class="human-block-icon">👤</div>
+      <div class="human-block-title">Alleen jij kunt dit doen</div>
+      <div class="human-block-text">Dit vereist toegang tot externe accounts, echte credentials of handmatige stappen in een externe tool. Een agent heeft hier geen toegang toe.</div>
+    </div>` : ''}
+
+    <!-- Agent runnable block -->
+    ${canAgent ? `
+    <div class="agent-block">
+      <div class="agent-block-icon">🤖</div>
+      <div class="agent-block-title">Een agent kan dit uitvoeren</div>
+      <div class="agent-block-text">Kies een agent en klik op "Starten" — de agent opent in het Agents-tabblad met deze taak al ingevuld.</div>
+      <select class="agent-select" id="agentPickerFor_${id}">${agentOptions}</select>
+      <button class="btn-run-agent" onclick="runAgentForTask('${id}')">▶ Laat agent doen</button>
+    </div>` : ''}
+
+    <!-- Neither set — offer to toggle -->
+    ${!isHuman && !canAgent ? `
+    <div style="border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px">KAN EEN AGENT DIT DOEN?</div>
+      <div style="display:flex;gap:8px">
+        <button class="detail-action-btn" onclick="setTaskMeta('${id}','agent')" style="flex:1">🤖 Ja, agent kan dit</button>
+        <button class="detail-action-btn" onclick="setTaskMeta('${id}','human')" style="flex:1">👤 Nee, alleen ik</button>
+      </div>
+    </div>` : ''}
+
+    <!-- Uitleg knop -->
+    <button class="btn-uitleg" onclick="vraagUitleg('${id}')">💬 Vraag uitleg hoe ik dit doe</button>
+
+    <!-- Actions -->
+    <div class="detail-actions">
+      ${t.status==='pending'     ? `<button class="detail-action-btn primary" onclick="detailUpdateStatus('${id}','in_progress')">▶ Start</button>` : ''}
+      ${t.status==='in_progress' ? `<button class="detail-action-btn success" onclick="detailUpdateStatus('${id}','complete')">✓ Markeer klaar</button>` : ''}
+      ${t.status==='complete'    ? `<button class="detail-action-btn" onclick="detailUpdateStatus('${id}','pending')">↩ Heropenen</button>` : ''}
+      ${t.status!=='complete'    ? `<button class="detail-action-btn" onclick="closeDetailAndEdit('${id}')">✎ Bewerken</button>` : ''}
+      <button class="detail-action-btn danger" onclick="detailDelete('${id}')">✕ Verwijder</button>
+    </div>
+  `;
+}
+
+function closeTaskDetail() {
+  selectedTaskId = null;
+  document.getElementById('logPanel').style.display    = '';
+  document.getElementById('detailPanel').classList.remove('open');
+  render();
+}
+
+async function detailUpdateStatus(id, status) {
+  await fetch(`/api/tasks/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({status}) });
+  await loadTasks(); await loadLog();
+  openTaskDetail(id); // re-render detail
+}
+
+async function detailDelete(id) {
+  if (!confirm('Taak verwijderen?')) return;
+  await fetch(`/api/tasks/${id}`, { method:'DELETE' });
+  closeTaskDetail();
+  await loadTasks(); await loadLog();
+}
+
+function closeDetailAndEdit(id) {
+  closeTaskDetail();
+  openEdit(id);
+}
+
+async function setTaskMeta(id, type) {
+  const body = type === 'agent'
+    ? { agent_runnable: true, human_only: false }
+    : { human_only: true, agent_runnable: false };
+  await fetch(`/api/tasks/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  await loadTasks();
+  openTaskDetail(id);
+}
+
+function runAgentForTask(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  const picker = document.getElementById(`agentPickerFor_${id}`);
+  const agentType = picker ? picker.value : (t.suggested_agent || 'fullstack');
+  const instruction = `TAAK_ID: ${t.id}\n\nOpdracht: ${t.title}${t.description ? '\n\n' + t.description : ''}\n\nMarkeer taak ${t.id} als in_progress zodra je begint, en als complete zodra je klaar bent.`;
+
+  // Switch to agents view
+  const agentNavBtn = document.querySelector('.nav-item[onclick*="agents"]');
+  showView('agents', agentNavBtn);
+
+  // Find the right textarea and pre-fill it
+  setTimeout(() => {
+    const ta = document.getElementById(`input-${agentType}`);
+    if (ta) {
+      ta.value = instruction;
+      autoResizeTextarea(ta);
+      ta.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      ta.focus();
+    }
+  }, 100);
+}
+
+function vraagUitleg(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+
+  const instruction = `Leg me stap voor stap uit hoe ik de volgende taak moet uitvoeren. Geef concrete, praktische instructies die ik direct kan opvolgen. Als er commando's of code bij komen kijken, geef die dan letterlijk weer.
+
+Taak: ${t.title}
+
+${t.description ? `Details:\n${t.description}` : ''}
+
+Geef een duidelijk stappenplan.`.trim();
+
+  // Use orchestrator for explanations — it has the most context
+  const agentType = 'orchestrator';
+  const agentNavBtn = document.querySelector('.nav-item[onclick*="agents"]');
+  showView('agents', agentNavBtn);
+
+  setTimeout(() => {
+    const ta = document.getElementById(`input-${agentType}`);
+    if (ta) {
+      ta.value = instruction;
+      autoResizeTextarea(ta);
+      ta.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      ta.focus();
+      // Scroll orchestrator panel into view
+      const panel = ta.closest('.orchestrator-panel') || ta.closest('.agent-panel');
+      if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, 150);
+}
+
 function setPriority(p) {
   selPriority = p;
   document.querySelectorAll('.priority-opt').forEach(el => {
@@ -900,34 +1335,45 @@ const AGENTS = [
 const ALL_TYPES = ['orchestrator', ...AGENTS.map(a => a.type)];
 const agentState = {};
 ALL_TYPES.forEach(t => { agentState[t] = { jobId: null, pollTimer: null }; });
+const agentFiles = {}; // type -> [{name, data (dataURL), mime}]
 
 let memModalAgent = null;
 
 function buildAgentPanels() {
   const grid = document.getElementById('agentsGrid');
   grid.innerHTML = AGENTS.map(a => `
-    <div class="agent-panel ${a.fullwidth ? 'fullwidth' : ''}" id="panel-${a.type}">
+    <div class="agent-panel ${a.fullwidth ? 'fullwidth' : ''}" id="panel-${a.type}" data-agent="${a.type}">
       <div class="agent-panel-header">
         <span class="agent-panel-icon">${a.icon}</span>
         <div style="flex:1">
           <div class="agent-panel-name">${a.name}</div>
           <div class="agent-panel-desc">${a.desc}</div>
         </div>
-        <span class="agent-status-chip chip-idle" id="chip-${a.type}">idle</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="agent-status-chip chip-idle" id="chip-${a.type}">idle</span>
+          <button class="btn btn-ghost btn-sm" onclick="clearConversation('${a.type}')" title="Gesprek wissen" style="padding:2px 6px;font-size:13px">↺</button>
+          <button class="btn btn-ghost btn-sm" onclick="showMemoryModal('${a.type}')" title="Privé memory" style="padding:2px 6px;font-size:13px">◎</button>
+        </div>
       </div>
       <div class="agent-panel-body">
         <div class="conv-history" id="conv-${a.type}"></div>
-        <textarea
-          class="agent-textarea"
-          id="input-${a.type}"
-          rows="${a.fullwidth ? 2 : 3}"
-          placeholder="${a.placeholder}"
-          onkeydown="if((event.metaKey||event.ctrlKey)&&event.key==='Enter'){runAgentPanel('${a.type}')}"
-        ></textarea>
-        <div class="agent-panel-actions">
-          <button class="btn btn-ghost btn-sm" onclick="clearConversation('${a.type}')" title="Gesprek wissen">↺</button>
-          <button class="btn btn-ghost btn-sm" onclick="showMemoryModal('${a.type}')" title="Privé memory bekijken">◎</button>
-          <button class="btn btn-primary btn-sm" id="btn-${a.type}" onclick="runAgentPanel('${a.type}')">▶ Run</button>
+        <div class="live-log" id="live-${a.type}"></div>
+        <div class="file-chips" id="chips-${a.type}"></div>
+        <div class="chat-input-wrap">
+          <button class="attach-btn" onclick="document.getElementById('file-input-${a.type}').click()" title="Bestand bijvoegen">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          </button>
+          <input type="file" id="file-input-${a.type}" multiple style="display:none" onchange="handleFileSelect('${a.type}', this.files)">
+          <textarea
+            id="input-${a.type}"
+            placeholder="${a.placeholder}"
+            rows="1"
+            onkeydown="if((event.metaKey||event.ctrlKey)&&event.key==='Enter'){runAgentPanel('${a.type}')}"
+            oninput="autoResizeTextarea(this)"
+          ></textarea>
+          <button class="chat-send-btn" id="btn-${a.type}" onclick="runAgentPanel('${a.type}')" title="Run (⌘+Enter)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+          </button>
         </div>
         <div class="agent-output-area" id="out-${a.type}"></div>
         <div id="dispatch-log-${a.type}"></div>
@@ -938,33 +1384,121 @@ function buildAgentPanels() {
   ALL_TYPES.forEach(loadConversationUI);
 }
 
+function autoResizeTextarea(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 200) + 'px';
+}
+
+function handleFileSelect(type, fileList) {
+  if (!agentFiles[type]) agentFiles[type] = [];
+  Array.from(fileList).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      agentFiles[type].push({ name: file.name, data: e.target.result, mime: file.type });
+      renderFileChips(type);
+    };
+    reader.readAsDataURL(file);
+  });
+  // Reset input so same file can be re-added
+  document.getElementById('file-input-' + type).value = '';
+}
+
+function removeFile(type, idx) {
+  if (agentFiles[type]) agentFiles[type].splice(idx, 1);
+  renderFileChips(type);
+}
+
+function renderFileChips(type) {
+  const el = document.getElementById('chips-' + type);
+  if (!el) return;
+  const files = agentFiles[type] || [];
+  el.innerHTML = files.map((f, i) =>
+    `<div class="file-chip">
+      <span class="file-chip-name" title="${escHtml(f.name)}">${escHtml(f.name)}</span>
+      <span class="file-chip-rm" onclick="removeFile('${type}', ${i})">✕</span>
+    </div>`
+  ).join('');
+}
+
 async function runAgentPanel(type) {
   const instruction = document.getElementById('input-' + type).value.trim();
   if (!instruction) { document.getElementById('input-' + type).focus(); return; }
 
+  const files = agentFiles[type] ? [...agentFiles[type]] : [];
+  agentFiles[type] = [];
+  renderFileChips(type);
+
   setAgentStatus(type, 'running');
   const out = document.getElementById('out-' + type);
-  out.className = 'agent-output-area visible running';
-  out.textContent = 'Claude denkt na…';
-  document.getElementById('input-' + type).value = '';
+  out.className = 'agent-output-area';
+  out.textContent = '';
+  renderLiveLog(type, [], true);
+  const ta = document.getElementById('input-' + type);
+  ta.value = '';
+  ta.style.height = 'auto';
 
   // Optimistic UI: add user message to conv
-  addConvMessage(type, 'user', instruction);
+  const convLabel = files.length ? `${instruction}\n📎 ${files.map(f=>f.name).join(', ')}` : instruction;
+  addConvMessage(type, 'user', convLabel);
 
   try {
     const r = await fetch('/api/agent/run', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ agent: type, instruction }),
+      body: JSON.stringify({ agent: type, instruction, files }),
     });
-    const { job_id } = await r.json();
-    agentState[type].jobId = job_id;
-    startPolling(type, job_id);
+    const data = await r.json();
+
+    if (r.status === 409) {
+      // Already running in another tab — hook into that job instead of starting a new one
+      agentState[type].jobId = data.job_id;
+      renderLiveLog(type, [], true);
+      startPolling(type, data.job_id);
+      return;
+    }
+
+    agentState[type].jobId = data.job_id;
+    startPolling(type, data.job_id);
   } catch(e) {
     setAgentStatus(type, 'failed');
     out.className = 'agent-output-area visible failed';
     out.textContent = 'Fout: ' + e.message;
   }
+}
+
+function renderLiveLog(type, liveLog, running) {
+  const el = document.getElementById('live-' + type);
+  if (!el) return;
+  if (!liveLog || liveLog.length === 0) {
+    if (running) {
+      el.className = 'live-log visible';
+      el.innerHTML = `<div class="live-log-spinner"><div class="spinner-dot"></div><span>Claude denkt na…</span></div>`;
+    } else {
+      el.className = 'live-log';
+      el.innerHTML = '';
+    }
+    return;
+  }
+  el.className = 'live-log visible';
+  const rows = liveLog.map((entry, i) => {
+    const isLatest = running && i === liveLog.length - 1;
+    const bgColor = entry.color + '22';
+    return `<div class="live-log-row${isLatest ? ' latest' : ''}">
+      <span class="live-log-icon">${entry.icon}</span>
+      <span class="live-log-badge" style="background:${bgColor};color:${entry.color}">${entry.tool}</span>
+      <span class="live-log-label" title="${(entry.label||'').replace(/"/g,'&quot;')}">${escHtml(entry.label||'')}</span>
+    </div>`;
+  }).join('');
+  const spinner = running
+    ? `<div class="live-log-spinner"><div class="spinner-dot"></div><span>bezig…</span></div>`
+    : '';
+  el.innerHTML = rows + spinner;
+  // Keep latest visible
+  if (running) el.scrollTop = el.scrollHeight;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 function startPolling(type, job_id) {
@@ -973,36 +1507,40 @@ function startPolling(type, job_id) {
     try {
       const r = await fetch('/api/agent/' + job_id);
       const job = await r.json();
-      const out = document.getElementById('out-' + type);
 
       if (job.status === 'running' || job.status === 'pending') {
-        out.textContent = job.output || 'Claude denkt na…';
+        renderLiveLog(type, job.live_log || [], true);
+        if (job.model) setAgentStatus(type, 'running', job.model);
         return;
       }
 
       clearInterval(agentState[type].pollTimer);
-      setAgentStatus(type, job.status);
+      agentState[type].pollTimer = null;
+      setAgentStatus(type, job.status, null);
+      renderLiveLog(type, job.live_log || [], false);
+
+      // Refresh task list — agent may have updated task statuses
+      loadTasks();
 
       if (job.status === 'done') {
-        out.className = 'agent-output-area visible done';
-        out.textContent = job.output || '(geen output)';
-        // Add assistant reply to conv UI
         addConvMessage(type, 'assistant', job.output || '');
-        out.className = 'agent-output-area'; // hide raw output, conv shows it
-
-        // Show dispatches if orchestrator triggered sub-agents
         if (job.dispatches && job.dispatches.length) {
           showDispatchLog(type, job.dispatches);
         }
       } else {
+        const out = document.getElementById('out-' + type);
         out.className = 'agent-output-area visible failed';
         out.textContent = (job.error || '') + (job.output ? '\n\n' + job.output : '');
       }
     } catch(e) {}
-  }, 2000);
+  }, 800);
 }
 
-function setAgentStatus(type, status) {
+const SEND_ICON = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>`;
+
+const MODEL_COLORS = { haiku: '#3ECF8E', sonnet: '#5B6EF5', opus: '#ECB22E' };
+
+function setAgentStatus(type, status, model) {
   const panel = document.getElementById('panel-' + type);
   const chip  = document.getElementById('chip-' + type);
   const btn   = document.getElementById('btn-' + type);
@@ -1010,7 +1548,63 @@ function setAgentStatus(type, status) {
     panel.className = panel.className.replace(/\b(running|done|failed)\b/g, '').trim() + (status !== 'idle' ? ' ' + status : '');
   }
   if (chip) { chip.className = 'agent-status-chip chip-' + status; chip.textContent = status; }
-  if (btn)  { btn.disabled = status === 'running'; btn.textContent = status === 'running' ? '⏳…' : '▶ Run'; }
+  if (btn)  {
+    btn.disabled = status === 'running';
+    btn.innerHTML = status === 'running'
+      ? `<div class="spinner-dot" style="width:10px;height:10px;border-width:1.5px"></div>`
+      : SEND_ICON;
+    btn.title = status === 'running' ? 'Bezig…' : 'Run (⌘+Enter)';
+  }
+
+  // Model badge — show/hide next to status chip
+  const headerId = `model-badge-${type}`;
+  let badge = document.getElementById(headerId);
+  if (status === 'running' && model) {
+    const color = MODEL_COLORS[model] || '#8A8FA8';
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.id = headerId;
+      badge.style.cssText = `font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:.04em;margin-left:4px`;
+      if (chip) chip.parentNode.insertBefore(badge, chip.nextSibling);
+    }
+    badge.textContent = model;
+    badge.style.background = color + '22';
+    badge.style.color = color;
+  } else if (badge) {
+    badge.remove();
+  }
+}
+
+// ── Cross-tab sync ────────────────────────────────────────────────────────────
+
+async function syncAgentStates() {
+  try {
+    const r = await fetch('/api/agent/states');
+    if (!r.ok) return;
+    const states = await r.json();
+    for (const [type, state] of Object.entries(states)) {
+      const s = agentState[type];
+      if (!s) continue;
+
+      if (state.status === 'running' || state.status === 'pending') {
+        // Another tab started this agent — hook into the existing job
+        if (s.jobId !== state.job_id) {
+          s.jobId = state.job_id;
+          setAgentStatus(type, 'running');
+          renderLiveLog(type, state.live_log || [], true);
+          if (state.job_id) startPolling(type, state.job_id);
+        }
+      } else if ((state.status === 'done' || state.status === 'failed') && s.jobId !== state.job_id) {
+        // Job finished in another tab — update chip, reload conversation
+        s.jobId = state.job_id;
+        if (!s.pollTimer) {
+          setAgentStatus(type, state.status);
+          renderLiveLog(type, state.live_log || [], false);
+          loadConversationUI(type);
+        }
+      }
+    }
+  } catch(e) {}
 }
 
 function addConvMessage(type, role, content) {
@@ -1042,6 +1636,7 @@ async function clearConversation(type) {
   if (el) el.innerHTML = '';
   const out = document.getElementById('out-' + type);
   if (out) { out.className = 'agent-output-area'; out.textContent = ''; }
+  renderLiveLog(type, [], false);
   setAgentStatus(type, 'idle');
 }
 
@@ -1070,20 +1665,18 @@ function pollDispatchedAgent(type) {
       const job = await r.json();
       if (!job || job.status === 'idle') return;
       if (job.status === 'running' || job.status === 'pending') {
-        const out = document.getElementById('out-' + type);
-        if (out) { out.className = 'agent-output-area visible running'; out.textContent = job.output || 'Claude denkt na…'; }
+        renderLiveLog(type, job.live_log || [], true);
         return;
       }
       clearInterval(agentState[type].pollTimer);
       setAgentStatus(type, job.status);
+      renderLiveLog(type, job.live_log || [], false);
       if (job.status === 'done') {
         addConvMessage(type, 'user', job.prompt || '');
         addConvMessage(type, 'assistant', job.output || '');
-        const out = document.getElementById('out-' + type);
-        if (out) out.className = 'agent-output-area';
       }
     } catch(e) {}
-  }, 3000);
+  }, 800);
 }
 
 // ── Memory modal ──────────────────────────────────────────────────────────────
@@ -1222,10 +1815,16 @@ document.addEventListener('keydown', e => {
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 buildAgentPanels();
-// Load orchestrator conversation on init
 loadConversationUI('orchestrator');
 loadTasks();
 loadLog();
+
+// Cross-tab sync: on tab focus and on init
+syncAgentStates();
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') syncAgentStates();
+});
+window.addEventListener('focus', syncAgentStates);
 loadOverviewStats();
 loadQuickHealth();
 loadRecentLog();
