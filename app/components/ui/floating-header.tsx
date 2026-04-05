@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import Image from 'next/image'
 import { MenuIcon } from 'lucide-react'
 import { Sheet, SheetContent, SheetFooter } from './sheet'
 import { Button, buttonVariants } from './button'
@@ -35,11 +36,7 @@ export function FloatingHeader() {
 
         {/* Logo */}
         <a href="/" className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-white/05 transition-colors">
-          <div
-            className="w-6 h-6 rounded-md flex items-center justify-center text-white text-xs font-bold"
-            style={{ background: 'linear-gradient(135deg,#5B6EF5,#7B6FF0)' }}
-          >R</div>
-          <span className="font-bricolage font-bold text-white text-sm tracking-tight">runvex</span>
+          <Image src="/logo.png" alt="Runvex" width={80} height={24} className="h-6 w-auto" />
         </a>
 
         {/* Desktop links — absolute center */}
@@ -90,11 +87,7 @@ export function FloatingHeader() {
             <SheetContent side="left" showClose={true}>
               <div className="px-4 pt-12 pb-4">
                 <a href="/" className="flex items-center gap-2 mb-8">
-                  <div
-                    className="w-6 h-6 rounded-md flex items-center justify-center text-white text-xs font-bold"
-                    style={{ background: 'linear-gradient(135deg,#5B6EF5,#7B6FF0)' }}
-                  >R</div>
-                  <span className="font-bricolage font-bold text-white text-sm">runvex</span>
+                  <Image src="/logo.png" alt="Runvex" width={80} height={24} className="h-6 w-auto" />
                 </a>
                 <div className="flex flex-col gap-1">
                   {links.map((link) => (
