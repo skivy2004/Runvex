@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { checkDashboardSecret } from '@/app/lib/auth'
+import { rateLimit, getIp, tooManyRequests } from '@/app/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,6 +17,7 @@ function checkAuth(req: NextRequest): boolean {
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!await rateLimit(`linkedin-drafts:${getIp(req)}`, 30, 60_000)) return tooManyRequests()
   if (!checkAuth(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { id } = await params
   const body = await req.json()
@@ -40,6 +42,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!await rateLimit(`linkedin-drafts:${getIp(_req)}`, 30, 60_000)) return tooManyRequests()
   if (!checkAuth(_req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { id } = await params
   const supabase = getSupabase()

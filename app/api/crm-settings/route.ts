@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { checkDashboardSecret } from '@/app/lib/auth'
+import { rateLimit, getIp, tooManyRequests } from '@/app/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,6 +17,7 @@ function checkAuth(req: NextRequest): boolean {
 }
 
 export async function GET(req: NextRequest) {
+  if (!await rateLimit(`crm-settings:${getIp(req)}`, 30, 60_000)) return tooManyRequests()
   if (!checkAuth(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const supabase = getSupabase()
   const { data, error } = await supabase
@@ -27,6 +29,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  if (!await rateLimit(`crm-settings:${getIp(req)}`, 30, 60_000)) return tooManyRequests()
   if (!checkAuth(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { crm_type, crm_api_key, crm_min_score } = await req.json()
   const supabase = getSupabase()
