@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Sidebar from './components/Sidebar'
+import LogoutButton from './components/LogoutButton'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -52,10 +53,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <p className="text-xs font-medium text-white">Runvex</p>
                 <p className="text-xs mt-0.5" style={{ color: '#5A5E82' }}>admin</p>
               </div>
-              <svg width="12" height="12" fill="none" stroke="#5A5E82" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
             </Link>
+
+            <LogoutButton />
           </div>
         </header>
 
