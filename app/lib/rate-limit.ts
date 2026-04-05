@@ -1,27 +1,42 @@
 /**
- * In-memory sliding window rate limiter.
- * Works per warm serverless instance only — not shared across Vercel instances.
+ * Rate limiter with Upstash Redis support.
  *
- * TODO: upgrade to Upstash Redis for cross-instance rate limiting when scaling:
- *   1. npm install @upstash/ratelimit @upstash/redis
- *   2. Add the following env vars to .env and Vercel dashboard:
+ * Uses Upstash Redis when UPSTASH_REDIS_URL + UPSTASH_REDIS_TOKEN are set
+ * (cross-instance, production-safe). Falls back to in-memory sliding window.
+ *
+ * Setup Upstash:
+ *   1. Create a Redis DB at console.upstash.com
+ *   2. Add to .env + Vercel dashboard:
  *        UPSTASH_REDIS_URL=https://<your-db>.upstash.io
  *        UPSTASH_REDIS_TOKEN=<your-token>
- *      (Also accepted by @upstash/redis: UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN)
- *   3. Replace this file with:
- *        import { Ratelimit } from '@upstash/ratelimit'
- *        import { Redis } from '@upstash/redis'
- *        const redis = new Redis({
- *          url: process.env.UPSTASH_REDIS_URL!,
- *          token: process.env.UPSTASH_REDIS_TOKEN!,
- *        })
- *        const ratelimit = new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10, '1 m') })
- *        export async function rateLimit(key: string, limit: number, windowMs: number) {
- *          return (await ratelimit.limit(key)).success
- *        }
- *
- * UPSTASH_REDIS_URL and UPSTASH_REDIS_TOKEN are currently NOT set — using in-memory fallback.
  */
+
+// ── Upstash path ─────────────────────────────────────────────────────────────
+
+let upstashReady: boolean | null = null
+
+async function upstashRateLimit(key: string, limit: number, windowMs: number): Promise<boolean> {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { Ratelimit } = require('@upstash/ratelimit')
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { Redis } = require('@upstash/redis')
+
+  const redis = new Redis({
+    url: process.env.UPSTASH_REDIS_URL!,
+    token: process.env.UPSTASH_REDIS_TOKEN!,
+  })
+
+  const rl = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(limit, `${windowMs}ms`),
+    prefix: 'rl',
+  })
+
+  const { success } = await rl.limit(key)
+  return success
+}
+
+// ── In-memory fallback ────────────────────────────────────────────────────────
 
 const store = new Map<string, number[]>()
 
@@ -37,13 +52,7 @@ if (typeof setInterval !== 'undefined') {
   }, 5 * 60 * 1000)
 }
 
-/**
- * Returns true if the request is allowed, false if rate limited.
- * @param key     Unique key (e.g. "contact:1.2.3.4")
- * @param limit   Max number of requests in the window
- * @param windowMs Window size in milliseconds
- */
-export function rateLimit(key: string, limit: number, windowMs: number): boolean {
+function inMemoryRateLimit(key: string, limit: number, windowMs: number): boolean {
   const now = Date.now()
   const timestamps = store.get(key) ?? []
   const recent = timestamps.filter(t => now - t < windowMs)
@@ -51,6 +60,27 @@ export function rateLimit(key: string, limit: number, windowMs: number): boolean
   recent.push(now)
   store.set(key, recent)
   return true
+}
+
+// ── Public API ────────────────────────────────────────────────────────────────
+
+/**
+ * Returns true if the request is allowed, false if rate limited.
+ * @param key     Unique key (e.g. "contact:1.2.3.4")
+ * @param limit   Max number of requests in the window
+ * @param windowMs Window size in milliseconds
+ */
+export async function rateLimit(key: string, limit: number, windowMs: number): Promise<boolean> {
+  if (upstashReady !== false && process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
+    try {
+      const result = await upstashRateLimit(key, limit, windowMs)
+      upstashReady = true
+      return result
+    } catch {
+      upstashReady = false // disable for remaining lifetime of this instance
+    }
+  }
+  return inMemoryRateLimit(key, limit, windowMs)
 }
 
 export function getIp(req: Request): string {

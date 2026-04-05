@@ -6,7 +6,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  if (!rateLimit(`contact:${getIp(req)}`, 5, 15 * 60 * 1000)) return tooManyRequests()
+  if (!await rateLimit(`contact:${getIp(req)}`, 5, 15 * 60 * 1000)) return tooManyRequests()
 
   const webhookUrl = process.env.N8N_WEBHOOK_URL
 

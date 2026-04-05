@@ -8,7 +8,7 @@ function checkDashboardSecret(req: NextRequest): boolean {
 }
 
 export async function POST(req: NextRequest) {
-  if (!rateLimit(`calendly:${getIp(req)}`, 10, 60 * 1000)) return tooManyRequests()
+  if (!await rateLimit(`calendly:${getIp(req)}`, 10, 60 * 1000)) return tooManyRequests()
   if (!checkDashboardSecret(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

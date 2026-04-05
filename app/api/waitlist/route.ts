@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { rateLimit, getIp, tooManyRequests } from '@/app/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
-  if (!rateLimit(`waitlist:${getIp(req)}`, 3, 60 * 60 * 1000)) return tooManyRequests()
+  if (!await rateLimit(`waitlist:${getIp(req)}`, 3, 60 * 60 * 1000)) return tooManyRequests()
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!

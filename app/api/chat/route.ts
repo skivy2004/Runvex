@@ -20,7 +20,7 @@ Gedraag je als volgt:
 Houd antwoorden kort (max 2 zinnen). Spreek Nederlands. Wees warm en direct, niet salesy.`
 
 export async function POST(req: NextRequest) {
-  if (!rateLimit(`chat:${getIp(req)}`, 20, 60 * 1000)) return tooManyRequests()
+  if (!await rateLimit(`chat:${getIp(req)}`, 20, 60 * 1000)) return tooManyRequests()
 
   const { messages } = await req.json()
   if (!Array.isArray(messages)) {
