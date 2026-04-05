@@ -7,14 +7,26 @@ export async function POST(req: NextRequest) {
   try {
     const raw = await req.json()
     // Whitelist allowed fields — never forward arbitrary user input to n8n
+    const naam  = typeof raw.naam  === 'string' ? raw.naam.trim().slice(0, 200)  : ''
+    const email = typeof raw.email === 'string' ? raw.email.trim().slice(0, 200) : ''
+    const datum = typeof raw.datum === 'string' ? raw.datum.trim().slice(0, 50)  : ''
+
+    if (!naam || !email || !datum) {
+      return NextResponse.json({ error: 'naam, email en datum zijn verplicht' }, { status: 400 })
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: 'Ongeldig e-mailadres' }, { status: 400 })
+    }
+
     const body = {
-      naam:       typeof raw.naam === 'string'       ? raw.naam.slice(0, 200)       : undefined,
-      email:      typeof raw.email === 'string'      ? raw.email.slice(0, 200)      : undefined,
-      bedrijf:    typeof raw.bedrijf === 'string'    ? raw.bedrijf.slice(0, 200)    : undefined,
-      telefoon:   typeof raw.telefoon === 'string'   ? raw.telefoon.slice(0, 50)    : undefined,
-      bericht:    typeof raw.bericht === 'string'    ? raw.bericht.slice(0, 2000)   : undefined,
-      datum:      typeof raw.datum === 'string'      ? raw.datum.slice(0, 50)       : undefined,
-      form_token: typeof raw.form_token === 'string' ? raw.form_token.slice(0, 100) : undefined,
+      naam,
+      email,
+      datum,
+      tijdslot:   typeof raw.tijdslot  === 'string' ? raw.tijdslot.trim().slice(0, 50)   : undefined,
+      telefoon:   typeof raw.telefoon  === 'string' ? raw.telefoon.trim().slice(0, 50)   : undefined,
+      bedrijf:    typeof raw.bedrijf   === 'string' ? raw.bedrijf.trim().slice(0, 200)   : undefined,
+      bericht:    typeof raw.bericht   === 'string' ? raw.bericht.trim().slice(0, 2000)  : undefined,
+      form_token: typeof raw.form_token === 'string' ? raw.form_token.slice(0, 100)      : undefined,
     }
     const res = await fetch(process.env.N8N_BOOKING_CREATE_URL!, {
       method: 'POST',
