@@ -10,7 +10,13 @@ function getSupabase() {
   )
 }
 
+function checkAuth(req: NextRequest): boolean {
+  const secret = req.headers.get('x-dashboard-secret')
+  return !!process.env.DASHBOARD_SECRET && secret === process.env.DASHBOARD_SECRET
+}
+
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+  if (!checkAuth(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await req.json()
   const supabase = getSupabase()
   const { data, error } = await supabase
@@ -24,6 +30,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+  if (!checkAuth(_req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const supabase = getSupabase()
   const { error } = await supabase.from('linkedin_drafts').delete().eq('id', params.id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

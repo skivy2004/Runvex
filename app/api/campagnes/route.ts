@@ -10,7 +10,13 @@ function getSupabase() {
   )
 }
 
-export async function GET() {
+function checkAuth(req: NextRequest): boolean {
+  const secret = req.headers.get('x-dashboard-secret')
+  return !!process.env.DASHBOARD_SECRET && secret === process.env.DASHBOARD_SECRET
+}
+
+export async function GET(req: NextRequest) {
+  if (!checkAuth(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const supabase = getSupabase()
   const { data, error } = await supabase
     .from('campagnes')
@@ -21,6 +27,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  if (!checkAuth(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await req.json()
   const { naam, stappen, actief } = body
   if (!naam) return NextResponse.json({ error: 'naam vereist' }, { status: 400 })

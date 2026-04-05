@@ -17,7 +17,9 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://client.crisp.chat https://cdn.crisp.chat",
+              // 'unsafe-inline' is required for Next.js hydration scripts; remove only after adding nonce support
+              // 'unsafe-eval' removed — not needed by Next.js production builds
+              "script-src 'self' 'unsafe-inline' https://client.crisp.chat https://cdn.crisp.chat",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://client.crisp.chat",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: https: blob:",

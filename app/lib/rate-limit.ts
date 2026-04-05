@@ -1,7 +1,15 @@
 /**
  * In-memory sliding window rate limiter.
- * Works per warm serverless instance. For multi-instance production use,
- * replace with Upstash Redis (@upstash/ratelimit).
+ * Works per warm serverless instance only — not shared across Vercel instances.
+ *
+ * TODO: upgrade to Upstash Redis when scaling beyond a single instance:
+ *   1. npm install @upstash/ratelimit @upstash/redis
+ *   2. Add UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN to .env + Vercel
+ *   3. Replace this file with:
+ *      import { Ratelimit } from '@upstash/ratelimit'
+ *      import { Redis } from '@upstash/redis'
+ *      const ratelimit = new Ratelimit({ redis: Redis.fromEnv(), limiter: Ratelimit.slidingWindow(10, '1 m') })
+ *      export async function rateLimit(key: string) { return (await ratelimit.limit(key)).success }
  */
 
 const store = new Map<string, number[]>()

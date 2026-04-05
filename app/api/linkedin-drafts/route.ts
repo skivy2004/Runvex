@@ -10,7 +10,13 @@ function getSupabase() {
   )
 }
 
+function checkAuth(req: NextRequest): boolean {
+  const secret = req.headers.get('x-dashboard-secret')
+  return !!process.env.DASHBOARD_SECRET && secret === process.env.DASHBOARD_SECRET
+}
+
 export async function GET(req: NextRequest) {
+  if (!checkAuth(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const status = req.nextUrl.searchParams.get('status')
   const supabase = getSupabase()
   let query = supabase.from('linkedin_drafts').select('*').order('aangemaakt_op', { ascending: false })
@@ -21,6 +27,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  if (!checkAuth(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await req.json()
   const supabase = getSupabase()
   const { data, error } = await supabase
