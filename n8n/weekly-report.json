@@ -31,7 +31,7 @@
             },
             {
               "name": "x-report-secret",
-              "value": "931c7dca2501d1a6b025ccab05f55d71bd7f54721e7ff563"
+              "value": "={{ $env.REPORT_SECRET }}"
             }
           ]
         },
