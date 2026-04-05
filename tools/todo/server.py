@@ -374,6 +374,47 @@ def select_model(instruction, agent_type):
     return 'sonnet', 'Fallback naar standaard model'
 
 
+def route_task_agent(task):
+    """
+    Haiku-call die bepaalt welke agent een taak moet uitvoeren.
+    Geeft (agent_key, needs_human: bool, reason) terug.
+    """
+    routing_prompt = (
+        "Je bent een taak-router voor een Next.js / Supabase / n8n project.\n"
+        "Bepaal welke specialist-agent deze taak moet uitvoeren, OF dat een mens het moet doen.\n\n"
+        "AGENTS:\n"
+        "  frontend  — React/Next.js components, Tailwind CSS, UI, animaties, app/components/\n"
+        "  backend   — API routes (app/api/), Supabase, n8n, Resend, server-side code\n"
+        "  marketing — copy, SEO, blogposts, content, teksten\n"
+        "  review    — security audits, code review, OWASP, TypeScript, performance\n"
+        "  fullstack — taken die meerdere lagen raken, of niet duidelijk één laag\n"
+        "  human     — vereist inloggen op externe service, browser-actie, echte credentials,\n"
+        "              handmatige stappen buiten de codebase (Calendly, Slack webhook, DNS, etc.)\n\n"
+        f"Taak titel: {task['title']}\n"
+        f"Beschrijving: {(task.get('description') or '')[:400]}\n\n"
+        'Antwoord ALLEEN met geldig JSON op één regel:\n'
+        '{"agent":"frontend|backend|marketing|review|fullstack|human","reason":"één zin"}'
+    )
+    try:
+        res = subprocess.run(
+            ['claude', '-p', routing_prompt, '--model', MODEL_MAP['haiku']],
+            capture_output=True, text=True, timeout=25, cwd=PROJECT_ROOT,
+        )
+        m = re.search(r'\{[^{}]+\}', res.stdout.strip())
+        if m:
+            data   = json.loads(m.group())
+            agent  = data.get('agent', 'fullstack')
+            reason = data.get('reason', '')
+            if agent == 'human':
+                return 'human', True, reason
+            if agent not in ('frontend', 'backend', 'marketing', 'review', 'fullstack'):
+                agent = 'fullstack'
+            return agent, False, reason
+    except Exception:
+        pass
+    return 'fullstack', False, 'Fallback naar fullstack agent'
+
+
 # ── Agent runner ──────────────────────────────────────────────────────────────
 
 def run_agent_bg(job_id, agent_type, instruction, uploaded_files=None):
@@ -491,107 +532,102 @@ def run_agent_bg(job_id, agent_type, instruction, uploaded_files=None):
 
 AUTO_RUNNER_STATUS = {'running': False, 'current_task_id': None, 'current_task_title': None}
 
-def _agent_sub_instruction(task):
-    """Build the instruction that the orchestrator injects into the sub-agent DISPATCH."""
-    tid = task['id']
-    return (
-        f"Voer de volgende taak volledig uit.\n\n"
-        f"Taak ID : {tid}\n"
-        f"Prioriteit: P{task.get('priority', 3)}\n"
-        f"Titel   : {task['title']}\n"
-        f"Beschrijving:\n{task.get('description', '(geen beschrijving)')}\n\n"
-        f"Wanneer klaar:\n"
-        f"  curl -s -X PUT http://localhost:7001/api/tasks/{tid} "
-        f"-H 'Content-Type: application/json' "
-        f"-d '{{\"status\":\"complete\",\"work_log\":\"<wat je gedaan hebt>\"}}'\n\n"
-        f"Als je het NIET kunt uitvoeren (externe toegang, browser, credentials buiten de codebase):\n"
-        f"  curl -s -X PUT http://localhost:7001/api/tasks/{tid} "
-        f"-H 'Content-Type: application/json' "
-        f"-d '{{\"status\":\"needs_human\",\"work_log\":\"<waarom Jeremy dit zelf moet doen>\"}}'"
-    )
-
-
 def auto_task_runner():
     """
-    Background thread: routes pending agent_runnable tasks through the orchestrator.
-    The orchestrator picks the right specialist agent and dispatches automatically.
-    Waits for the TASK status (not job) to become terminal before picking the next task.
+    Background thread:
+    1. Haiku-call bepaalt welke agent de taak uitvoert (of needs_human).
+    2. De gekozen agent voert de taak direct uit — orchestrator wordt NIET gebruikt.
+    3. Wacht op de taak-status (niet job-status) voor de volgende taak.
     """
     import time
-    time.sleep(15)  # give server time to boot
+    time.sleep(15)
     while True:
         try:
             tasks = load_tasks()
             runnable = sorted(
-                [t for t in tasks
-                 if not t.get('human_only') and t['status'] == 'pending'],
+                [t for t in tasks if not t.get('human_only') and t['status'] == 'pending'],
                 key=lambda t: (t.get('priority', 3), t.get('created', ''))
             )
             if runnable:
                 task = runnable[0]
+                tid  = task['id']
 
-                # Wait if orchestrator is already busy
-                orch_id  = LATEST_JOB_BY_AGENT.get('orchestrator')
-                orch_job = AGENT_JOBS.get(orch_id) if orch_id else None
-                if orch_job and orch_job.get('status') in ('pending', 'running'):
+                # ── Stap 1: Haiku bepaalt de agent (snel, goedkoop) ──
+                agent, is_human, reason = route_task_agent(task)
+                log_event(f"ROUTE    taak {tid[:6]} → {agent} ({reason[:60]})")
+
+                if is_human:
+                    # Meteen markeren als needs_human, geen agent starten
+                    fresh = load_tasks()
+                    for t2 in fresh:
+                        if t2['id'] == tid:
+                            t2['status']   = 'needs_human'
+                            t2['work_log'] = reason
+                            t2['updated']  = now_iso()
+                            break
+                    save_tasks(fresh)
+                    log_event(f"AUTO     taak {tid[:6]} → needs_human (routing)")
+                    time.sleep(5)
+                    continue
+
+                # ── Stap 2: wacht als de agent al bezig is ──
+                existing_id  = LATEST_JOB_BY_AGENT.get(agent)
+                existing_job = AGENT_JOBS.get(existing_id) if existing_id else None
+                if existing_job and existing_job.get('status') in ('pending', 'running'):
                     time.sleep(20)
                     continue
 
-                # Mark in_progress so the loop doesn't double-pick this task
+                # ── Stap 3: markeer in_progress zodat loop hem niet dubbel pakt ──
                 fresh = load_tasks()
                 for t2 in fresh:
-                    if t2['id'] == task['id']:
-                        t2['status']  = 'in_progress'
-                        t2['updated'] = now_iso()
+                    if t2['id'] == tid:
+                        t2['status']         = 'in_progress'
+                        t2['suggested_agent'] = agent
+                        t2['updated']        = now_iso()
                         break
                 save_tasks(fresh)
 
                 AUTO_RUNNER_STATUS['running']            = True
-                AUTO_RUNNER_STATUS['current_task_id']    = task['id']
+                AUTO_RUNNER_STATUS['current_task_id']    = tid
                 AUTO_RUNNER_STATUS['current_task_title'] = task['title']
 
-                sub_instr = _agent_sub_instruction(task)
-
+                # ── Stap 4: bouw instructie voor de gekozen agent ──
                 instruction = (
-                    f"AUTO-TAAK — categoriseer en routeer naar de juiste agent.\n\n"
-                    f"Taak ID : {task['id']}\n"
+                    f"Voer de volgende taak volledig uit.\n\n"
+                    f"Taak ID : {tid}\n"
                     f"Prioriteit: P{task.get('priority', 3)}\n"
                     f"Titel   : {task['title']}\n"
                     f"Beschrijving:\n{task.get('description', '(geen beschrijving)')}\n\n"
-                    f"OPTIE A — Taak is uitvoerbaar door een agent:\n"
-                    f"  Kies de juiste agent en dispatch DIRECT. Zet deze instructie in het instruction-veld:\n"
-                    f"  ---\n"
-                    f"  {sub_instr}\n"
-                    f"  ---\n\n"
-                    f"OPTIE B — Taak vereist externe toegang / handmatige stappen:\n"
-                    f"  Markeer als needs_human:\n"
-                    f"  curl -s -X PUT http://localhost:7001/api/tasks/{task['id']} "
+                    f"Begin direct — geen bevestiging nodig.\n\n"
+                    f"Wanneer klaar:\n"
+                    f"  curl -s -X PUT http://localhost:7001/api/tasks/{tid} "
+                    f"-H 'Content-Type: application/json' "
+                    f"-d '{{\"status\":\"complete\",\"work_log\":\"<wat je gedaan hebt>\"}}'\n\n"
+                    f"Als je het NIET kunt uitvoeren (externe toegang, echte credentials, browser):\n"
+                    f"  curl -s -X PUT http://localhost:7001/api/tasks/{tid} "
                     f"-H 'Content-Type: application/json' "
                     f"-d '{{\"status\":\"needs_human\",\"work_log\":\"<reden>\"}}'  "
-                    f"en doe GEEN dispatch.\n\n"
-                    f"Kies DIRECT één van beide opties — geen bevestiging nodig."
                 )
 
                 job_id = str(uuid.uuid4())[:8]
                 AGENT_JOBS[job_id] = {
-                    'id': job_id, 'agent': 'orchestrator', 'prompt': instruction,
+                    'id': job_id, 'agent': agent, 'prompt': instruction,
                     'status': 'pending', 'output': '', 'error': '',
                     'live_log': [], 'dispatches': [],
                     'started': now_iso(), 'finished': None,
-                    'auto_task_id': task['id'],
+                    'auto_task_id': tid,
                 }
                 threading.Thread(
-                    target=run_agent_bg, args=(job_id, 'orchestrator', instruction), daemon=True
+                    target=run_agent_bg, args=(job_id, agent, instruction), daemon=True
                 ).start()
-                log_event(f"AUTO     [orchestrator→?] taak {task['id'][:6]}: {task['title'][:40]}")
+                log_event(f"AUTO     [{agent}] taak {tid[:6]}: {task['title'][:40]}")
 
-                # Wait until the TASK status becomes terminal (complete / failed / needs_human)
-                # This covers both orchestrator time + sub-agent execution time
-                for _ in range(120):   # max 10 minutes
+                # ── Stap 5: wacht tot taak-status terminaal is ──
+                for _ in range(120):  # max 10 minuten
                     time.sleep(5)
-                    current = next((t for t in load_tasks() if t['id'] == task['id']), None)
+                    current = next((t for t in load_tasks() if t['id'] == tid), None)
                     if current and current['status'] not in ('pending', 'in_progress'):
-                        log_event(f"AUTO     taak {task['id'][:6]} → {current['status']}")
+                        log_event(f"AUTO     taak {tid[:6]} → {current['status']}")
                         break
 
                 AUTO_RUNNER_STATUS['running']            = False
