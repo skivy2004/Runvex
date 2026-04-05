@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   if (!Array.isArray(messages)) {
     return NextResponse.json({ error: 'messages required' }, { status: 400 })
   }
-  if (messages.length > 50) {
+  if (messages.length > 15) {
     return NextResponse.json({ error: 'Te veel berichten' }, { status: 400 })
   }
 
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     })
     .map((m: Record<string, unknown>) => ({
       role: m.role as 'user' | 'assistant',
-      content: String(m.content).slice(0, 2000),
+      content: String(m.content).slice(0, 500),
     }))
 
   if (safeMessages.length === 0) {
