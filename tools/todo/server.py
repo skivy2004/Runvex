@@ -57,13 +57,21 @@ AGENT_PROMPTS = {
         "Geef bevindingen met bestandsnaam + regelnummer."
     ),
     'orchestrator': (
-        "Je bent de Hoofd Agent (Orchestrator) voor het Runvex project. "
-        "Je kunt taken delegeren aan: frontend, backend, marketing, fullstack, review agents. "
-        "Je ziet alle agent memories en kunt sub-agents aansturen. "
-        "Als je taken wilt uitbesteden, gebruik dan dit formaat EXACT aan het einde van je antwoord:\n"
+        "Je bent de Hoofd Agent (Orchestrator) voor het Runvex project (/Users/jeremy/lead-automation).\n\n"
+        "AGENT ROUTING — kies de juiste specialist:\n"
+        "  frontend  → React/Next.js components, Tailwind CSS, UI/UX, animaties, app/components/\n"
+        "  backend   → API routes (app/api/), Supabase, n8n workflows, Resend, server-side logica\n"
+        "  marketing → copy, SEO, blogposts, teksten, content strategie\n"
+        "  review    → security audits, OWASP, code review, TypeScript, performance\n"
+        "  fullstack → taken die meerdere lagen raken, of niet duidelijk één laag\n\n"
+        "Bij AUTO-TAAK: dispatch ALTIJD direct zonder bevestiging. Zet in de agent-instructie:\n"
+        "  1. De volledige taakomschrijving + context\n"
+        "  2. Het TAAK_ID zodat de agent de taak kan afronden\n"
+        "  3. De curl-commando's om de taak als complete of needs_human te markeren\n\n"
+        "DISPATCH formaat (EXACT, aan het einde van je antwoord):\n"
         "DISPATCH:\n"
-        '[{"agent":"frontend","instruction":"..."},{"agent":"backend","instruction":"..."}]\n'
-        "Gebruik DISPATCH alleen als je daadwerkelijk sub-agents wilt activeren."
+        '[{"agent":"backend","instruction":"Voer uit: ...\\n\\nTAAK_ID: abc123\\nMarkeer af: curl -X PUT http://localhost:7001/api/tasks/abc123 -H \'Content-Type: application/json\' -d \'{\\"status\\":\\"complete\\",\\"work_log\\":\\"...\\"}\' "}]\n'
+        "Gebruik DISPATCH ook als je wilt delegeren bij manuele verzoeken."
     ),
 }
 
@@ -483,90 +491,118 @@ def run_agent_bg(job_id, agent_type, instruction, uploaded_files=None):
 
 AUTO_RUNNER_STATUS = {'running': False, 'current_task_id': None, 'current_task_title': None}
 
+def _agent_sub_instruction(task):
+    """Build the instruction that the orchestrator injects into the sub-agent DISPATCH."""
+    tid = task['id']
+    return (
+        f"Voer de volgende taak volledig uit.\n\n"
+        f"Taak ID : {tid}\n"
+        f"Prioriteit: P{task.get('priority', 3)}\n"
+        f"Titel   : {task['title']}\n"
+        f"Beschrijving:\n{task.get('description', '(geen beschrijving)')}\n\n"
+        f"Wanneer klaar:\n"
+        f"  curl -s -X PUT http://localhost:7001/api/tasks/{tid} "
+        f"-H 'Content-Type: application/json' "
+        f"-d '{{\"status\":\"complete\",\"work_log\":\"<wat je gedaan hebt>\"}}'\n\n"
+        f"Als je het NIET kunt uitvoeren (externe toegang, browser, credentials buiten de codebase):\n"
+        f"  curl -s -X PUT http://localhost:7001/api/tasks/{tid} "
+        f"-H 'Content-Type: application/json' "
+        f"-d '{{\"status\":\"needs_human\",\"work_log\":\"<waarom Jeremy dit zelf moet doen>\"}}'"
+    )
+
+
 def auto_task_runner():
-    """Background thread: auto-execute pending agent_runnable tasks, one at a time."""
+    """
+    Background thread: routes pending agent_runnable tasks through the orchestrator.
+    The orchestrator picks the right specialist agent and dispatches automatically.
+    Waits for the TASK status (not job) to become terminal before picking the next task.
+    """
     import time
-    time.sleep(15)  # wait for server to boot
+    time.sleep(15)  # give server time to boot
     while True:
         try:
             tasks = load_tasks()
             runnable = sorted(
                 [t for t in tasks
-                 if t.get('agent_runnable') and not t.get('human_only')
-                 and t['status'] == 'pending'],
+                 if not t.get('human_only') and t['status'] == 'pending'],
                 key=lambda t: (t.get('priority', 3), t.get('created', ''))
             )
             if runnable:
-                task   = runnable[0]
-                agent  = task.get('suggested_agent', 'fullstack')
+                task = runnable[0]
 
-                # Only run if the chosen agent is free
-                existing_id  = LATEST_JOB_BY_AGENT.get(agent)
-                existing_job = AGENT_JOBS.get(existing_id) if existing_id else None
-                if existing_job and existing_job.get('status') in ('pending', 'running'):
-                    time.sleep(30)
+                # Wait if orchestrator is already busy
+                orch_id  = LATEST_JOB_BY_AGENT.get('orchestrator')
+                orch_job = AGENT_JOBS.get(orch_id) if orch_id else None
+                if orch_job and orch_job.get('status') in ('pending', 'running'):
+                    time.sleep(20)
                     continue
 
-                # Mark in_progress immediately so we don't double-pick
-                fresh_tasks = load_tasks()
-                for t2 in fresh_tasks:
+                # Mark in_progress so the loop doesn't double-pick this task
+                fresh = load_tasks()
+                for t2 in fresh:
                     if t2['id'] == task['id']:
                         t2['status']  = 'in_progress'
                         t2['updated'] = now_iso()
                         break
-                save_tasks(fresh_tasks)
+                save_tasks(fresh)
 
-                AUTO_RUNNER_STATUS['running']           = True
-                AUTO_RUNNER_STATUS['current_task_id']   = task['id']
+                AUTO_RUNNER_STATUS['running']            = True
+                AUTO_RUNNER_STATUS['current_task_id']    = task['id']
                 AUTO_RUNNER_STATUS['current_task_title'] = task['title']
 
+                sub_instr = _agent_sub_instruction(task)
+
                 instruction = (
-                    f"Voer automatisch de volgende taak uit.\n\n"
-                    f"Taak ID: {task['id']}\n"
+                    f"AUTO-TAAK — categoriseer en routeer naar de juiste agent.\n\n"
+                    f"Taak ID : {task['id']}\n"
                     f"Prioriteit: P{task.get('priority', 3)}\n"
-                    f"Titel: {task['title']}\n"
-                    f"Beschrijving: {task.get('description', '(geen beschrijving)')}\n\n"
-                    f"Stappen:\n"
-                    f"1. Begin direct met uitvoeren — geen bevestiging nodig.\n"
-                    f"2. Als je klaar bent:\n"
-                    f"   curl -s -X PUT http://localhost:7001/api/tasks/{task['id']} "
+                    f"Titel   : {task['title']}\n"
+                    f"Beschrijving:\n{task.get('description', '(geen beschrijving)')}\n\n"
+                    f"OPTIE A — Taak is uitvoerbaar door een agent:\n"
+                    f"  Kies de juiste agent en dispatch DIRECT. Zet deze instructie in het instruction-veld:\n"
+                    f"  ---\n"
+                    f"  {sub_instr}\n"
+                    f"  ---\n\n"
+                    f"OPTIE B — Taak vereist externe toegang / handmatige stappen:\n"
+                    f"  Markeer als needs_human:\n"
+                    f"  curl -s -X PUT http://localhost:7001/api/tasks/{task['id']} "
                     f"-H 'Content-Type: application/json' "
-                    f"-d '{{\"status\":\"complete\",\"work_log\":\"kort wat je gedaan hebt\"}}'\n"
-                    f"3. Als je het NIET kunt uitvoeren (extern systeem, browser vereist, echte credentials, "
-                    f"handmatige stappen buiten de codebase):\n"
-                    f"   curl -s -X PUT http://localhost:7001/api/tasks/{task['id']} "
-                    f"-H 'Content-Type: application/json' "
-                    f"-d '{{\"status\":\"needs_human\",\"work_log\":\"Waarom jij dit moet doen: <reden>\"}}'  "
-                    f"← gebruik dit als je écht niet verder kunt zonder externe toegang.\n\n"
-                    f"Markeer als needs_human ALLEEN als: inloggen op externe service vereist, "
-                    f"browser-actie buiten CLI, of echte API keys nodig die je niet hebt."
+                    f"-d '{{\"status\":\"needs_human\",\"work_log\":\"<reden>\"}}'  "
+                    f"en doe GEEN dispatch.\n\n"
+                    f"Kies DIRECT één van beide opties — geen bevestiging nodig."
                 )
 
                 job_id = str(uuid.uuid4())[:8]
                 AGENT_JOBS[job_id] = {
-                    'id': job_id, 'agent': agent, 'prompt': instruction,
+                    'id': job_id, 'agent': 'orchestrator', 'prompt': instruction,
                     'status': 'pending', 'output': '', 'error': '',
                     'live_log': [], 'dispatches': [],
                     'started': now_iso(), 'finished': None,
                     'auto_task_id': task['id'],
                 }
-                t_thread = threading.Thread(
-                    target=run_agent_bg, args=(job_id, agent, instruction), daemon=True
-                )
-                t_thread.start()
-                log_event(f"AUTO     [{agent}] taak {task['id'][:6]}: {task['title'][:40]}")
+                threading.Thread(
+                    target=run_agent_bg, args=(job_id, 'orchestrator', instruction), daemon=True
+                ).start()
+                log_event(f"AUTO     [orchestrator→?] taak {task['id'][:6]}: {task['title'][:40]}")
 
-                # Wait until that job finishes before picking the next task
-                while AGENT_JOBS[job_id].get('status') in ('pending', 'running'):
+                # Wait until the TASK status becomes terminal (complete / failed / needs_human)
+                # This covers both orchestrator time + sub-agent execution time
+                for _ in range(120):   # max 10 minutes
                     time.sleep(5)
-                AUTO_RUNNER_STATUS['running']           = False
-                AUTO_RUNNER_STATUS['current_task_id']   = None
+                    current = next((t for t in load_tasks() if t['id'] == task['id']), None)
+                    if current and current['status'] not in ('pending', 'in_progress'):
+                        log_event(f"AUTO     taak {task['id'][:6]} → {current['status']}")
+                        break
+
+                AUTO_RUNNER_STATUS['running']            = False
+                AUTO_RUNNER_STATUS['current_task_id']    = None
                 AUTO_RUNNER_STATUS['current_task_title'] = None
+
         except Exception as e:
             AUTO_RUNNER_STATUS['running'] = False
             log_event(f"AUTO-ERR {e}")
 
-        time.sleep(20)  # pause between checks
+        time.sleep(20)
 
 
 # ── Health check ──────────────────────────────────────────────────────────────
