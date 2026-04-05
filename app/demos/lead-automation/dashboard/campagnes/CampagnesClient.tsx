@@ -18,6 +18,11 @@ type Campagne = {
 
 const VARIABELEN = ['{naam}', '{bedrijf}', '{email}']
 
+const AUTH_HEADERS = {
+  'Content-Type': 'application/json',
+  'x-dashboard-secret': process.env.NEXT_PUBLIC_DASHBOARD_SECRET ?? '',
+}
+
 const DEFAULT_STAPPEN: Stap[] = [
   { dag: 0, onderwerp: 'Welkom bij Runvex, {naam}!', body: 'Hoi {naam},\n\nBedankt voor je bericht. We nemen zo snel mogelijk contact met je op.\n\nMet vriendelijke groet,\nHet Runvex team' },
   { dag: 3, onderwerp: 'Heb je nog vragen, {naam}?', body: 'Hoi {naam},\n\nWe wilden even checken of je al de informatie hebt die je nodig hebt.\n\nLaat het ons weten!\n\nMet vriendelijke groet,\nHet Runvex team' },
@@ -36,7 +41,7 @@ export default function CampagnesClient() {
 
   async function load() {
     try {
-      const r = await fetch('/api/campagnes')
+      const r = await fetch('/api/campagnes', { headers: AUTH_HEADERS })
       const d = await r.json()
       if (Array.isArray(d)) setCampagnes(d)
     } catch {}
@@ -71,13 +76,13 @@ export default function CampagnesClient() {
       if (isNew) {
         await fetch('/api/campagnes', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: AUTH_HEADERS,
           body: JSON.stringify({ naam, stappen }),
         })
       } else if (selected) {
         await fetch(`/api/campagnes/${selected.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: AUTH_HEADERS,
           body: JSON.stringify({ naam, stappen }),
         })
       }
@@ -90,7 +95,7 @@ export default function CampagnesClient() {
   async function toggleActief(c: Campagne) {
     await fetch(`/api/campagnes/${c.id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: AUTH_HEADERS,
       body: JSON.stringify({ actief: !c.actief }),
     })
     await load()
@@ -98,7 +103,7 @@ export default function CampagnesClient() {
 
   async function verwijder(c: Campagne) {
     if (!confirm(`Weet je zeker dat je "${c.naam}" wilt verwijderen?`)) return
-    await fetch(`/api/campagnes/${c.id}`, { method: 'DELETE' })
+    await fetch(`/api/campagnes/${c.id}`, { method: 'DELETE', headers: AUTH_HEADERS })
     await load()
   }
 

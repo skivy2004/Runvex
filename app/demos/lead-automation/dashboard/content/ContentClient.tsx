@@ -20,6 +20,11 @@ const STATUS_LABELS: Record<string, { label: string; color: string; bg: string; 
   geplaatst:   { label: 'Geplaatst',   color: '#A99FF5', bg: 'rgba(91,110,245,0.12)',        border: 'rgba(91,110,245,0.2)' },
 }
 
+const AUTH_HEADERS = {
+  'Content-Type': 'application/json',
+  'x-dashboard-secret': process.env.NEXT_PUBLIC_DASHBOARD_SECRET ?? '',
+}
+
 export default function ContentClient() {
   const [drafts, setDrafts]             = useState<Draft[]>([])
   const [loading, setLoading]           = useState(true)
@@ -30,7 +35,7 @@ export default function ContentClient() {
   const load = useCallback(async () => {
     try {
       const url = statusFilter ? `/api/linkedin-drafts?status=${statusFilter}` : '/api/linkedin-drafts'
-      const r = await fetch(url)
+      const r = await fetch(url, { headers: AUTH_HEADERS })
       const d = await r.json()
       if (Array.isArray(d)) setDrafts(d)
     } catch {}
@@ -44,14 +49,14 @@ export default function ContentClient() {
     if (status === 'geplaatst') body.geplaatst_op = new Date().toISOString()
     await fetch(`/api/linkedin-drafts/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: AUTH_HEADERS,
       body: JSON.stringify(body),
     })
     await load()
   }
 
   async function verwijder(id: string) {
-    await fetch(`/api/linkedin-drafts/${id}`, { method: 'DELETE' })
+    await fetch(`/api/linkedin-drafts/${id}`, { method: 'DELETE', headers: AUTH_HEADERS })
     await load()
   }
 

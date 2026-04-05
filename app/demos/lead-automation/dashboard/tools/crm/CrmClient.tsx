@@ -2,6 +2,11 @@
 
 import { useState, useEffect } from 'react'
 
+const AUTH_HEADERS = {
+  'Content-Type': 'application/json',
+  'x-dashboard-secret': process.env.NEXT_PUBLIC_DASHBOARD_SECRET ?? '',
+}
+
 export default function CrmClient() {
   const [crmType, setCrmType]     = useState('hubspot')
   const [apiKey, setApiKey]       = useState('')
@@ -12,7 +17,7 @@ export default function CrmClient() {
   useEffect(() => {
     async function load() {
       try {
-        const r = await fetch('/api/crm-settings')
+        const r = await fetch('/api/crm-settings', { headers: AUTH_HEADERS })
         const d = await r.json()
         if (!Array.isArray(d)) return
         const get = (key: string) => d.find((s: { key: string; value: string }) => s.key === key)?.value ?? ''
@@ -30,7 +35,7 @@ export default function CrmClient() {
   const save = async () => {
     await fetch('/api/crm-settings', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: AUTH_HEADERS,
       body: JSON.stringify({ crm_type: crmType, crm_api_key: apiKey, crm_min_score: minScore }),
     })
     setSaved(true)
