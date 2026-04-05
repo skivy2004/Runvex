@@ -1,10 +1,10 @@
-import { createClient } from '@supabase/supabase-js'
 import StatsBar from './components/StatsBar'
 import LeadTable from './components/LeadTable'
 import LeadSourceCard from './components/LeadSourceCard'
 import ActivityFeed from './components/ActivityFeed'
 import LeadChart from './components/LeadChart'
 import OnboardingWizard from './components/OnboardingWizard'
+import { DEMO_LEADS } from './demo-data'
 
 export const revalidate = 0
 
@@ -23,22 +23,24 @@ export type Lead = {
   ai_prioriteit: number | null
   follow_up_verstuurd: boolean
   aangemaakt_op: string
+  crm_gesynchroniseerd: boolean | null
+  crm_type: string | null
+  verrijking: {
+    bedrijfsnaam?: string | null
+    sector?: string | null
+    grootte?: string | null
+    land?: string | null
+    linkedin?: string | null
+    twitter?: string | null
+    beschrijving?: string | null
+    website?: string | null
+    bijgewerkt_op?: string | null
+  } | null
 }
 
 async function getLeads(): Promise<Lead[]> {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-  const { data, error } = await supabase
-    .from('leads')
-    .select('*')
-    .neq('bron', 'waitlist')
-    .order('ai_prioriteit', { ascending: false })
-    .order('aangemaakt_op', { ascending: false })
-
-  if (error) throw new Error(error.message)
-  return data as Lead[]
+  // Demo pagina gebruikt fixture data — geen echte persoonsgegevens publiek toegankelijk
+  return DEMO_LEADS
 }
 
 function buildChartData(leads: Lead[]) {

@@ -4,12 +4,23 @@ import { useRouter } from 'next/navigation'
 import type { Lead } from '../page'
 import ScoreBadge from './ScoreBadge'
 
+const DASHBOARD_HEADERS = {
+  'Content-Type': 'application/json',
+  'x-dashboard-secret': process.env.NEXT_PUBLIC_DASHBOARD_SECRET ?? '',
+}
+
 export default function LeadDetail({ lead, onClose }: { lead: Lead; onClose: () => void }) {
   const router = useRouter()
   const [followupLoading, setFollowupLoading] = useState(false)
   const [behandeldLoading, setBehandeldLoading] = useState(false)
+  const [enrichLoading, setEnrichLoading]     = useState(false)
+  const [verrijking, setVerrijking]           = useState(lead.verrijking)
+  const [crmLoading, setCrmLoading]           = useState(false)
+  const [crmSynced, setCrmSynced]             = useState(!!lead.crm_gesynchroniseerd)
+  const [calendlyLoading, setCalendlyLoading] = useState(false)
   const [followupDone, setFollowupDone] = useState(lead.follow_up_verstuurd)
   const [behandeld, setBehandeld] = useState(lead.status === 'behandeld')
+  const [uitgenodigd, setUitgenodigd] = useState(lead.status === 'uitgenodigd')
   const [error, setError] = useState<string | null>(null)
 
   async function sendFollowup() {
@@ -18,7 +29,7 @@ export default function LeadDetail({ lead, onClose }: { lead: Lead; onClose: () 
     try {
       const res = await fetch('/api/leads/followup', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: DASHBOARD_HEADERS,
         body: JSON.stringify({ leadId: lead.id }),
       })
       if (res.ok) {
@@ -34,13 +45,79 @@ export default function LeadDetail({ lead, onClose }: { lead: Lead; onClose: () 
     setFollowupLoading(false)
   }
 
+  async function enrichLead() {
+    setEnrichLoading(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/leads/enrich', {
+        method: 'POST',
+        headers: DASHBOARD_HEADERS,
+        body: JSON.stringify({ leadId: lead.id }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) {
+        setVerrijking(data.verrijking)
+        router.refresh()
+      } else {
+        setError(data.error || 'Verrijking mislukt')
+      }
+    } catch {
+      setError('Verbindingsfout — probeer opnieuw')
+    }
+    setEnrichLoading(false)
+  }
+
+  async function syncCrm() {
+    setCrmLoading(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/leads/sync-crm', {
+        method: 'POST',
+        headers: DASHBOARD_HEADERS,
+        body: JSON.stringify({ leadId: lead.id }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) {
+        setCrmSynced(true)
+        router.refresh()
+      } else {
+        setError(data.error || 'CRM sync mislukt')
+      }
+    } catch {
+      setError('Verbindingsfout — probeer opnieuw')
+    }
+    setCrmLoading(false)
+  }
+
+  async function sendCalendlyInvite() {
+    setCalendlyLoading(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/leads/calendly', {
+        method: 'POST',
+        headers: DASHBOARD_HEADERS,
+        body: JSON.stringify({ leadId: lead.id }),
+      })
+      if (res.ok) {
+        setUitgenodigd(true)
+        router.refresh()
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error || 'Uitnodiging versturen mislukt')
+      }
+    } catch {
+      setError('Verbindingsfout — probeer opnieuw')
+    }
+    setCalendlyLoading(false)
+  }
+
   async function markBehandeld() {
     setBehandeldLoading(true)
     setError(null)
     try {
       const res = await fetch('/api/leads/behandeld', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: DASHBOARD_HEADERS,
         body: JSON.stringify({ leadId: lead.id }),
       })
       if (res.ok) {
@@ -122,6 +199,46 @@ export default function LeadDetail({ lead, onClose }: { lead: Lead; onClose: () 
             </div>
           )}
 
+          {/* Bedrijfsinfo (Hunter.io verrijking) */}
+          {verrijking ? (
+            <div>
+              <h3 className="text-sm font-semibold mb-2" style={{ color: '#8A8FA8' }}>Bedrijfsinfo</h3>
+              <div className="rounded-lg p-3 space-y-1.5" style={{ background: '#1A1C24', border: '1px solid rgba(255,255,255,0.06)' }}>
+                {[
+                  { label: 'Bedrijf', value: verrijking.bedrijfsnaam },
+                  { label: 'Sector', value: verrijking.sector },
+                  { label: 'Grootte', value: verrijking.grootte },
+                  { label: 'Land', value: verrijking.land },
+                ].filter(r => r.value).map(({ label: l, value }) => (
+                  <div key={l} className="flex gap-2 text-xs">
+                    <span className="w-16 shrink-0" style={{ color: '#5A5E82' }}>{l}</span>
+                    <span className="text-white">{value}</span>
+                  </div>
+                ))}
+                {verrijking.linkedin && (
+                  <a href={verrijking.linkedin} target="_blank" rel="noopener noreferrer" className="flex gap-2 text-xs" style={{ color: '#5B6EF5' }}>
+                    <span className="w-16 shrink-0" style={{ color: '#5A5E82' }}>LinkedIn</span>
+                    <span>Bekijk profiel ↗</span>
+                  </a>
+                )}
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={enrichLead}
+              disabled={enrichLoading}
+              className="w-full py-2 text-xs font-medium rounded-lg transition-opacity"
+              style={{
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                color: '#5A5E82',
+                opacity: enrichLoading ? 0.6 : 1,
+              }}
+            >
+              {enrichLoading ? 'Bedrijfsdata ophalen…' : '🔍 Verrijk lead met Hunter.io'}
+            </button>
+          )}
+
           <div>
             <h3 className="text-sm font-semibold mb-1" style={{ color: '#8A8FA8' }}>Origineel bericht</h3>
             <p
@@ -175,33 +292,65 @@ export default function LeadDetail({ lead, onClose }: { lead: Lead; onClose: () 
             </div>
           )}
 
-          <div className="flex gap-3 pt-2">
-            <button
-              onClick={sendFollowup}
-              disabled={followupLoading || followupDone}
-              className="flex-1 py-2.5 text-white text-sm font-medium rounded-lg transition-opacity"
-              style={{
-                background: followupDone ? 'rgba(91,110,245,0.3)' : '#5B6EF5',
-                opacity: followupLoading ? 0.6 : 1,
-                cursor: followupDone ? 'default' : 'pointer',
-              }}
-            >
-              {followupLoading ? 'Verzenden…' : followupDone ? '✓ Follow-up verstuurd' : 'Stuur follow-up'}
-            </button>
-            <button
-              onClick={markBehandeld}
-              disabled={behandeldLoading || behandeld}
-              className="flex-1 py-2.5 text-sm font-medium rounded-lg transition-opacity"
-              style={{
-                background: behandeld ? 'rgba(62,207,142,0.1)' : 'rgba(255,255,255,0.05)',
-                border: `1px solid ${behandeld ? 'rgba(62,207,142,0.3)' : 'rgba(255,255,255,0.08)'}`,
-                color: behandeld ? '#3ECF8E' : '#8A8FA8',
-                opacity: behandeldLoading ? 0.6 : 1,
-                cursor: behandeld ? 'default' : 'pointer',
-              }}
-            >
-              {behandeldLoading ? 'Opslaan…' : behandeld ? '✓ Behandeld' : 'Markeer behandeld'}
-            </button>
+          <div className="flex flex-col gap-2 pt-2">
+            <div className="flex gap-3">
+              <button
+                onClick={sendFollowup}
+                disabled={followupLoading || followupDone}
+                className="flex-1 py-2.5 text-white text-sm font-medium rounded-lg transition-opacity"
+                style={{
+                  background: followupDone ? 'rgba(91,110,245,0.3)' : '#5B6EF5',
+                  opacity: followupLoading ? 0.6 : 1,
+                  cursor: followupDone ? 'default' : 'pointer',
+                }}
+              >
+                {followupLoading ? 'Verzenden…' : followupDone ? '✓ Follow-up verstuurd' : 'Stuur follow-up'}
+              </button>
+              <button
+                onClick={markBehandeld}
+                disabled={behandeldLoading || behandeld}
+                className="flex-1 py-2.5 text-sm font-medium rounded-lg transition-opacity"
+                style={{
+                  background: behandeld ? 'rgba(62,207,142,0.1)' : 'rgba(255,255,255,0.05)',
+                  border: `1px solid ${behandeld ? 'rgba(62,207,142,0.3)' : 'rgba(255,255,255,0.08)'}`,
+                  color: behandeld ? '#3ECF8E' : '#8A8FA8',
+                  opacity: behandeldLoading ? 0.6 : 1,
+                  cursor: behandeld ? 'default' : 'pointer',
+                }}
+              >
+                {behandeldLoading ? 'Opslaan…' : behandeld ? '✓ Behandeld' : 'Markeer behandeld'}
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={sendCalendlyInvite}
+                disabled={calendlyLoading || uitgenodigd}
+                className="flex-1 py-2.5 text-sm font-medium rounded-lg transition-opacity"
+                style={{
+                  background: uitgenodigd ? 'rgba(62,207,142,0.1)' : 'rgba(255,255,255,0.03)',
+                  border: `1px solid ${uitgenodigd ? 'rgba(62,207,142,0.3)' : 'rgba(91,110,245,0.2)'}`,
+                  color: uitgenodigd ? '#3ECF8E' : '#5B6EF5',
+                  opacity: calendlyLoading ? 0.6 : 1,
+                  cursor: uitgenodigd ? 'default' : 'pointer',
+                }}
+              >
+                {calendlyLoading ? 'Versturen…' : uitgenodigd ? '✓ Meeting verstuurd' : '📅 Meeting uitnodiging'}
+              </button>
+              <button
+                onClick={syncCrm}
+                disabled={crmLoading || crmSynced}
+                className="flex-1 py-2.5 text-sm font-medium rounded-lg transition-opacity"
+                style={{
+                  background: crmSynced ? 'rgba(62,207,142,0.1)' : 'rgba(255,255,255,0.03)',
+                  border: `1px solid ${crmSynced ? 'rgba(62,207,142,0.3)' : 'rgba(255,255,255,0.1)'}`,
+                  color: crmSynced ? '#3ECF8E' : '#8A8FA8',
+                  opacity: crmLoading ? 0.6 : 1,
+                  cursor: crmSynced ? 'default' : 'pointer',
+                }}
+              >
+                {crmLoading ? 'Syncing…' : crmSynced ? `✓ ${lead.crm_type ?? 'CRM'} synced` : '🔄 Sync naar CRM'}
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -1,403 +1,646 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Todo Dashboard</title>
+<title>Runvex Control</title>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    --bg:       #0A0B0F;
-    --card:     #12141A;
-    --border:   #1E2130;
-    --accent:   #5B6EF5;
-    --accent2:  #4A5CE0;
-    --text:     #E2E4F0;
-    --muted:    #8A8FA8;
-    --green:    #3ECF8E;
-    --amber:    #ECB22E;
-    --red:      #E8507A;
-    --purple:   #9B6EF5;
-    --p1:       #E8507A;
-    --p2:       #ECB22E;
-    --p3:       #5B6EF5;
-    --p4:       #3ECF8E;
-    --p5:       #4A5564;
-  }
+:root {
+  --bg:      #0A0B0F;
+  --bg2:     #0D0F17;
+  --card:    #12141A;
+  --card2:   #16181F;
+  --border:  #1E2130;
+  --border2: #252838;
+  --accent:  #5B6EF5;
+  --accent2: #4A5CE0;
+  --text:    #E2E4F0;
+  --muted:   #8A8FA8;
+  --muted2:  #5A5E7A;
+  --green:   #3ECF8E;
+  --amber:   #ECB22E;
+  --red:     #E8507A;
+  --purple:  #9B6EF5;
+  --p1: #E8507A; --p2: #ECB22E; --p3: #5B6EF5; --p4: #3ECF8E; --p5: #4A5564;
+}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    font-size: 14px;
-    min-height: 100vh;
-  }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; height: 100vh; overflow: hidden; }
 
-  /* ── Layout ── */
-  .app { display: flex; flex-direction: column; height: 100vh; }
+/* ── Layout ── */
+.shell { display: flex; height: 100vh; }
 
-  header {
-    padding: 16px 24px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: var(--card);
-  }
+/* ── Sidebar ── */
+.sidebar {
+  width: 220px;
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
 
-  header h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
-  header h1 span { color: var(--accent); }
+.sidebar-logo {
+  padding: 18px 16px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.logo-mark {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, #5B6EF5, #3B4FD5);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 14px; color: white; flex-shrink: 0;
+}
+.logo-text { font-weight: 700; font-size: 15px; }
+.logo-sub  { font-size: 10px; color: var(--muted2); font-weight: 500; letter-spacing: .05em; text-transform: uppercase; }
 
-  .header-actions { display: flex; gap: 10px; align-items: center; }
+.nav { flex: 1; padding: 10px 8px; display: flex; flex-direction: column; gap: 2px; }
 
-  .main {
-    display: grid;
-    grid-template-columns: 1fr 340px;
-    gap: 0;
-    flex: 1;
-    overflow: hidden;
-  }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  border: none; background: transparent; width: 100%; text-align: left;
+  transition: all .15s;
+}
+.nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+.nav-item.active { background: rgba(91,110,245,0.12); color: var(--accent); }
+.nav-item .nav-icon { font-size: 15px; flex-shrink: 0; width: 20px; text-align: center; }
+.nav-badge { margin-left: auto; background: var(--accent); color: white; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; }
 
-  /* ── Tasks panel ── */
-  .tasks-panel {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    border-right: 1px solid var(--border);
-  }
+.sidebar-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  font-size: 11px; color: var(--muted2);
+}
+.live-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); margin-right: 5px; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:.3} }
 
-  .tasks-toolbar {
-    padding: 14px 20px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    gap: 10px;
-    align-items: center;
-  }
+/* ── Main ── */
+.main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
 
-  .filter-tabs { display: flex; gap: 4px; }
-  .filter-tab {
-    padding: 5px 12px;
-    border-radius: 6px;
-    border: 1px solid transparent;
-    background: transparent;
-    color: var(--muted);
-    cursor: pointer;
-    font-size: 13px;
-    transition: all .15s;
-  }
-  .filter-tab.active {
-    background: var(--border);
-    color: var(--text);
-    border-color: var(--border);
-  }
-  .filter-tab:hover:not(.active) { color: var(--text); }
+.topbar {
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--card);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.topbar-title { font-size: 15px; font-weight: 600; }
+.topbar-actions { display: flex; gap: 8px; align-items: center; }
 
-  .tasks-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
+.view { display: none; flex: 1; overflow: hidden; }
+.view.active { display: flex; flex-direction: column; }
 
-  /* ── Task card ── */
-  .task-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 16px;
-    display: flex;
-    gap: 14px;
-    align-items: flex-start;
-    transition: border-color .15s;
-  }
-  .task-card:hover { border-color: #2A2D40; }
-  .task-card.status-complete { opacity: .5; }
-  .task-card.status-in_progress { border-color: var(--accent); }
+.scroll { flex: 1; overflow-y: auto; padding: 20px 24px; }
 
-  .task-priority {
-    flex-shrink: 0;
-    width: 26px;
-    height: 26px;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: 700;
-    margin-top: 1px;
-  }
-  .p1 { background: rgba(232,80,122,.15); color: var(--p1); }
-  .p2 { background: rgba(236,178,46,.15); color: var(--p2); }
-  .p3 { background: rgba(91,110,245,.15); color: var(--p3); }
-  .p4 { background: rgba(62,207,142,.15); color: var(--p4); }
-  .p5 { background: rgba(74,85,100,.2);   color: var(--p5); }
+/* ── Cards / grid ── */
+.grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px; }
+.grid-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; }
 
-  .task-body { flex: 1; min-width: 0; }
-  .task-title { font-weight: 500; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .task-desc  { color: var(--muted); font-size: 12px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+.card-title { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+.card-value { font-size: 28px; font-weight: 800; letter-spacing: -.02em; }
+.card-sub   { font-size: 12px; color: var(--muted); margin-top: 3px; }
 
-  .task-meta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 10px;
-  }
+.section-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
 
-  .status-chip {
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .03em;
-  }
-  .chip-pending     { background: rgba(138,143,168,.12); color: var(--muted); }
-  .chip-in_progress { background: rgba(91,110,245,.15);  color: var(--accent); }
-  .chip-complete    { background: rgba(62,207,142,.12);  color: var(--green); }
-  .chip-failed      { background: rgba(232,80,122,.12);  color: var(--red); }
+/* ── Health rows ── */
+.health-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+.health-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.dot-ok  { background: var(--green); }
+.dot-bad { background: var(--red); }
+.dot-loading { background: var(--amber); animation: pulse 1s infinite; }
+.health-name { font-weight: 500; flex: 1; }
+.health-code { font-size: 11px; color: var(--muted); font-family: monospace; }
+.health-err  { font-size: 11px; color: var(--red); }
 
-  .task-date { color: var(--muted); font-size: 11px; margin-left: auto; }
+/* ── Tasks ── */
+.tasks-wrap { display: grid; grid-template-columns: 1fr 300px; gap: 0; flex: 1; overflow: hidden; }
+.tasks-panel { display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid var(--border); }
+.tasks-toolbar { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: center; }
+.filter-tabs { display: flex; gap: 4px; }
+.filter-tab { padding: 5px 12px; border-radius: 6px; border: 1px solid transparent; background: transparent; color: var(--muted); cursor: pointer; font-size: 12px; transition: all .15s; }
+.filter-tab.active { background: var(--border); color: var(--text); }
+.filter-tab:hover:not(.active) { color: var(--text); }
+.tasks-list { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+.task-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; gap: 12px; align-items: flex-start; transition: border-color .15s; }
+.task-card:hover { border-color: var(--border2); }
+.task-card.status-complete { opacity: .45; }
+.task-card.status-in_progress { border-color: var(--accent); }
+.task-priority { flex-shrink: 0; width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
+.p1{background:rgba(232,80,122,.15);color:var(--p1)} .p2{background:rgba(236,178,46,.15);color:var(--p2)}
+.p3{background:rgba(91,110,245,.15);color:var(--p3)} .p4{background:rgba(62,207,142,.15);color:var(--p4)}
+.p5{background:rgba(74,85,100,.2);color:var(--p5)}
+.task-body { flex: 1; min-width: 0; }
+.task-title { font-weight: 500; font-size: 13px; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.task-desc  { color: var(--muted); font-size: 11px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.task-meta  { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+.status-chip { padding: 2px 7px; border-radius: 20px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+.chip-pending{background:rgba(138,143,168,.12);color:var(--muted)} .chip-in_progress{background:rgba(91,110,245,.15);color:var(--accent)}
+.chip-complete{background:rgba(62,207,142,.12);color:var(--green)} .chip-failed{background:rgba(232,80,122,.12);color:var(--red)}
+.task-date { color: var(--muted2); font-size: 10px; margin-left: auto; }
+.task-actions { display: flex; gap: 5px; flex-shrink: 0; }
+.btn-icon { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; transition: all .15s; }
+.btn-icon:hover { border-color: var(--accent); color: var(--accent); background: rgba(91,110,245,.08); }
+.btn-icon.del:hover { border-color: var(--red); color: var(--red); background: rgba(232,80,122,.08); }
+.log-panel { display: flex; flex-direction: column; overflow: hidden; }
+.log-header { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.log-body { flex: 1; overflow-y: auto; padding: 8px; font-family: 'SF Mono', monospace; font-size: 11px; line-height: 1.7; }
+.log-line { color: var(--muted); padding: 1px 4px; }
+.log-line .ts { color: var(--muted2); }
+.log-line.added .msg{color:var(--green)} .log-line.updated .msg{color:var(--accent)}
+.log-line.deleted .msg{color:var(--red)} .log-line.server .msg{color:var(--amber)}
+.log-line.worker .msg{color:var(--purple)} .log-line.agent .msg{color:var(--purple)}
 
-  .task-actions { display: flex; gap: 6px; flex-shrink: 0; }
+/* ── Agents parallel grid ── */
+.agents-parallel-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
 
-  .btn-icon {
-    width: 30px; height: 30px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--muted);
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px;
-    transition: all .15s;
-  }
-  .btn-icon:hover { border-color: var(--accent); color: var(--accent); background: rgba(91,110,245,.08); }
-  .btn-icon.del:hover { border-color: var(--red); color: var(--red); background: rgba(232,80,122,.08); }
+.agent-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: border-color .2s;
+}
+.agent-panel.running { border-color: var(--accent); }
+.agent-panel.done    { border-color: rgba(62,207,142,.3); }
+.agent-panel.failed  { border-color: rgba(232,80,122,.3); }
 
-  /* ── Log panel ── */
-  .log-panel {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+.agent-panel-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.agent-panel-icon { font-size: 18px; flex-shrink: 0; }
+.agent-panel-name { font-size: 13px; font-weight: 600; flex: 1; }
+.agent-panel-desc { font-size: 10px; color: var(--muted2); }
+.agent-status-chip {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  flex-shrink: 0;
+}
+.chip-idle    { background: rgba(138,143,168,.1); color: var(--muted2); }
+.chip-running { background: rgba(236,178,46,.15); color: var(--amber); animation: pulse 1.5s infinite; }
+.chip-done    { background: rgba(62,207,142,.12); color: var(--green); }
+.chip-failed  { background: rgba(232,80,122,.12); color: var(--red); }
 
-  .log-header {
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--border);
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .08em;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+.agent-panel-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
 
-  .live-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--green);
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+.agent-textarea {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 12px;
+  padding: 8px 12px;
+  outline: none;
+  font-family: inherit;
+  resize: none;
+  line-height: 1.5;
+  transition: border-color .15s;
+}
+.agent-textarea:focus { border-color: var(--accent); }
+.agent-textarea::placeholder { color: var(--muted2); }
 
-  .log-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px;
-    font-family: 'SF Mono', 'Fira Mono', monospace;
-    font-size: 11px;
-    line-height: 1.6;
-  }
+.agent-panel-actions { display: flex; gap: 6px; justify-content: flex-end; }
 
-  .log-line { color: var(--muted); padding: 1px 4px; }
-  .log-line .ts { color: #3A3F55; }
-  .log-line.added   .msg { color: var(--green); }
-  .log-line.updated .msg { color: var(--accent); }
-  .log-line.deleted .msg { color: var(--red); }
-  .log-line.server  .msg { color: var(--amber); }
-  .log-line.worker  .msg { color: var(--purple); }
+.agent-output-area {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: 'SF Mono', 'Fira Mono', monospace;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-y: auto;
+  max-height: 300px;
+  min-height: 80px;
+  display: none;
+}
+.agent-output-area.visible { display: block; }
+.agent-output-area.running { color: var(--amber); }
+.agent-output-area.done    { color: var(--text); }
+.agent-output-area.failed  { color: var(--red); }
 
-  .empty-state {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    color: var(--muted);
-    padding: 40px;
-    text-align: center;
-  }
-  .empty-icon { font-size: 36px; opacity: .4; }
-  .empty-text { font-size: 13px; }
+/* Fullstack panel spans full width */
+.agent-panel.fullwidth { grid-column: span 2; }
+.agent-panel.fullwidth .agent-output-area { max-height: 220px; }
 
-  /* ── Buttons ── */
-  .btn {
-    padding: 8px 16px;
-    border-radius: 8px;
-    border: none;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all .15s;
-  }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { background: var(--accent2); }
-  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-  .btn-ghost:hover { color: var(--text); border-color: #2A2D40; }
+/* ── Orchestrator ── */
+.orchestrator-panel {
+  background: linear-gradient(135deg, rgba(91,110,245,.08), rgba(155,110,245,.06));
+  border: 1.5px solid rgba(91,110,245,.3);
+  border-radius: 14px;
+  margin-bottom: 4px;
+  overflow: hidden;
+}
+.orchestrator-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(91,110,245,.2);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(91,110,245,.04);
+}
 
-  /* ── Modal ── */
-  .overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,.7);
-    backdrop-filter: blur(4px);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 100;
-    opacity: 0; pointer-events: none;
-    transition: opacity .2s;
-  }
-  .overlay.open { opacity: 1; pointer-events: auto; }
+/* ── Conversation history ── */
+.conv-history {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.conv-history:empty { display: none; }
+.conv-msg {
+  padding: 7px 11px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  max-width: 90%;
+}
+.conv-msg.user {
+  align-self: flex-end;
+  background: rgba(91,110,245,.15);
+  color: var(--text);
+  border-radius: 8px 8px 2px 8px;
+}
+.conv-msg.assistant {
+  align-self: flex-start;
+  background: rgba(255,255,255,.04);
+  color: var(--muted);
+  border-radius: 8px 8px 8px 2px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.conv-msg-meta { font-size: 10px; color: var(--muted2); margin-bottom: 2px; }
 
-  .modal {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    width: 480px;
-    max-width: 95vw;
-    padding: 24px;
-    transform: translateY(12px);
-    transition: transform .2s;
-  }
-  .overlay.open .modal { transform: translateY(0); }
+/* ── Memory modal ── */
+.mem-modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.75);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200;
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s;
+}
+.mem-modal-overlay.open { opacity: 1; pointer-events: auto; }
+.mem-modal {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  width: 560px;
+  max-width: 95vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: translateY(10px);
+  transition: transform .2s;
+}
+.mem-modal-overlay.open .mem-modal { transform: translateY(0); }
+.mem-modal-header {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 14px; font-weight: 600;
+}
+.mem-modal-body { flex: 1; overflow-y: auto; padding: 16px 18px; }
+.mem-editor {
+  width: 100%; min-height: 260px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 12px;
+  font-family: 'SF Mono', monospace;
+  line-height: 1.7;
+  padding: 12px;
+  outline: none;
+  resize: vertical;
+  transition: border-color .15s;
+}
+.mem-editor:focus { border-color: var(--accent); }
+.mem-modal-footer {
+  padding: 12px 18px;
+  border-top: 1px solid var(--border);
+  display: flex; gap: 8px; justify-content: flex-end;
+}
 
-  .modal-title {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 20px;
-  }
+/* ── Dispatch log ── */
+.dispatch-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px;
+  background: rgba(155,110,245,.08);
+  border: 1px solid rgba(155,110,245,.2);
+  border-radius: 6px;
+  font-size: 11px;
+  margin-top: 6px;
+}
+.dispatch-arrow { color: var(--purple); font-weight: 700; }
 
-  .form-group { margin-bottom: 16px; }
-  .form-group label {
-    display: block;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--muted);
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: .06em;
-  }
+/* ── Memory ── */
+.memory-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; }
+.memory-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.memory-card-header { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 10px; }
+.memory-type-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: .04em; flex-shrink: 0; margin-top: 2px; }
+.type-user     { background: rgba(91,110,245,.15); color: #5B6EF5; }
+.type-feedback { background: rgba(236,178,46,.15);  color: #ECB22E; }
+.type-project  { background: rgba(62,207,142,.15);  color: #3ECF8E; }
+.type-reference{ background: rgba(155,110,245,.15); color: #9B6EF5; }
+.memory-name { font-weight: 600; font-size: 13px; }
+.memory-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.memory-body { padding: 14px 16px; font-size: 12px; color: var(--muted); line-height: 1.7; white-space: pre-wrap; max-height: 220px; overflow-y: auto; }
 
-  .form-input, .form-textarea, .form-select {
-    width: 100%;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-size: 13px;
-    padding: 10px 12px;
-    outline: none;
-    transition: border-color .15s;
-    font-family: inherit;
-  }
-  .form-input:focus, .form-textarea:focus, .form-select:focus {
-    border-color: var(--accent);
-  }
-  .form-textarea { resize: vertical; min-height: 80px; }
-  .form-select option { background: var(--card); }
+/* ── Buttons ── */
+.btn { padding: 8px 16px; border-radius: 8px; border: none; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent2); }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+.btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.btn-ghost:hover { color: var(--text); border-color: var(--border2); }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
 
-  .priority-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 6px;
-  }
-  .priority-opt {
-    padding: 8px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--muted);
-    cursor: pointer;
-    text-align: center;
-    font-size: 12px;
-    font-weight: 600;
-    transition: all .15s;
-  }
-  .priority-opt:hover { border-color: #2A2D40; color: var(--text); }
-  .priority-opt.sel-1 { border-color: var(--p1); color: var(--p1); background: rgba(232,80,122,.1); }
-  .priority-opt.sel-2 { border-color: var(--p2); color: var(--p2); background: rgba(236,178,46,.1); }
-  .priority-opt.sel-3 { border-color: var(--p3); color: var(--p3); background: rgba(91,110,245,.1); }
-  .priority-opt.sel-4 { border-color: var(--p4); color: var(--p4); background: rgba(62,207,142,.1); }
-  .priority-opt.sel-5 { border-color: #4A5564;   color: #8A9BB0;   background: rgba(74,85,100,.15); }
+/* ── Modal ── */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity .2s; }
+.overlay.open { opacity: 1; pointer-events: auto; }
+.modal { background: var(--card); border: 1px solid var(--border); border-radius: 14px; width: 480px; max-width: 95vw; padding: 24px; transform: translateY(10px); transition: transform .2s; }
+.overlay.open .modal { transform: translateY(0); }
+.modal-title { font-size: 15px; font-weight: 600; margin-bottom: 18px; }
+.form-group { margin-bottom: 14px; }
+.form-group label { display: block; font-size: 11px; font-weight: 500; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .06em; }
+.form-input, .form-textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px; padding: 9px 12px; outline: none; transition: border-color .15s; font-family: inherit; }
+.form-input:focus, .form-textarea:focus { border-color: var(--accent); }
+.form-textarea { resize: vertical; min-height: 70px; }
+.priority-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 6px; }
+.priority-opt { padding: 7px; border-radius: 7px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; text-align: center; font-size: 11px; font-weight: 600; transition: all .15s; }
+.sel-1{border-color:var(--p1);color:var(--p1);background:rgba(232,80,122,.1)} .sel-2{border-color:var(--p2);color:var(--p2);background:rgba(236,178,46,.1)}
+.sel-3{border-color:var(--p3);color:var(--p3);background:rgba(91,110,245,.1)} .sel-4{border-color:var(--p4);color:var(--p4);background:rgba(62,207,142,.1)}
+.sel-5{border-color:#4A5564;color:#8A9BB0;background:rgba(74,85,100,.15)}
+.modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
 
-  .modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 24px;
-  }
+/* ── Empty ── */
+.empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 50px; text-align: center; color: var(--muted); }
+.empty-icon { font-size: 32px; opacity: .4; }
+.empty-text { font-size: 13px; }
 
-  /* Stats bar */
-  .stats-bar {
-    display: flex;
-    gap: 0;
-    padding: 0 24px;
-    border-bottom: 1px solid var(--border);
-    background: var(--card);
-  }
-  .stat {
-    padding: 10px 20px 10px 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    color: var(--muted);
-  }
-  .stat-num { font-size: 16px; font-weight: 600; color: var(--text); }
-  .stat:not(:last-child) { margin-right: 20px; }
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+/* ── Overview site links ── */
+.link-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 12px; text-decoration: none; transition: all .15s; }
+.link-btn:hover { border-color: var(--accent); color: var(--accent); }
 </style>
 </head>
 <body>
-<div class="app">
+<div class="shell">
 
-  <header>
-    <h1>Todo <span>Dashboard</span></h1>
-    <div class="header-actions">
-      <div id="stats" style="display:flex;gap:20px;font-size:12px;color:var(--muted)"></div>
-      <button class="btn btn-primary" onclick="openAdd()">+ Add Task</button>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">R</div>
+      <div>
+        <div class="logo-text">Runvex</div>
+        <div class="logo-sub">Control</div>
+      </div>
     </div>
-  </header>
 
+    <nav class="nav">
+      <button class="nav-item active" onclick="showView('overview',this)">
+        <span class="nav-icon">⌂</span> Overview
+      </button>
+      <button class="nav-item" onclick="showView('tasks',this)">
+        <span class="nav-icon">✓</span> Tasks
+        <span class="nav-badge" id="pendingBadge">0</span>
+      </button>
+      <button class="nav-item" onclick="showView('agents',this)">
+        <span class="nav-icon">⚡</span> Agents
+      </button>
+      <button class="nav-item" onclick="showView('memory',this)">
+        <span class="nav-icon">◎</span> Memory
+      </button>
+      <button class="nav-item" onclick="showView('health',this)">
+        <span class="nav-icon">♥</span> Health
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <span class="live-dot"></span>localhost:7001
+    </div>
+  </aside>
+
+  <!-- Main -->
   <div class="main">
-    <!-- Tasks -->
-    <div class="tasks-panel">
-      <div class="tasks-toolbar">
-        <div class="filter-tabs">
-          <button class="filter-tab active" onclick="setFilter('all',this)">All</button>
-          <button class="filter-tab" onclick="setFilter('pending',this)">Pending</button>
-          <button class="filter-tab" onclick="setFilter('in_progress',this)">In Progress</button>
-          <button class="filter-tab" onclick="setFilter('complete',this)">Done</button>
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-title" id="topbarTitle">Overview</div>
+      <div class="topbar-actions" id="topbarActions">
+        <a class="link-btn" href="https://runvex.app" target="_blank">↗ runvex.app</a>
+        <a class="link-btn" href="https://runvex.app/demos/lead-automation/dashboard" target="_blank">↗ Dashboard</a>
+        <a class="link-btn" href="https://vercel.com" target="_blank">↗ Vercel</a>
+      </div>
+    </div>
+
+    <!-- ══ OVERVIEW ══ -->
+    <div class="view active" id="view-overview">
+      <div class="scroll">
+
+        <div class="grid-4" id="overviewStats">
+          <div class="card"><div class="card-title">Tasks totaal</div><div class="card-value" id="ov-total">—</div><div class="card-sub">in backlog</div></div>
+          <div class="card"><div class="card-title">Pending</div><div class="card-value" style="color:var(--amber)" id="ov-pending">—</div><div class="card-sub">wachten op actie</div></div>
+          <div class="card"><div class="card-title">In progress</div><div class="card-value" style="color:var(--accent)" id="ov-inprog">—</div><div class="card-sub">actief</div></div>
+          <div class="card"><div class="card-title">Completed</div><div class="card-value" style="color:var(--green)" id="ov-done">—</div><div class="card-sub">afgerond</div></div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <div class="section-title">Site status</div>
+            <div id="quickHealth">
+              <div class="health-row"><div class="health-dot dot-loading"></div><span>Laden…</span></div>
+            </div>
+          </div>
+          <div>
+            <div class="section-title">Snelle links</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <a class="link-btn" href="https://runvex.app" target="_blank">🌐 Website</a>
+              <a class="link-btn" href="https://runvex.app/demos/lead-automation/dashboard" target="_blank">📊 Dashboard</a>
+              <a class="link-btn" href="https://supabase.com" target="_blank">🗄 Supabase</a>
+              <a class="link-btn" href="https://resend.com" target="_blank">✉️ Resend</a>
+              <a class="link-btn" href="https://vercel.com" target="_blank">▲ Vercel</a>
+              <a class="link-btn" href="https://n8n-runvex-production.up.railway.app" target="_blank">⚙️ n8n</a>
+              <a class="link-btn" href="https://console.anthropic.com" target="_blank">🤖 Anthropic</a>
+              <a class="link-btn" href="https://github.com/skivy2004/Runvex" target="_blank">🐙 GitHub</a>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:20px">
+          <div class="section-title">Recente activiteit</div>
+          <div id="recentLog" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;font-family:monospace;font-size:11px;line-height:1.8;color:var(--muted);max-height:180px;overflow-y:auto"></div>
         </div>
       </div>
-      <div class="tasks-list" id="taskList"></div>
     </div>
 
-    <!-- Log -->
-    <div class="log-panel">
-      <div class="log-header">
-        <div class="live-dot"></div>
-        Activity Log
+    <!-- ══ TASKS ══ -->
+    <div class="view" id="view-tasks">
+      <div class="tasks-wrap">
+        <div class="tasks-panel">
+          <div class="tasks-toolbar">
+            <div class="filter-tabs">
+              <button class="filter-tab active" onclick="setFilter('all',this)">Alles</button>
+              <button class="filter-tab" onclick="setFilter('pending',this)">Pending</button>
+              <button class="filter-tab" onclick="setFilter('in_progress',this)">Bezig</button>
+              <button class="filter-tab" onclick="setFilter('complete',this)">Klaar</button>
+            </div>
+            <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="openAdd()">+ Taak</button>
+          </div>
+          <div class="tasks-list" id="taskList"></div>
+        </div>
+        <div class="log-panel">
+          <div class="log-header"><span class="live-dot"></span>Activity log</div>
+          <div class="log-body" id="logBody"></div>
+        </div>
       </div>
-      <div class="log-body" id="logBody"></div>
+    </div>
+
+    <!-- ══ AGENTS ══ -->
+    <div class="view" id="view-agents">
+      <div class="scroll">
+
+        <!-- Orchestrator -->
+        <div class="orchestrator-panel" id="panel-orchestrator">
+          <div class="orchestrator-header">
+            <div style="display:flex;align-items:center;gap:10px;flex:1">
+              <span style="font-size:20px">🧠</span>
+              <div>
+                <div style="font-size:14px;font-weight:700">Hoofd Agent — Orchestrator</div>
+                <div style="font-size:11px;color:var(--muted2)">Ziet alle sub-agent memories · Kan automatisch dispatchen naar sub-agents</div>
+              </div>
+            </div>
+            <span class="agent-status-chip chip-idle" id="chip-orchestrator">idle</span>
+          </div>
+          <div style="padding:14px;display:flex;flex-direction:column;gap:10px">
+            <div class="conv-history" id="conv-orchestrator"></div>
+            <textarea class="agent-textarea" id="input-orchestrator" rows="3"
+              placeholder="Bijv: Analyseer de site en geef de frontend agent een taak om de hero te verbeteren en de backend agent om de health check te versnellen"
+              onkeydown="if((event.metaKey||event.ctrlKey)&&event.key==='Enter'){runAgentPanel('orchestrator')}"></textarea>
+            <div style="display:flex;gap:6px;justify-content:flex-end;align-items:center">
+              <span style="font-size:11px;color:var(--muted2);margin-right:auto">⌘+Enter om te runnen · DISPATCH: blok activeert sub-agents automatisch</span>
+              <button class="btn btn-ghost btn-sm" onclick="clearConversation('orchestrator')">↺ Gesprek wissen</button>
+              <button class="btn btn-ghost btn-sm" onclick="showMemoryModal('orchestrator')">◎ Memory</button>
+              <button class="btn btn-primary btn-sm" id="btn-orchestrator" onclick="runAgentPanel('orchestrator')">▶ Run</button>
+            </div>
+            <div class="agent-output-area" id="out-orchestrator"></div>
+            <div id="dispatch-log-orchestrator" style="display:none"></div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;margin:16px 0 12px">
+          <div style="flex:1;height:1px;background:var(--border)"></div>
+          <span style="font-size:11px;color:var(--muted2);font-weight:600;letter-spacing:.06em">SUB-AGENTS</span>
+          <div style="flex:1;height:1px;background:var(--border)"></div>
+        </div>
+
+        <div class="agents-parallel-grid" id="agentsGrid">
+          <!-- Dynamisch gegenereerd door JS -->
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ MEMORY ══ -->
+    <div class="view" id="view-memory">
+      <div class="scroll">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div class="section-title" style="margin-bottom:0">Claude Memory — Runvex Project</div>
+          <button class="btn btn-ghost btn-sm" onclick="loadMemory()">↻ Vernieuwen</button>
+        </div>
+        <div class="memory-grid" id="memoryGrid">
+          <div class="empty" style="grid-column:span 2"><div class="empty-icon">◎</div><div class="empty-text">Memory laden…</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ HEALTH ══ -->
+    <div class="view" id="view-health">
+      <div class="scroll">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div class="section-title" style="margin-bottom:0">Runvex feature health</div>
+          <button class="btn btn-ghost btn-sm" onclick="loadHealth()">↻ Controleer</button>
+        </div>
+
+        <div id="healthList">
+          <div class="health-row"><div class="health-dot dot-loading"></div><span>Controleren…</span></div>
+        </div>
+
+        <div style="margin-top:24px">
+          <div class="section-title">Features checklist</div>
+          <div id="featureChecks" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- Memory Editor Modal -->
+<div class="mem-modal-overlay" id="memOverlay" onclick="closeMemModal(event)">
+  <div class="mem-modal">
+    <div class="mem-modal-header">
+      <span id="memModalTitle">◎ Agent Memory</span>
+      <button onclick="closeMemModal()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px">✕</button>
+    </div>
+    <div class="mem-modal-body">
+      <div style="font-size:11px;color:var(--muted2);margin-bottom:10px">
+        Alleen deze agent (en de Hoofd Agent) kan deze memory lezen. Agents schrijven automatisch naar hun eigen memory via <code style="background:var(--bg);padding:1px 5px;border-radius:4px">MEMORY_UPDATE:</code> blokken.
+      </div>
+      <textarea class="mem-editor" id="memEditor"></textarea>
+    </div>
+    <div class="mem-modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeMemModal()">Annuleren</button>
+      <button class="btn btn-primary btn-sm" onclick="saveAgentMemory()">Opslaan</button>
     </div>
   </div>
 </div>
@@ -405,168 +648,195 @@
 <!-- Add/Edit Modal -->
 <div class="overlay" id="overlay" onclick="closeIfBackdrop(event)">
   <div class="modal">
-    <div class="modal-title" id="modalTitle">New Task</div>
-
+    <div class="modal-title" id="modalTitle">Nieuwe taak</div>
+    <div class="form-group"><label>Titel *</label><input class="form-input" id="fTitle" placeholder="Wat moet er gedaan worden?" /></div>
+    <div class="form-group"><label>Beschrijving</label><textarea class="form-textarea" id="fDesc" placeholder="Details, context…"></textarea></div>
     <div class="form-group">
-      <label>Title *</label>
-      <input class="form-input" id="fTitle" placeholder="What needs to be done?" />
-    </div>
-
-    <div class="form-group">
-      <label>Description</label>
-      <textarea class="form-textarea" id="fDesc" placeholder="Details, context, links…"></textarea>
-    </div>
-
-    <div class="form-group">
-      <label>Priority</label>
+      <label>Prioriteit</label>
       <div class="priority-grid">
-        <button class="priority-opt" data-p="1" onclick="setPriority(1)">P1<br><span style="font-weight:400;font-size:10px">Critical</span></button>
-        <button class="priority-opt" data-p="2" onclick="setPriority(2)">P2<br><span style="font-weight:400;font-size:10px">High</span></button>
+        <button class="priority-opt" data-p="1" onclick="setPriority(1)">P1<br><span style="font-weight:400;font-size:10px">Kritiek</span></button>
+        <button class="priority-opt" data-p="2" onclick="setPriority(2)">P2<br><span style="font-weight:400;font-size:10px">Hoog</span></button>
         <button class="priority-opt" data-p="3" onclick="setPriority(3)">P3<br><span style="font-weight:400;font-size:10px">Medium</span></button>
-        <button class="priority-opt" data-p="4" onclick="setPriority(4)">P4<br><span style="font-weight:400;font-size:10px">Low</span></button>
-        <button class="priority-opt" data-p="5" onclick="setPriority(5)">P5<br><span style="font-weight:400;font-size:10px">Someday</span></button>
+        <button class="priority-opt" data-p="4" onclick="setPriority(4)">P4<br><span style="font-weight:400;font-size:10px">Laag</span></button>
+        <button class="priority-opt" data-p="5" onclick="setPriority(5)">P5<br><span style="font-weight:400;font-size:10px">Ooit</span></button>
       </div>
     </div>
-
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" id="saveBtn" onclick="saveTask()">Add Task</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Annuleren</button>
+      <button class="btn btn-primary" id="saveBtn" onclick="saveTask()">Toevoegen</button>
     </div>
   </div>
 </div>
 
 <script>
-let tasks = [];
-let filter = 'all';
-let editId = null;
-let selPriority = 3;
-let logLines = [];
-
-const priorityLabel = ['','Critical','High','Medium','Low','Someday'];
+// ── State ─────────────────────────────────────────────────────────────────────
+let tasks = [], filter = 'all', editId = null, selPriority = 3, logLines = [];
 const statusOrder = { in_progress: 0, pending: 1, complete: 2, failed: 3 };
 
-// ── Fetch ──────────────────────────────────────────────────────────────────
+// ── Navigation ────────────────────────────────────────────────────────────────
+
+function showView(id, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+
+  const titles = { overview:'Overview', tasks:'Tasks', agents:'Agents', memory:'Memory', health:'Health' };
+  document.getElementById('topbarTitle').textContent = titles[id] || id;
+
+  // Show/hide topbar actions
+  const actions = document.getElementById('topbarActions');
+  if (id === 'tasks') {
+    actions.innerHTML = '';
+  } else if (id === 'agents') {
+    actions.innerHTML = '';
+  } else {
+    actions.innerHTML = `
+      <a class="link-btn" href="https://runvex.app" target="_blank">↗ runvex.app</a>
+      <a class="link-btn" href="https://runvex.app/demos/lead-automation/dashboard" target="_blank">↗ Dashboard</a>
+      <a class="link-btn" href="https://vercel.com" target="_blank">↗ Vercel</a>`;
+  }
+
+  if (id === 'memory') loadMemory();
+  if (id === 'health') loadHealth();
+}
+
+// ── Overview ──────────────────────────────────────────────────────────────────
+
+async function loadOverviewStats() {
+  try {
+    const r = await fetch('/api/stats');
+    const s = await r.json();
+    document.getElementById('ov-total').textContent   = s.total;
+    document.getElementById('ov-pending').textContent = s.pending;
+    document.getElementById('ov-inprog').textContent  = s.in_progress;
+    document.getElementById('ov-done').textContent    = s.complete;
+    document.getElementById('pendingBadge').textContent = s.pending;
+  } catch(e) {}
+}
+
+async function loadQuickHealth() {
+  const el = document.getElementById('quickHealth');
+  try {
+    const r = await fetch('/api/site-health');
+    const checks = await r.json();
+    el.innerHTML = checks.map(c => `
+      <div class="health-row">
+        <div class="health-dot ${c.ok ? 'dot-ok' : 'dot-bad'}"></div>
+        <span class="health-name">${esc(c.name)}</span>
+        <span class="${c.ok ? 'health-code' : 'health-err'}">${c.ok ? c.status : (c.error || c.status)}</span>
+      </div>`).join('');
+  } catch(e) {
+    el.innerHTML = `<div class="health-row"><div class="health-dot dot-bad"></div><span>Kan health niet ophalen</span></div>`;
+  }
+}
+
+async function loadRecentLog() {
+  try {
+    const r = await fetch('/api/log');
+    const { lines } = await r.json();
+    const el = document.getElementById('recentLog');
+    if (!lines.length) { el.textContent = 'Nog geen activiteit.'; return; }
+    el.innerHTML = lines.slice(-20).reverse().map(line => {
+      const m = line.match(/^\[([^\]]+)\] (.+)$/);
+      if (!m) return `<div>${esc(line)}</div>`;
+      const [,ts,msg] = m;
+      const color = msg.startsWith('AGENT') ? 'var(--purple)'
+                  : msg.startsWith('ADDED') ? 'var(--green)'
+                  : msg.startsWith('UPDATED') ? 'var(--accent)'
+                  : 'var(--muted)';
+      return `<div><span style="color:var(--muted2)">${ts.slice(11)} </span><span style="color:${color}">${esc(msg)}</span></div>`;
+    }).join('');
+  } catch(e) {}
+}
+
+// ── Tasks ─────────────────────────────────────────────────────────────────────
 
 async function loadTasks() {
   try {
-    const res = await fetch('/api/tasks');
-    tasks = await res.json();
+    const r = await fetch('/api/tasks');
+    tasks = await r.json();
     render();
-    updateStats();
-  } catch(e) { console.error(e); }
+  } catch(e) {}
 }
 
 async function loadLog() {
   try {
-    const res = await fetch('/api/log');
-    const { lines } = await res.json();
-    if (lines.length !== logLines.length || lines[lines.length-1] !== logLines[logLines.length-1]) {
+    const r = await fetch('/api/log');
+    const { lines } = await r.json();
+    if (lines.length !== logLines.length) {
       logLines = lines;
       renderLog();
     }
   } catch(e) {}
 }
 
-// ── Render tasks ───────────────────────────────────────────────────────────
-
 function render() {
   const list = document.getElementById('taskList');
   let visible = tasks.filter(t => filter === 'all' || t.status === filter);
   visible.sort((a,b) => {
     const so = (statusOrder[a.status]??9) - (statusOrder[b.status]??9);
-    if (so !== 0) return so;
-    return a.priority - b.priority;
+    return so !== 0 ? so : a.priority - b.priority;
   });
-
   if (!visible.length) {
-    list.innerHTML = `<div class="empty-state">
-      <div class="empty-icon">✓</div>
-      <div class="empty-text">${filter === 'all' ? 'No tasks yet. Add one to get started.' : 'No '+filter+' tasks.'}</div>
-    </div>`;
+    list.innerHTML = `<div class="empty"><div class="empty-icon">✓</div><div class="empty-text">${filter === 'all' ? 'Geen taken. Voeg er een toe.' : 'Geen '+filter+' taken.'}</div></div>`;
     return;
   }
-
   list.innerHTML = visible.map(t => `
     <div class="task-card status-${t.status}">
       <div class="task-priority p${t.priority}">P${t.priority}</div>
       <div class="task-body">
         <div class="task-title">${esc(t.title)}</div>
         ${t.description ? `<div class="task-desc">${esc(t.description)}</div>` : ''}
-        ${t.work_log ? `<div class="task-desc" style="color:var(--accent);margin-top:4px">↳ ${esc(t.work_log)}</div>` : ''}
+        ${t.work_log ? `<div class="task-desc" style="color:var(--accent);margin-top:3px">↳ ${esc(t.work_log)}</div>` : ''}
         <div class="task-meta">
           <span class="status-chip chip-${t.status}">${t.status.replace('_',' ')}</span>
           <span class="task-date">${fmtDate(t.created)}</span>
         </div>
       </div>
       <div class="task-actions">
-        ${t.status === 'pending' ? `<button class="btn-icon" title="Mark in progress" onclick="updateStatus('${t.id}','in_progress')">▶</button>` : ''}
-        ${t.status === 'in_progress' ? `<button class="btn-icon" title="Mark complete" onclick="updateStatus('${t.id}','complete')" style="color:var(--green)">✓</button>` : ''}
-        ${t.status !== 'complete' ? `<button class="btn-icon" title="Edit" onclick="openEdit('${t.id}')">✎</button>` : ''}
-        <button class="btn-icon del" title="Delete" onclick="deleteTask('${t.id}')">✕</button>
+        ${t.status==='pending' ? `<button class="btn-icon" title="Bezig" onclick="updateStatus('${t.id}','in_progress')">▶</button>` : ''}
+        ${t.status==='in_progress' ? `<button class="btn-icon" style="color:var(--green)" title="Klaar" onclick="updateStatus('${t.id}','complete')">✓</button>` : ''}
+        ${t.status!=='complete' ? `<button class="btn-icon" title="Bewerken" onclick="openEdit('${t.id}')">✎</button>` : ''}
+        <button class="btn-icon del" title="Verwijderen" onclick="deleteTask('${t.id}')">✕</button>
       </div>
-    </div>
-  `).join('');
-}
+    </div>`).join('');
 
-function updateStats() {
+  // Update badge
   const pending = tasks.filter(t => t.status === 'pending').length;
-  const inprog  = tasks.filter(t => t.status === 'in_progress').length;
-  const done    = tasks.filter(t => t.status === 'complete').length;
-  document.getElementById('stats').innerHTML = `
-    <span>${pending} pending</span>
-    <span style="color:var(--accent)">${inprog} in progress</span>
-    <span style="color:var(--green)">${done} done</span>
-  `;
+  document.getElementById('pendingBadge').textContent = pending;
 }
-
-// ── Render log ─────────────────────────────────────────────────────────────
 
 function renderLog() {
   const body = document.getElementById('logBody');
-  if (!logLines.length) {
-    body.innerHTML = `<div style="color:var(--muted);padding:10px;font-size:11px">No activity yet.</div>`;
-    return;
-  }
+  if (!logLines.length) { body.innerHTML = `<div style="color:var(--muted);padding:8px;font-size:11px">Nog geen activiteit.</div>`; return; }
   body.innerHTML = logLines.map(line => {
     const m = line.match(/^\[([^\]]+)\] (.+)$/);
     if (!m) return `<div class="log-line"><span class="msg">${esc(line)}</span></div>`;
     const [,ts,msg] = m;
-    const cls = msg.startsWith('ADDED') ? 'added'
-              : msg.startsWith('UPDATED') ? 'updated'
-              : msg.startsWith('DELETED') ? 'deleted'
-              : msg.startsWith('SERVER') ? 'server'
-              : msg.startsWith('WORKER') ? 'worker'
-              : '';
+    const cls = msg.startsWith('ADDED')?'added':msg.startsWith('UPDATED')?'updated':msg.startsWith('DELETED')?'deleted':msg.startsWith('SERVER')?'server':msg.startsWith('WORKER')?'worker':msg.startsWith('AGENT')?'agent':'';
     return `<div class="log-line ${cls}"><span class="ts">${ts.slice(11)} </span><span class="msg">${esc(msg)}</span></div>`;
   }).join('');
   body.scrollTop = body.scrollHeight;
 }
 
-// ── Actions ────────────────────────────────────────────────────────────────
-
 async function updateStatus(id, status) {
-  await fetch(`/api/tasks/${id}`, {
-    method: 'PUT',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({status})
-  });
-  await loadTasks();
-  await loadLog();
+  await fetch(`/api/tasks/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({status}) });
+  await loadTasks(); await loadLog();
 }
 
 async function deleteTask(id) {
-  if (!confirm('Delete this task?')) return;
-  await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
-  await loadTasks();
-  await loadLog();
+  if (!confirm('Taak verwijderen?')) return;
+  await fetch(`/api/tasks/${id}`, { method:'DELETE' });
+  await loadTasks(); await loadLog();
 }
 
-// ── Modal ──────────────────────────────────────────────────────────────────
+// ── Modal ─────────────────────────────────────────────────────────────────────
 
 function openAdd() {
   editId = null;
-  document.getElementById('modalTitle').textContent = 'New Task';
-  document.getElementById('saveBtn').textContent = 'Add Task';
+  document.getElementById('modalTitle').textContent = 'Nieuwe taak';
+  document.getElementById('saveBtn').textContent = 'Toevoegen';
   document.getElementById('fTitle').value = '';
   document.getElementById('fDesc').value = '';
   setPriority(3);
@@ -578,23 +848,16 @@ function openEdit(id) {
   const t = tasks.find(x => x.id === id);
   if (!t) return;
   editId = id;
-  document.getElementById('modalTitle').textContent = 'Edit Task';
-  document.getElementById('saveBtn').textContent = 'Save';
+  document.getElementById('modalTitle').textContent = 'Taak bewerken';
+  document.getElementById('saveBtn').textContent = 'Opslaan';
   document.getElementById('fTitle').value = t.title;
   document.getElementById('fDesc').value = t.description || '';
   setPriority(t.priority);
   document.getElementById('overlay').classList.add('open');
-  document.getElementById('fTitle').focus();
 }
 
-function closeModal() {
-  document.getElementById('overlay').classList.remove('open');
-  editId = null;
-}
-
-function closeIfBackdrop(e) {
-  if (e.target === document.getElementById('overlay')) closeModal();
-}
+function closeModal() { document.getElementById('overlay').classList.remove('open'); editId = null; }
+function closeIfBackdrop(e) { if (e.target === document.getElementById('overlay')) closeModal(); }
 
 function setPriority(p) {
   selPriority = p;
@@ -608,29 +871,14 @@ async function saveTask() {
   const title = document.getElementById('fTitle').value.trim();
   const desc  = document.getElementById('fDesc').value.trim();
   if (!title) { document.getElementById('fTitle').focus(); return; }
-
   const body = JSON.stringify({ title, description: desc, priority: selPriority });
-
   if (editId) {
-    await fetch(`/api/tasks/${editId}`, {
-      method: 'PUT',
-      headers: {'Content-Type':'application/json'},
-      body
-    });
+    await fetch(`/api/tasks/${editId}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body });
   } else {
-    await fetch('/api/tasks', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body
-    });
+    await fetch('/api/tasks', { method:'POST', headers:{'Content-Type':'application/json'}, body });
   }
-
-  closeModal();
-  await loadTasks();
-  await loadLog();
+  closeModal(); await loadTasks(); await loadLog();
 }
-
-// ── Filter ─────────────────────────────────────────────────────────────────
 
 function setFilter(f, el) {
   filter = f;
@@ -639,38 +887,353 @@ function setFilter(f, el) {
   render();
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// ── Agents (parallel + orchestrator) ─────────────────────────────────────────
+
+const AGENTS = [
+  { type: 'frontend',  icon: '🎨', name: 'Frontend',  desc: 'UI · design · componenten',  placeholder: 'Bijv: Maak de hero responsiever op mobiel' },
+  { type: 'backend',   icon: '⚙️',  name: 'Backend',   desc: 'API · Supabase · n8n',       placeholder: 'Bijv: Voeg een rate limit toe aan /api/chat' },
+  { type: 'marketing', icon: '📣', name: 'Marketing',  desc: 'Copy · SEO · content',       placeholder: 'Bijv: Schrijf 3 social posts over onze AI feature' },
+  { type: 'review',   icon: '🔍', name: 'Review',     desc: 'Code review · security',     placeholder: 'Bijv: Review de auth logica in alle API routes' },
+  { type: 'fullstack', icon: '🔧', name: 'Fullstack',  desc: 'Architectuur · features',    placeholder: 'Bijv: Bouw een export-naar-CSV knop voor het dashboard', fullwidth: true },
+];
+
+const ALL_TYPES = ['orchestrator', ...AGENTS.map(a => a.type)];
+const agentState = {};
+ALL_TYPES.forEach(t => { agentState[t] = { jobId: null, pollTimer: null }; });
+
+let memModalAgent = null;
+
+function buildAgentPanels() {
+  const grid = document.getElementById('agentsGrid');
+  grid.innerHTML = AGENTS.map(a => `
+    <div class="agent-panel ${a.fullwidth ? 'fullwidth' : ''}" id="panel-${a.type}">
+      <div class="agent-panel-header">
+        <span class="agent-panel-icon">${a.icon}</span>
+        <div style="flex:1">
+          <div class="agent-panel-name">${a.name}</div>
+          <div class="agent-panel-desc">${a.desc}</div>
+        </div>
+        <span class="agent-status-chip chip-idle" id="chip-${a.type}">idle</span>
+      </div>
+      <div class="agent-panel-body">
+        <div class="conv-history" id="conv-${a.type}"></div>
+        <textarea
+          class="agent-textarea"
+          id="input-${a.type}"
+          rows="${a.fullwidth ? 2 : 3}"
+          placeholder="${a.placeholder}"
+          onkeydown="if((event.metaKey||event.ctrlKey)&&event.key==='Enter'){runAgentPanel('${a.type}')}"
+        ></textarea>
+        <div class="agent-panel-actions">
+          <button class="btn btn-ghost btn-sm" onclick="clearConversation('${a.type}')" title="Gesprek wissen">↺</button>
+          <button class="btn btn-ghost btn-sm" onclick="showMemoryModal('${a.type}')" title="Privé memory bekijken">◎</button>
+          <button class="btn btn-primary btn-sm" id="btn-${a.type}" onclick="runAgentPanel('${a.type}')">▶ Run</button>
+        </div>
+        <div class="agent-output-area" id="out-${a.type}"></div>
+        <div id="dispatch-log-${a.type}"></div>
+      </div>
+    </div>`).join('');
+
+  // Load existing conversations
+  ALL_TYPES.forEach(loadConversationUI);
+}
+
+async function runAgentPanel(type) {
+  const instruction = document.getElementById('input-' + type).value.trim();
+  if (!instruction) { document.getElementById('input-' + type).focus(); return; }
+
+  setAgentStatus(type, 'running');
+  const out = document.getElementById('out-' + type);
+  out.className = 'agent-output-area visible running';
+  out.textContent = 'Claude denkt na…';
+  document.getElementById('input-' + type).value = '';
+
+  // Optimistic UI: add user message to conv
+  addConvMessage(type, 'user', instruction);
+
+  try {
+    const r = await fetch('/api/agent/run', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ agent: type, instruction }),
+    });
+    const { job_id } = await r.json();
+    agentState[type].jobId = job_id;
+    startPolling(type, job_id);
+  } catch(e) {
+    setAgentStatus(type, 'failed');
+    out.className = 'agent-output-area visible failed';
+    out.textContent = 'Fout: ' + e.message;
+  }
+}
+
+function startPolling(type, job_id) {
+  if (agentState[type].pollTimer) clearInterval(agentState[type].pollTimer);
+  agentState[type].pollTimer = setInterval(async () => {
+    try {
+      const r = await fetch('/api/agent/' + job_id);
+      const job = await r.json();
+      const out = document.getElementById('out-' + type);
+
+      if (job.status === 'running' || job.status === 'pending') {
+        out.textContent = job.output || 'Claude denkt na…';
+        return;
+      }
+
+      clearInterval(agentState[type].pollTimer);
+      setAgentStatus(type, job.status);
+
+      if (job.status === 'done') {
+        out.className = 'agent-output-area visible done';
+        out.textContent = job.output || '(geen output)';
+        // Add assistant reply to conv UI
+        addConvMessage(type, 'assistant', job.output || '');
+        out.className = 'agent-output-area'; // hide raw output, conv shows it
+
+        // Show dispatches if orchestrator triggered sub-agents
+        if (job.dispatches && job.dispatches.length) {
+          showDispatchLog(type, job.dispatches);
+        }
+      } else {
+        out.className = 'agent-output-area visible failed';
+        out.textContent = (job.error || '') + (job.output ? '\n\n' + job.output : '');
+      }
+    } catch(e) {}
+  }, 2000);
+}
+
+function setAgentStatus(type, status) {
+  const panel = document.getElementById('panel-' + type);
+  const chip  = document.getElementById('chip-' + type);
+  const btn   = document.getElementById('btn-' + type);
+  if (panel) {
+    panel.className = panel.className.replace(/\b(running|done|failed)\b/g, '').trim() + (status !== 'idle' ? ' ' + status : '');
+  }
+  if (chip) { chip.className = 'agent-status-chip chip-' + status; chip.textContent = status; }
+  if (btn)  { btn.disabled = status === 'running'; btn.textContent = status === 'running' ? '⏳…' : '▶ Run'; }
+}
+
+function addConvMessage(type, role, content) {
+  const el = document.getElementById('conv-' + type);
+  if (!el) return;
+  const div = document.createElement('div');
+  div.className = `conv-msg ${role}`;
+  // Truncate long messages in conv view
+  const preview = content.length > 400 ? content.slice(0, 400) + '…' : content;
+  div.textContent = preview;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+async function loadConversationUI(type) {
+  const el = document.getElementById('conv-' + type);
+  if (!el) return;
+  try {
+    const r = await fetch('/api/agent/conversation/' + type);
+    const msgs = await r.json();
+    el.innerHTML = '';
+    msgs.slice(-6).forEach(m => addConvMessage(type, m.role, m.content));
+  } catch(e) {}
+}
+
+async function clearConversation(type) {
+  await fetch('/api/agent/conversation/clear/' + type, { method: 'POST' });
+  const el = document.getElementById('conv-' + type);
+  if (el) el.innerHTML = '';
+  const out = document.getElementById('out-' + type);
+  if (out) { out.className = 'agent-output-area'; out.textContent = ''; }
+  setAgentStatus(type, 'idle');
+}
+
+function showDispatchLog(type, dispatches) {
+  const el = document.getElementById('dispatch-log-' + type);
+  if (!el) return;
+  el.style.display = 'block';
+  el.innerHTML = dispatches.map(d => `
+    <div class="dispatch-item">
+      <span class="dispatch-arrow">→</span>
+      <span style="color:var(--purple);font-weight:600">${d.agent}</span>
+      <span style="color:var(--muted)">${esc(d.instruction)}</span>
+    </div>`).join('');
+  // Auto-trigger UI updates for dispatched agents
+  dispatches.forEach(d => {
+    if (document.getElementById('chip-' + d.agent)) setAgentStatus(d.agent, 'running');
+    pollDispatchedAgent(d.agent);
+  });
+}
+
+function pollDispatchedAgent(type) {
+  if (agentState[type].pollTimer) clearInterval(agentState[type].pollTimer);
+  agentState[type].pollTimer = setInterval(async () => {
+    try {
+      const r = await fetch('/api/agent/latest/' + type);
+      const job = await r.json();
+      if (!job || job.status === 'idle') return;
+      if (job.status === 'running' || job.status === 'pending') {
+        const out = document.getElementById('out-' + type);
+        if (out) { out.className = 'agent-output-area visible running'; out.textContent = job.output || 'Claude denkt na…'; }
+        return;
+      }
+      clearInterval(agentState[type].pollTimer);
+      setAgentStatus(type, job.status);
+      if (job.status === 'done') {
+        addConvMessage(type, 'user', job.prompt || '');
+        addConvMessage(type, 'assistant', job.output || '');
+        const out = document.getElementById('out-' + type);
+        if (out) out.className = 'agent-output-area';
+      }
+    } catch(e) {}
+  }, 3000);
+}
+
+// ── Memory modal ──────────────────────────────────────────────────────────────
+
+async function showMemoryModal(type) {
+  memModalAgent = type;
+  document.getElementById('memModalTitle').textContent = `◎ ${type} memory`;
+  document.getElementById('memOverlay').classList.add('open');
+  try {
+    const r = await fetch('/api/agent/memory/' + type);
+    const { content } = await r.json();
+    document.getElementById('memEditor').value = content;
+  } catch(e) {}
+}
+
+function closeMemModal(e) {
+  if (e && e.target !== document.getElementById('memOverlay')) return;
+  document.getElementById('memOverlay').classList.remove('open');
+  memModalAgent = null;
+}
+
+async function saveAgentMemory() {
+  if (!memModalAgent) return;
+  const content = document.getElementById('memEditor').value;
+  await fetch('/api/agent/memory/' + memModalAgent, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ content }),
+  });
+  document.getElementById('memOverlay').classList.remove('open');
+  memModalAgent = null;
+}
+
+// ── Memory ────────────────────────────────────────────────────────────────────
+
+async function loadMemory() {
+  const grid = document.getElementById('memoryGrid');
+  grid.innerHTML = `<div class="empty" style="grid-column:span 2"><div class="empty-icon">◎</div><div class="empty-text">Laden…</div></div>`;
+  try {
+    const r = await fetch('/api/memory');
+    const files = await r.json();
+    if (!files.length) {
+      grid.innerHTML = `<div class="empty" style="grid-column:span 2"><div class="empty-icon">◎</div><div class="empty-text">Geen memory bestanden gevonden</div></div>`;
+      return;
+    }
+    grid.innerHTML = files.map(f => `
+      <div class="memory-card">
+        <div class="memory-card-header">
+          ${f.type ? `<span class="memory-type-badge type-${f.type}">${f.type}</span>` : ''}
+          <div>
+            <div class="memory-name">${esc(f.name || f.file)}</div>
+            ${f.description ? `<div class="memory-desc">${esc(f.description)}</div>` : ''}
+          </div>
+        </div>
+        <div class="memory-body">${esc(f.body)}</div>
+      </div>`).join('');
+  } catch(e) {
+    grid.innerHTML = `<div class="empty" style="grid-column:span 2"><div class="empty-icon">⚠</div><div class="empty-text">Fout: ${esc(e.message)}</div></div>`;
+  }
+}
+
+// ── Health ────────────────────────────────────────────────────────────────────
+
+async function loadHealth() {
+  const list = document.getElementById('healthList');
+  list.innerHTML = `<div class="health-row"><div class="health-dot dot-loading"></div><span>Controleren…</span></div>`;
+  try {
+    const r = await fetch('/api/site-health');
+    const checks = await r.json();
+    list.innerHTML = checks.map(c => `
+      <div class="health-row">
+        <div class="health-dot ${c.ok ? 'dot-ok' : 'dot-bad'}"></div>
+        <span class="health-name">${esc(c.name)}</span>
+        <a href="${c.url}" target="_blank" style="font-size:11px;color:var(--muted2);text-decoration:none">${c.url}</a>
+        <span class="${c.ok ? 'health-code' : 'health-err'}" style="margin-left:auto">${c.ok ? '✓ ' + c.status : '✕ ' + (c.error || c.status)}</span>
+      </div>`).join('');
+  } catch(e) {
+    list.innerHTML = `<div class="health-row"><div class="health-dot dot-bad"></div><span>Fout bij health check: ${esc(e.message)}</span></div>`;
+  }
+
+  // Feature checklist
+  const features = [
+    { name: 'Contact formulier → n8n webhook',   done: true },
+    { name: 'Claude AI lead scoring',             done: true },
+    { name: 'Follow-up e-mail via Resend',        done: true },
+    { name: 'Dashboard met live leads',           done: true },
+    { name: 'AI chatbot (ChatWidget)',             done: true },
+    { name: 'Weekrapport endpoint',               done: true },
+    { name: 'Settings pagina (scoring + sequenties)', done: true },
+    { name: 'Onboarding wizard (0 leads)',         done: true },
+    { name: 'Status pagina (/status)',            done: true },
+    { name: 'Exit-intent popup',                  done: true },
+    { name: 'ROI calculator',                     done: true },
+    { name: 'Demo video (Remotion)',              done: true },
+    { name: 'Blog (3 posts)',                     done: true },
+    { name: 'Vergelijkingspagina',                done: true },
+    { name: 'Sector landingspagina\'s',           done: true },
+    { name: 'Affiliate programma',                done: true },
+    { name: 'Help center',                        done: true },
+    { name: 'API documentatie',                   done: true },
+    { name: 'Google Calendar booking',            done: true },
+    { name: 'n8n weekrapport workflow',           done: true },
+  ];
+  document.getElementById('featureChecks').innerHTML = features.map(f => `
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--card);border:1px solid var(--border);border-radius:8px">
+      <span style="color:${f.done ? 'var(--green)' : 'var(--muted)'};font-size:13px">${f.done ? '✓' : '○'}</span>
+      <span style="font-size:13px;${f.done ? '' : 'color:var(--muted)'}">${esc(f.name)}</span>
+      ${f.done ? '<span style="margin-left:auto;font-size:10px;color:var(--green);font-weight:600">ACTIEF</span>' : '<span style="margin-left:auto;font-size:10px;color:var(--muted)">TODO</span>'}
+    </div>`).join('');
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function fmtDate(iso) {
   if (!iso) return '';
-  const d = new Date(iso);
-  const now = new Date();
-  const diff = now - d;
-  if (diff < 60000) return 'just now';
-  if (diff < 3600000) return Math.floor(diff/60000)+'m ago';
-  if (diff < 86400000) return Math.floor(diff/3600000)+'h ago';
-  return d.toLocaleDateString('en', {month:'short',day:'numeric'});
+  const d = new Date(iso), now = new Date(), diff = now - d;
+  if (diff < 60000) return 'zojuist';
+  if (diff < 3600000) return Math.floor(diff/60000)+'m geleden';
+  if (diff < 86400000) return Math.floor(diff/3600000)+'u geleden';
+  return d.toLocaleDateString('nl', {month:'short', day:'numeric'});
 }
 
-// ── Keyboard ───────────────────────────────────────────────────────────────
+// ── Keyboard ──────────────────────────────────────────────────────────────────
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeModal();
-  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+  if ((e.metaKey||e.ctrlKey) && e.key === 'Enter') {
     if (document.getElementById('overlay').classList.contains('open')) saveTask();
   }
 });
 
-// ── Init ───────────────────────────────────────────────────────────────────
+// ── Init ──────────────────────────────────────────────────────────────────────
 
+buildAgentPanels();
+// Load orchestrator conversation on init
+loadConversationUI('orchestrator');
 loadTasks();
 loadLog();
+loadOverviewStats();
+loadQuickHealth();
+loadRecentLog();
+
 setInterval(loadTasks, 10000);
 setInterval(loadLog, 5000);
+setInterval(loadOverviewStats, 15000);
+setInterval(loadRecentLog, 15000);
 </script>
 </body>
 </html>

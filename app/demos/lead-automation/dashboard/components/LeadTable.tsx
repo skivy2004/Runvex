@@ -69,6 +69,38 @@ export default function LeadTable({ leads, lastUpdated }: { leads: Lead[]; lastU
       })
   }, [leads, search, scoreFilter, sectorFilter, sortKey, sortDir])
 
+  function exportCsv(rows: Lead[]) {
+    const cols: Array<{ key: keyof Lead; label: string }> = [
+      { key: 'naam', label: 'Naam' },
+      { key: 'email', label: 'E-mail' },
+      { key: 'bedrijf', label: 'Bedrijf' },
+      { key: 'telefoon', label: 'Telefoon' },
+      { key: 'bron', label: 'Bron' },
+      { key: 'ai_score', label: 'Score' },
+      { key: 'ai_prioriteit', label: 'Prioriteit' },
+      { key: 'ai_sector', label: 'Sector' },
+      { key: 'ai_samenvatting', label: 'Samenvatting' },
+      { key: 'status', label: 'Status' },
+      { key: 'aangemaakt_op', label: 'Aangemaakt op' },
+      { key: 'follow_up_verstuurd', label: 'Follow-up verstuurd' },
+      { key: 'bericht', label: 'Bericht' },
+    ]
+    const escape = (v: unknown) => {
+      const s = v == null ? '' : String(v)
+      return `"${s.replace(/"/g, '""')}"`
+    }
+    const header = cols.map(c => c.label).join(',')
+    const lines = rows.map(row => cols.map(c => escape(row[c.key])).join(','))
+    const csv = [header, ...lines].join('\r\n')
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `leads-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   function Arrow({ k }: { k: SortKey }) {
     if (sortKey !== k) return <span className="ml-1" style={{ color: 'rgba(255,255,255,0.2)' }}>↕</span>
     return <span className="ml-1" style={{ color: '#5B6EF5' }}>{sortDir === 'asc' ? '↑' : '↓'}</span>
@@ -104,6 +136,17 @@ export default function LeadTable({ leads, lastUpdated }: { leads: Lead[]; lastU
         </select>
         <div className="ml-auto flex items-center gap-3 text-xs" style={{ color: '#5A5E82' }}>
           <span>Bijgewerkt: {minutes === 0 ? 'zojuist' : `${minutes} min geleden`}</span>
+          <button
+            onClick={() => exportCsv(filtered)}
+            className="px-3 py-1.5 rounded-lg font-medium transition-colors"
+            style={{
+              background: 'transparent',
+              border: '1px solid rgba(255,255,255,0.08)',
+              color: '#8A8FA8',
+            }}
+          >
+            ↓ Exporteer CSV
+          </button>
           <button
             onClick={() => router.refresh()}
             className="px-3 py-1.5 rounded-lg font-medium transition-colors"
