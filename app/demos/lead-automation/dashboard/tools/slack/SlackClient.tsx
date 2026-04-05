@@ -43,7 +43,7 @@ export default function SlackClient() {
     setTesting(true)
     setTestResult(null)
     try {
-      const r = await fetch('/api/slack-alert', {
+      const r = await fetch('/api/slack-test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -200,6 +200,7 @@ export default function SlackClient() {
           <p className="text-xs font-semibold mb-1" style={{ color: '#5A5E82' }}>n8n HTTP Request node — voeg toe na AI scoring stap:</p>
           <code className="text-xs" style={{ color: '#5B6EF5' }}>
             POST https://runvex.app/api/slack-alert<br />
+            {'Header: x-dashboard-secret: <DASHBOARD_SECRET>'}<br />
             {'Body: { naam, bedrijf, email, ai_prioriteit, ai_score, bericht }'}
           </code>
         </div>

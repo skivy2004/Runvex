@@ -10,10 +10,19 @@ function getSupabase() {
   )
 }
 
+function checkAuth(req: NextRequest): boolean {
+  const secret = req.headers.get('x-dashboard-secret')
+  return !!process.env.DASHBOARD_SECRET && secret === process.env.DASHBOARD_SECRET
+}
+
 // POST /api/slack-alert
 // Called by n8n after lead scoring, or via test button
 // Body: { lead_id?, naam, bedrijf, ai_prioriteit, ai_score, bericht, email }
 export async function POST(req: NextRequest) {
+  if (!checkAuth(req)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const body = await req.json()
 
   const supabase = getSupabase()
