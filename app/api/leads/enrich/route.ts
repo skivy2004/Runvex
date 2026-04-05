@@ -53,7 +53,8 @@ export async function POST(req: NextRequest) {
 
   if (!hunterRes.ok) {
     const text = await hunterRes.text()
-    return NextResponse.json({ error: `Hunter.io fout: ${text}` }, { status: 500 })
+    console.error('[enrich] Hunter.io error:', hunterRes.status, text)
+    return NextResponse.json({ error: 'Verrijking mislukt — probeer het later opnieuw' }, { status: 500 })
   }
 
   const hunterData = await hunterRes.json()
@@ -77,7 +78,10 @@ export async function POST(req: NextRequest) {
     .update({ verrijking })
     .eq('id', leadId)
 
-  if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 })
+  if (updateErr) {
+    console.error('[enrich] Supabase update error:', updateErr)
+    return NextResponse.json({ error: 'Opslaan mislukt — probeer het later opnieuw' }, { status: 500 })
+  }
 
   return NextResponse.json({ ok: true, verrijking })
 }

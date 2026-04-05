@@ -63,7 +63,8 @@ export async function POST(req: NextRequest) {
     })
     if (!res.ok) {
       const text = await res.text()
-      return NextResponse.json({ error: `HubSpot fout: ${text}` }, { status: 500 })
+      console.error('[sync-crm] HubSpot error:', res.status, text)
+      return NextResponse.json({ error: 'CRM synchronisatie mislukt — probeer het later opnieuw' }, { status: 500 })
     }
   } else if (crmType === 'pipedrive') {
     // Pipedrive Person API
@@ -79,7 +80,8 @@ export async function POST(req: NextRequest) {
     })
     if (!res.ok) {
       const text = await res.text()
-      return NextResponse.json({ error: `Pipedrive fout: ${text}` }, { status: 500 })
+      console.error('[sync-crm] Pipedrive error:', res.status, text)
+      return NextResponse.json({ error: 'CRM synchronisatie mislukt — probeer het later opnieuw' }, { status: 500 })
     }
   } else {
     return NextResponse.json({ error: `Onbekend CRM type: ${crmType}` }, { status: 400 })

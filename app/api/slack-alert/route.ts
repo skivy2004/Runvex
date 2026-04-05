@@ -95,7 +95,8 @@ export async function POST(req: NextRequest) {
 
   if (!slackRes.ok) {
     const text = await slackRes.text()
-    return NextResponse.json({ error: `Slack fout: ${text}` }, { status: 500 })
+    console.error('[slack-alert] Slack error:', slackRes.status, text)
+    return NextResponse.json({ error: 'Slack melding mislukt — probeer het later opnieuw' }, { status: 500 })
   }
 
   return NextResponse.json({ success: true, sent: true })

@@ -95,10 +95,12 @@ export async function POST(req: NextRequest) {
     })
     if (!res.ok) {
       const text = await res.text()
-      return NextResponse.json({ error: `E-mail fout: ${text}` }, { status: 500 })
+      console.error('[calendly] Resend error:', res.status, text)
+      return NextResponse.json({ error: 'E-mail verzenden mislukt — probeer het later opnieuw' }, { status: 500 })
     }
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+    console.error('[calendly] Unexpected error:', err)
+    return NextResponse.json({ error: 'Er ging iets mis — probeer het later opnieuw' }, { status: 500 })
   }
 
   // Mark lead as 'uitgenodigd'
@@ -108,7 +110,8 @@ export async function POST(req: NextRequest) {
     .eq('id', leadId)
 
   if (updateErr) {
-    return NextResponse.json({ error: updateErr.message }, { status: 500 })
+    console.error('[calendly] Supabase update error:', updateErr)
+    return NextResponse.json({ error: 'Opslaan mislukt — probeer het later opnieuw' }, { status: 500 })
   }
 
   return NextResponse.json({ ok: true })
