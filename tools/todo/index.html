@@ -254,6 +254,33 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 .auto-runner-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 1.2s infinite; flex-shrink: 0; }
 .auto-runner-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+/* ── Active agent cards (overview) ── */
+.active-agents-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.active-agent-card {
+  background: var(--card); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 8px;
+  cursor: pointer; transition: border-color .15s;
+}
+.active-agent-card:hover { border-color: var(--accent); }
+.active-agent-card.is-running { border-top: 2px solid var(--accent); }
+.aac-header { display: flex; align-items: center; gap: 8px; }
+.aac-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.aac-dot.running { background: var(--amber); animation: pulse 1.2s infinite; }
+.aac-dot.idle    { background: var(--muted2); }
+.aac-name { font-size: 12px; font-weight: 700; flex: 1; }
+.aac-model { font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 4px; }
+.aac-tool {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--muted);
+  background: var(--bg); border-radius: 6px; padding: 5px 8px;
+  min-height: 28px;
+}
+.aac-tool-icon { font-size: 13px; flex-shrink: 0; }
+.aac-tool-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aac-task { font-size: 11px; color: var(--muted2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aac-goto { font-size: 10px; color: var(--accent); text-align: right; opacity: .7; }
+
 .agent-block {
   border-radius: 10px; padding: 12px 14px;
   background: rgba(91,110,245,.06); border: 1px solid rgba(91,110,245,.2);
@@ -770,6 +797,13 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
         </div>
 
         <div style="margin-top:20px">
+          <div class="section-title">Actieve agents</div>
+          <div id="activeAgentsPanel">
+            <div style="color:var(--muted2);font-size:12px;padding:10px 0">Geen agents actief.</div>
+          </div>
+        </div>
+
+        <div style="margin-top:20px">
           <div class="section-title">Recente activiteit</div>
           <div id="recentLog" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;font-family:monospace;font-size:11px;line-height:1.8;color:var(--muted);max-height:180px;overflow-y:auto"></div>
         </div>
@@ -965,6 +999,7 @@ function showView(id, btn) {
   document.getElementById('view-' + id).classList.add('active');
   if (btn) btn.classList.add('active');
   if (id === 'agents') syncAgentStates();
+  if (id === 'overview') { loadOverviewStats(); loadActiveAgents(); }
 
   const titles = { overview:'Overview', tasks:'Tasks', agents:'Agents', memory:'Memory', health:'Health' };
   document.getElementById('topbarTitle').textContent = titles[id] || id;
@@ -997,6 +1032,59 @@ async function loadOverviewStats() {
     document.getElementById('ov-inprog').textContent  = s.in_progress;
     document.getElementById('ov-done').textContent    = s.complete;
     document.getElementById('pendingBadge').textContent = s.pending;
+  } catch(e) {}
+}
+
+const AGENT_COLORS_OV = {
+  frontend:'#3ECF8E', backend:'#5B6EF5', marketing:'#ECB22E',
+  review:'#E8507A', fullstack:'#9B6EF5', orchestrator:'#5B6EF5'
+};
+const MODEL_COLORS_OV = { haiku:'#3ECF8E', sonnet:'#5B6EF5', opus:'#ECB22E' };
+const AGENT_LABELS_OV = {
+  orchestrator:'Orchestrator', frontend:'Frontend', backend:'Backend',
+  marketing:'Marketing', fullstack:'Fullstack', review:'Review'
+};
+
+async function loadActiveAgents() {
+  const panel = document.getElementById('activeAgentsPanel');
+  if (!panel) return;
+  try {
+    const r = await fetch('/api/agent/states');
+    const states = await r.json();
+
+    const active = Object.entries(states).filter(([,s]) => s.status === 'running' || s.status === 'pending');
+
+    if (!active.length) {
+      panel.innerHTML = `<div style="color:var(--muted2);font-size:12px;padding:6px 0">Geen agents actief.</div>`;
+      return;
+    }
+
+    panel.innerHTML = `<div class="active-agents-grid">${active.map(([type, s]) => {
+      const color  = AGENT_COLORS_OV[type] || '#5B6EF5';
+      const mcolor = s.model ? (MODEL_COLORS_OV[s.model] || '#5B6EF5') : null;
+      const log    = s.live_log || [];
+      const latest = log.length ? log[log.length - 1] : null;
+      const prompt = s.prompt ? s.prompt.slice(0, 80) + (s.prompt.length > 80 ? '…' : '') : '';
+
+      const toolHtml = latest
+        ? `<span class="aac-tool-icon">${latest.icon || '⚙️'}</span>
+           <span class="aac-tool-label" style="color:${latest.color||'var(--muted)'}">
+             ${esc(latest.tool || '')}${latest.label ? ' · ' + esc(latest.label) : ''}
+           </span>`
+        : `<span class="aac-tool-label">Bezig…</span>`;
+
+      return `<div class="active-agent-card is-running" onclick="showView('agents')" style="border-top-color:${color}">
+        <div class="aac-header">
+          <div class="aac-dot running"></div>
+          <span class="aac-name" style="color:${color}">${AGENT_LABELS_OV[type] || type}</span>
+          ${mcolor ? `<span class="aac-model" style="background:${mcolor}22;color:${mcolor}">${esc(s.model)}</span>` : ''}
+          <span style="font-size:10px;color:var(--muted2);margin-left:auto">${s.status}</span>
+        </div>
+        <div class="aac-tool">${toolHtml}</div>
+        ${prompt ? `<div class="aac-task" title="${esc(s.prompt||'')}">${esc(prompt)}</div>` : ''}
+        <div class="aac-goto">Bekijk in Agents →</div>
+      </div>`;
+    }).join('')}</div>`;
   } catch(e) {}
 }
 
@@ -1885,7 +1973,9 @@ setInterval(loadLog, 5000);
 setInterval(loadOverviewStats, 15000);
 setInterval(loadRecentLog, 15000);
 setInterval(pollAutoRunner, 5000);
+setInterval(loadActiveAgents, 3000);
 pollAutoRunner();
+loadActiveAgents();
 </script>
 </body>
 </html>
