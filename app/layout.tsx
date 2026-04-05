@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Bricolage_Grotesque, DM_Sans } from 'next/font/google'
+import { headers } from 'next/headers'
 import './globals.css'
 import CookieBanner from './components/CookieBanner'
 import CrispChat from './components/CrispChat'
@@ -41,11 +42,13 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const nonce = (await headers()).get('x-nonce') ?? undefined
+  void nonce // available for Script components: <Script nonce={nonce} ... />
   return (
     <html lang="nl" className={`${bricolage.variable} ${dmSans.variable}`}>
       <body style={{ fontFamily: 'var(--font-dm-sans)' }}>
