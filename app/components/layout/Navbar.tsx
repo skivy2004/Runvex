@@ -54,22 +54,14 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center"
-              style={{
-                background: 'linear-gradient(135deg, var(--purple), var(--purple-2))',
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path
-                  d="M4 3h4.5a3.5 3.5 0 0 1 0 7H7l4 3M4 3v10"
-                  stroke="white"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
+            <img
+              src="/logo.png"
+              alt="Runvex"
+              width={32}
+              height={32}
+              className="w-8 h-8 rounded-lg"
+              style={{ objectFit: 'contain' }}
+            />
             <span
               className="font-bricolage text-base font-semibold text-white"
               style={{ letterSpacing: '-0.01em' }}
