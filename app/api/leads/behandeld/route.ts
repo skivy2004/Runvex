@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { rateLimit, getIp, tooManyRequests } from '@/app/lib/rate-limit'
-
-function checkDashboardSecret(req: NextRequest): boolean {
-  const secret = req.headers.get('x-dashboard-secret')
-  return !!process.env.DASHBOARD_SECRET && secret === process.env.DASHBOARD_SECRET
-}
+import { checkDashboardSecret } from '@/app/lib/auth'
 
 export async function POST(req: NextRequest) {
   if (!await rateLimit(`behandeld:${getIp(req)}`, 30, 60 * 1000)) return tooManyRequests()

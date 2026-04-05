@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { checkDashboardSecret } from '@/app/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,8 +12,7 @@ function getSupabase() {
 }
 
 function checkAuth(req: NextRequest): boolean {
-  const secret = req.headers.get('x-dashboard-secret')
-  return !!process.env.DASHBOARD_SECRET && secret === process.env.DASHBOARD_SECRET
+  return checkDashboardSecret(req)
 }
 
 // POST /api/slack-alert

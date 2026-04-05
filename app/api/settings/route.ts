@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { checkReportSecret } from '@/app/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,8 +12,7 @@ function getSupabase() {
 }
 
 function isAuthorized(req: NextRequest): boolean {
-  const secret = req.headers.get('x-report-secret')
-  return !!secret && secret === process.env.REPORT_SECRET
+  return checkReportSecret(req)
 }
 
 export async function GET(req: NextRequest) {
