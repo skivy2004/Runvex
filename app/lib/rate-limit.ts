@@ -2,14 +2,25 @@
  * In-memory sliding window rate limiter.
  * Works per warm serverless instance only — not shared across Vercel instances.
  *
- * TODO: upgrade to Upstash Redis when scaling beyond a single instance:
+ * TODO: upgrade to Upstash Redis for cross-instance rate limiting when scaling:
  *   1. npm install @upstash/ratelimit @upstash/redis
- *   2. Add UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN to .env + Vercel
+ *   2. Add the following env vars to .env and Vercel dashboard:
+ *        UPSTASH_REDIS_URL=https://<your-db>.upstash.io
+ *        UPSTASH_REDIS_TOKEN=<your-token>
+ *      (Also accepted by @upstash/redis: UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN)
  *   3. Replace this file with:
- *      import { Ratelimit } from '@upstash/ratelimit'
- *      import { Redis } from '@upstash/redis'
- *      const ratelimit = new Ratelimit({ redis: Redis.fromEnv(), limiter: Ratelimit.slidingWindow(10, '1 m') })
- *      export async function rateLimit(key: string) { return (await ratelimit.limit(key)).success }
+ *        import { Ratelimit } from '@upstash/ratelimit'
+ *        import { Redis } from '@upstash/redis'
+ *        const redis = new Redis({
+ *          url: process.env.UPSTASH_REDIS_URL!,
+ *          token: process.env.UPSTASH_REDIS_TOKEN!,
+ *        })
+ *        const ratelimit = new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10, '1 m') })
+ *        export async function rateLimit(key: string, limit: number, windowMs: number) {
+ *          return (await ratelimit.limit(key)).success
+ *        }
+ *
+ * UPSTASH_REDIS_URL and UPSTASH_REDIS_TOKEN are currently NOT set — using in-memory fallback.
  */
 
 const store = new Map<string, number[]>()
