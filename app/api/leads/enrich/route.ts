@@ -40,9 +40,15 @@ export async function POST(req: NextRequest) {
   if (!domain) return NextResponse.json({ error: 'Ongeldig e-mailadres' }, { status: 400 })
 
   // Call Hunter.io company enrichment API
+  // API key via Basic Auth header (not query string) to avoid leaking in server/proxy logs
   const hunterRes = await fetch(
-    `https://api.hunter.io/v2/domain-search?domain=${encodeURIComponent(domain)}&api_key=${encodeURIComponent(apiKey)}&limit=1`,
-    { next: { revalidate: 0 } }
+    `https://api.hunter.io/v2/domain-search?domain=${encodeURIComponent(domain)}&limit=1`,
+    {
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${apiKey}:`).toString('base64')}`,
+      },
+      next: { revalidate: 0 },
+    }
   )
 
   if (!hunterRes.ok) {
