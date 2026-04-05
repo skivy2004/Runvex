@@ -36,6 +36,22 @@ function IconBolt() {
     </svg>
   )
 }
+function IconSearch() {
+  return (
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    </svg>
+  )
+}
+function IconCalendar() {
+  return (
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+  )
+}
 function IconSlack() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -75,6 +91,11 @@ const SECTIONS = [
       { label: 'AI Insights', href: '/demos/lead-automation/dashboard', icon: <IconSparkle />, badge: '2' },
       { label: 'Automatisering', href: '/demos/lead-automation/dashboard', icon: <IconBolt /> },
       { label: 'Slack Alerts', href: '/demos/lead-automation/dashboard/tools/slack', icon: <IconSlack /> },
+      { label: 'Calendly', href: '/demos/lead-automation/dashboard/tools/calendly', icon: <IconCalendar /> },
+      { label: 'Hunter.io', href: '/demos/lead-automation/dashboard/tools/hunter', icon: <IconSearch /> },
+      { label: 'Campagnes', href: '/demos/lead-automation/dashboard/campagnes', icon: <IconMail /> },
+      { label: 'LinkedIn Content', href: '/demos/lead-automation/dashboard/content', icon: <IconBolt /> },
+      { label: 'CRM Integratie', href: '/demos/lead-automation/dashboard/tools/crm', icon: <IconGrid /> },
     ],
   },
   {

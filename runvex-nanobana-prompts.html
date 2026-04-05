@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Runvex × Nano Banana — Video Prompts</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #07071A;
+      color: #e2e2f0;
+      font-family: 'DM Sans', system-ui, sans-serif;
+      padding: 48px 24px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+    header h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 0%, #5B4FE8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+    }
+    header p {
+      color: #8B8FB3;
+      font-size: 1rem;
+    }
+    .scene {
+      background: #0C0C28;
+      border: 1px solid #1e1e45;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 40px;
+    }
+    .scene-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px 24px;
+      border-bottom: 1px solid #1e1e45;
+      background: #111130;
+    }
+    .scene-num {
+      background: #5B4FE8;
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.85rem;
+      padding: 4px 12px;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+    .scene-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .scene-duration {
+      margin-left: auto;
+      font-size: 0.8rem;
+      color: #8B8FB3;
+      background: #1a1a3a;
+      padding: 4px 10px;
+      border-radius: 8px;
+    }
+    .scene-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+    }
+    .scene-screenshot {
+      background: #050515;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      border-right: 1px solid #1e1e45;
+      min-height: 220px;
+      position: relative;
+    }
+    .scene-screenshot .ref-label {
+      font-size: 0.7rem;
+      color: #5B4FE8;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+      flex-shrink: 0;
+    }
+    .scene-screenshot .ref-url {
+      font-size: 0.72rem;
+      color: #8B8FB3;
+      margin-top: 8px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .scene-screenshot .ref-url a {
+      color: #5B4FE8;
+      text-decoration: none;
+    }
+
+    /* ── Live iframe embed ── */
+    .site-frame {
+      flex: 1;
+      position: relative;
+      width: 100%;
+      min-height: 240px;
+      overflow: hidden;
+      border-radius: 8px;
+      border: 1px solid #2a2a50;
+      background: #07071A;
+    }
+    .site-frame iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1512px;
+      height: 9000px;
+      border: none;
+      pointer-events: none;
+      transform-origin: 0 0;
+      /* transform is set via JS or inline style per scene */
+    }
+    .site-frame .frame-badge {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: rgba(91, 79, 232, 0.92);
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      z-index: 10;
+      pointer-events: none;
+      backdrop-filter: blur(4px);
+    }
+
+    /* Conceptual scenes (no screenshot) */
+    .no-screenshot {
+      background: #050515;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      border-right: 1px solid #1e1e45;
+      min-height: 220px;
+      color: #3a3a6a;
+      text-align: center;
+      font-size: 0.85rem;
+    }
+    .no-screenshot .icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .no-screenshot .note { font-size: 0.75rem; color: #5a5a8a; margin-top: 8px; }
+
+    /* Logo card for scene 8 */
+    .logo-card {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      border-radius: 8px;
+      border: 1px solid #2a2a50;
+      background: #07071A;
+      padding: 24px;
+      min-height: 240px;
+    }
+
+    .scene-prompt {
+      padding: 24px;
+    }
+    .scene-prompt label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #5B4FE8;
+      display: block;
+      margin-bottom: 10px;
+    }
+    .prompt-box {
+      background: #07071A;
+      border: 1px solid #1e1e45;
+      border-radius: 10px;
+      padding: 16px;
+      font-size: 0.88rem;
+      line-height: 1.7;
+      color: #c8c8e8;
+      white-space: pre-wrap;
+      font-family: 'DM Sans', system-ui;
+    }
+    .tip {
+      margin-top: 12px;
+      font-size: 0.75rem;
+      color: #5B4FE8;
+      background: #1a1040;
+      border: 1px solid #2a1e6a;
+      border-radius: 8px;
+      padding: 8px 12px;
+    }
+    footer {
+      text-align: center;
+      margin-top: 60px;
+      color: #3a3a6a;
+      font-size: 0.8rem;
+    }
+    @media (max-width: 680px) {
+      .scene-body { grid-template-columns: 1fr; }
+      .scene-screenshot { border-right: none; border-bottom: 1px solid #1e1e45; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Runvex × Nano Banana</h1>
+  <p>8 scènes · Live screenshots van runvex.app + prompts · Gebruik image-to-video voor elk frame</p>
+</header>
+
+<!-- SCENE 1 -->
+<div class="scene">
+  <div class="scene-header">
+    <span class="scene-num">Scène 1</span>
+    <span class="scene-title">Het probleem — de overvolle inbox</span>
+    <span class="scene-duration">0:00 – 0:10</span>
+  </div>
+  <div class="scene-body">
+    <div class="no-screenshot">
+      <div class="icon">📸</div>
+      <strong>Conceptuele scène</strong>
+      <div class="note">Geen sitescreen nodig.<br>Gebruik een eigen foto of stockfoto<br>van een drukke ondernemer achter laptop.</div>
+    </div>
+    <div class="scene-prompt">
+      <label>Nano Banana Prompt</label>
+      <div class="prompt-box">Cinematic close-up of a man's hands scrolling endlessly through an overflowing email inbox on a laptop screen at night. The room is dark. The screen light illuminates his tired face. Emails pile up faster than he can read them. Slow dolly-in camera movement. Shallow depth of field. Cool desaturated color grading. Moody, stressed atmosphere. 4K cinematic quality.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SCENE 2 -->
+<div class="scene">
+  <div class="scene-header">
+    <span class="scene-num">Scène 2</span>
+    <span class="scene-title">Lead vult het formulier in</span>
+    <span class="scene-duration">0:10 – 0:20</span>
+  </div>
+  <div class="scene-body">
+    <div class="scene-screenshot">
+      <div class="ref-label">📌 Live referentie — Stap 01</div>
+      <div class="site-frame" data-scroll="2400">
+        <iframe src="https://www.runvex.app/" loading="lazy" scrolling="no" title="Runvex – Stap 01 formulier"></iframe>
+        <div class="frame-badge">Stap 01 · Formulier</div>
+      </div>
+      <div class="ref-url"><a href="https://www.runvex.app/#hoe-het-werkt" target="_blank">↗ runvex.app → "Hoe het werkt" → Stap 01</a></div>
+    </div>
+    <div class="scene-prompt">
+      <label>Nano Banana Prompt</label>
+      <div class="prompt-box">Macro close-up of a sleek dark laptop keyboard. A glowing purple-blue contact form appears on screen with fields: Naam, Email, Bericht. Hands type a message. As they press the "Verzenden" button, bright violet light particles burst upward like data packets flying into the air. Cinematic slow motion. Dark background. Neon purple accent light. Futuristic tech aesthetic. 4K.</div>
+      <div class="tip">💡 Screenshot de "Stap 01" kaart (linker kolom in de live preview links) als input voor Nano Banana image-to-video.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SCENE 3 -->
+<div class="scene">
+  <div class="scene-header">
+    <span class="scene-num">Scène 3</span>
+    <span class="scene-title">Claude AI analyseert de lead</span>
+    <span class="scene-duration">0:20 – 0:32</span>
+  </div>
+  <div class="scene-body">
+    <div class="scene-screenshot">
+      <div class="ref-label">📌 Live referentie — Stap 02</div>
+      <div class="site-frame" data-scroll="2560">
+        <iframe src="https://www.runvex.app/" loading="lazy" scrolling="no" title="Runvex – Stap 02 AI score"></iframe>
+        <div class="frame-badge">Stap 02 · AI Score</div>
+      </div>
+      <div class="ref-url"><a href="https://www.runvex.app/#hoe-het-werkt" target="_blank">↗ runvex.app → "Hoe het werkt" → Stap 02</a></div>
+    </div>
+    <div class="scene-prompt">
+      <label>Nano Banana Prompt</label>
+      <div class="prompt-box">Abstract cinematic visualization of AI processing data. Glowing neural network lines pulse in deep purple and electric blue on a near-black background. A lead profile card materializes — name "Jan de Vries", company, message — as glowing text. A score badge "9/10" appears with a bright violet flash. Smooth floating camera movement. Dark tech aesthetic. No humans. Futuristic, clean, 4K cinematic.</div>
+      <div class="tip">💡 Screenshot de "Jan de Vries 9/10" kaart (middelste kolom, Stap 02) en gebruik die als image input in Nano Banana.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SCENE 4 -->
+<div class="scene">
+  <div class="scene-header">
+    <span class="scene-num">Scène 4</span>
+    <span class="scene-title">Score verschijnt in het dashboard</span>
+    <span class="scene-duration">0:32 – 0:42</span>
+  </div>
+  <div class="scene-body">
+    <div class="scene-screenshot">
+      <div class="ref-label">📌 Live referentie — Lead Dashboard</div>
+      <div class="site-frame" data-scroll="560">
+        <iframe src="https://www.runvex.app/" loading="lazy" scrolling="no" title="Runvex – Lead Dashboard"></iframe>
+        <div class="frame-badge">Lead Dashboard</div>
+      </div>
+      <div class="ref-url"><a href="https://www.runvex.app/" target="_blank">↗ runvex.app → scroll 1× naar beneden</a></div>
+    </div>
+    <div class="scene-prompt">
+      <label>Nano Banana Prompt</label>
+      <div class="prompt-box">Close-up screen recording style shot of a dark SaaS dashboard UI. Rows of leads appear one by one, each with a colored priority score badge — purple 9, orange 7, green 4. The list auto-sorts itself by priority. Purple and blue accent colors. Clean modern sans-serif fonts. Smooth animation. Dark background #0a0a1a. Cinematic color grading. 4K.</div>
+      <div class="tip">💡 Screenshot het Lead Dashboard (live preview links) als referentie voor de UI stijl en kleur.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SCENE 5 -->
+<div class="scene">
+  <div class="scene-header">
+    <span class="scene-num">Scène 5</span>
+    <span class="scene-title">E-mail schrijft zichzelf automatisch</span>
+    <span class="scene-duration">0:42 – 0:52</span>
+  </div>
+  <div class="scene-body">
+    <div class="scene-screenshot">
+      <div class="ref-label">📌 Live referentie — Stap 03</div>
+      <div class="site-frame" data-scroll="2700">
+        <iframe src="https://www.runvex.app/" loading="lazy" scrolling="no" title="Runvex – Stap 03 e-mail"></iframe>
+        <div class="frame-badge">Stap 03 · E-mail</div>
+      </div>
+      <div class="ref-url"><a href="https://www.runvex.app/#hoe-het-werkt" target="_blank">↗ runvex.app → "Hoe het werkt" → Stap 03</a></div>
+    </div>
+    <div class="scene-prompt">
+      <label>Nano Banana Prompt</label>
+      <div class="prompt-box">Close-up of a dark email client interface on screen. Text types itself automatically at high speed — personalized Dutch business email starting with "Hoi Jan, bedankt voor je interesse in Runvex!". No hands visible. The cursor blinks and moves on its own. A glowing purple send button pulses and is clicked. "Verzonden" appears with a soft violet flash. Dark mode UI. Cinematic tech aesthetic. 4K.</div>
+      <div class="tip">💡 Screenshot de e-mail mockup (rechter kolom, Stap 03) als referentie voor de e-mail stijl.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SCENE 6 -->
+<div class="scene">
+  <div class="scene-header">
+    <span class="scene-num">Scène 6</span>
+    <span class="scene-title">De ondernemer wint — vrijheid</span>
+    <span class="scene-duration">0:52 – 1:02</span>
+  </div>
+  <div class="scene-body">
+    <div class="no-screenshot">
+      <div class="icon">📸</div>
+      <strong>Eigen footage of stockvideo</strong>
+      <div class="note">Geen directe siterefentie.<br>Gebruik een foto van jezelf of<br>een Dutch-looking entrepreneur.</div>
+    </div>
+    <div class="scene-prompt">
+      <label>Nano Banana Prompt</label>
+      <div class="prompt-box">Medium shot of a confident young Dutch entrepreneur sitting at a modern minimal desk. He leans back in his chair with a relaxed smile, hands behind his head. His laptop shows a clean dark dashboard. Sunlight streams through large windows behind him. Warm light contrasting with cool blue screen glow. Shallow depth of field. Aspirational lifestyle, successful mood. Cinematic 4K.</div>
+      <div class="tip">💡 Gebruik een foto van jezelf als input voor Nano Banana image-to-video voor een persoonlijk effect.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SCENE 7 -->
+<div class="scene">
+  <div class="scene-header">
+    <span class="scene-num">Scène 7</span>
+    <span class="scene-title">Statistieken vliegen in beeld</span>
+    <span class="scene-duration">1:02 – 1:12</span>
+  </div>
+  <div class="scene-body">
+    <div class="scene-screenshot">
+      <div class="ref-label">📌 Live referentie — Stats sectie</div>
+      <div class="site-frame" data-scroll="1140">
+        <iframe src="https://www.runvex.app/" loading="lazy" scrolling="no" title="Runvex – Stats sectie"></iframe>
+        <div class="frame-badge">500+ · 94% · &lt;10 min</div>
+      </div>
+      <div class="ref-url"><a href="https://www.runvex.app/" target="_blank">↗ runvex.app → stats sectie (scroll 2× omlaag)</a></div>
+    </div>
+    <div class="scene-prompt">
+      <label>Nano Banana Prompt</label>
+      <div class="prompt-box">Cinematic motion graphics style. Deep dark background #07071A. Three large bold white numbers count upward with glowing animation: "500+ Leads verwerkt", "94% AI accuraatheid", "< 10 min Setup". Each number pulses with a purple halo as it appears. Clean bold sans-serif typography. Subtle floating particle effects. Modern SaaS brand aesthetic. No humans. 4K cinematic.</div>
+      <div class="tip">💡 Screenshot de "500+ · 94% · &lt;10 min" sectie (live links) als stijlreferentie voor lettertypes en kleur.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SCENE 8 -->
+<div class="scene">
+  <div class="scene-header">
+    <span class="scene-num">Scène 8</span>
+    <span class="scene-title">Logo eindshot — branding</span>
+    <span class="scene-duration">1:12 – 1:20</span>
+  </div>
+  <div class="scene-body">
+    <div class="scene-screenshot">
+      <div class="ref-label">📌 Live referentie — Hero + Logo</div>
+      <div class="site-frame" data-scroll="0">
+        <iframe src="https://www.runvex.app/" loading="lazy" scrolling="no" title="Runvex – Hero"></iframe>
+        <div class="frame-badge">Hero · Logo</div>
+      </div>
+      <div class="ref-url"><a href="https://www.runvex.app/" target="_blank">↗ runvex.app — logo links in de navbar</a></div>
+    </div>
+    <div class="scene-prompt">
+      <label>Nano Banana Prompt</label>
+      <div class="prompt-box">Cinematic end card on a deep dark background #07071A. A glowing purple square logo icon with letter "R" fades in at center screen. Below it, the word "runvex" appears in clean bold white sans-serif. A soft purple light radiates outward from behind the logo. Slow zoom out. Elegant, minimal, premium tech brand feeling. 4K cinematic. Hold 3 seconds.</div>
+      <div class="tip">💡 Screenshot het "R runvex" logo uit de navbar (live preview links) als stijlreferentie voor het eindshot.</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>Runvex × Nano Banana Video Guide · Gemaakt met Claude · runvex.app</p>
+  <p style="margin-top:8px; font-size:0.75rem;">Gebruik image-to-video in Nano Banana voor elke scène. Combineer in CapCut of DaVinci Resolve.</p>
+</footer>
+
+<script>
+// Scale each iframe to fit its container, offset to the correct section
+(function applyFrameTransforms() {
+  var frames = document.querySelectorAll('.site-frame');
+  frames.forEach(function(container) {
+    var iframe = container.querySelector('iframe');
+    if (!iframe) return;
+    var scrollY = parseInt(container.getAttribute('data-scroll') || '0', 10);
+    var containerW = container.offsetWidth || 430;
+    var scale = containerW / 1512;
+    iframe.style.transform = 'scale(' + scale.toFixed(4) + ') translateY(-' + scrollY + 'px)';
+    // Set the container height to give a good aspect ratio
+    container.style.height = Math.round(containerW * 0.65) + 'px';
+  });
+}());
+
+// Re-apply on resize
+window.addEventListener('resize', function() {
+  var frames = document.querySelectorAll('.site-frame');
+  frames.forEach(function(container) {
+    var iframe = container.querySelector('iframe');
+    if (!iframe) return;
+    var scrollY = parseInt(container.getAttribute('data-scroll') || '0', 10);
+    var containerW = container.offsetWidth || 430;
+    var scale = containerW / 1512;
+    iframe.style.transform = 'scale(' + scale.toFixed(4) + ') translateY(-' + scrollY + 'px)';
+    container.style.height = Math.round(containerW * 0.65) + 'px';
+  });
+});
+</script>
+
+</body>
+</html>

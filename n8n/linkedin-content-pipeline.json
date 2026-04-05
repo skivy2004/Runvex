@@ -1,0 +1,172 @@
+{
+  "name": "LinkedIn Content Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7 * * 1,4"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule — ma+do 07:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/apify~linkedin-posts-scraper/run-sync-get-dataset-items",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "={{ $env.APIFY_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={{ JSON.stringify({ queries: ['AI automatisering lead generatie MKB', 'sales automation Nederland', 'B2B leads CRM automatisering'], resultsPerPage: 10, maxResults: 50 }) }}"
+      },
+      "id": "apify-scraper",
+      "name": "Apify — LinkedIn Posts Scraper",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "filter-likes",
+              "leftValue": "={{ $json.likes }}",
+              "rightValue": 50,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "filter-comments",
+              "leftValue": "={{ $json.numComments }}",
+              "rightValue": 5,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "filter-engagement",
+      "name": "Filter — ≥50 likes & ≥5 reacties",
+      "type": "n8n-nodes-base.filter",
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "operation": "message",
+        "modelId": {
+          "__rl": true,
+          "value": "claude-haiku-4-5-20251001",
+          "mode": "id"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Analyseer deze LinkedIn post en extraheer:\n1. Hook-stijl (vraag / statement / cijfer / statistiek)\n2. Hoofdonderwerp (max 3 woorden)\n3. Structuur (welk probleem → welke oplossing → welke CTA)\n4. Tone of voice (formeel / informeel / urgent / inspirerend)\n5. Wat maakt deze post succesvol?\n\nPost:\n{{ $json.text }}\n\nGeef je antwoord als JSON: { hook_stijl, onderwerp, structuur, tone, succes_factor }"
+            }
+          ]
+        },
+        "options": {
+          "maxTokensToSample": 400
+        }
+      },
+      "id": "claude-analyse",
+      "name": "Claude — Analyseer post-patronen",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "operation": "message",
+        "modelId": {
+          "__rl": true,
+          "value": "claude-haiku-4-5-20251001",
+          "mode": "id"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "={{ $('Schedule — ma+do 07:00').first().json }} Je bent een ghostwriter voor Runvex — een AI tool die lead-opvolging automatiseert voor MKB-eigenaren in Nederland.\n\nGebaseerd op dit succespatroon:\n- Hook-stijl: {{ $json.hook_stijl }}\n- Onderwerp: {{ $json.onderwerp }}\n- Succes-factor: {{ $json.succes_factor }}\n\nSchrijf 3 ORIGINELE Nederlandse LinkedIn posts voor Runvex. Volg dit format:\n\n[POST 1]\n<tekst>\n\n[POST 2]\n<tekst>\n\n[POST 3]\n<tekst>\n\nRegels:\n- Max 1300 tekens per post\n- Doelgroep: MKB-eigenaren die leads mislopen\n- Pijnpunt: trage lead-opvolging\n- Eindigt altijd met een open vraag\n- Max 3 hashtags onderaan\n- Geen AI-jargon of buzzwords"
+            }
+          ]
+        },
+        "options": {
+          "maxTokensToSample": 1500
+        }
+      },
+      "id": "claude-genereer",
+      "name": "Claude — Genereer 3 LinkedIn posts",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = $input.first().json.text || $input.first().json.content || '';\nconst posts = [];\nconst matches = output.match(/\\[POST \\d+\\]\\n([\\s\\S]*?)(?=\\n\\[POST \\d+\\]|$)/g);\n\nif (matches) {\n  for (const match of matches) {\n    const tekst = match.replace(/\\[POST \\d+\\]\\n/, '').trim();\n    if (tekst.length > 50) {\n      posts.push({ tekst });\n    }\n  }\n}\n\nreturn posts.map(p => ({ json: p }));"
+      },
+      "id": "parse-posts",
+      "name": "Parse — Split posts",
+      "type": "n8n-nodes-base.code",
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://runvex.app/api/linkedin-drafts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={{ JSON.stringify({ draft_tekst: $json.tekst, gebaseerd_op_url: $('Apify — LinkedIn Posts Scraper').first().json.url || null, gebaseerd_op_likes: $('Apify — LinkedIn Posts Scraper').first().json.likes || null, status: 'concept' }) }}"
+      },
+      "id": "save-draft",
+      "name": "Runvex — Sla draft op",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1560, 300]
+    }
+  ],
+  "connections": {
+    "Schedule — ma+do 07:00": { "main": [[{ "node": "Apify — LinkedIn Posts Scraper", "type": "main", "index": 0 }]] },
+    "Apify — LinkedIn Posts Scraper": { "main": [[{ "node": "Filter — ≥50 likes & ≥5 reacties", "type": "main", "index": 0 }]] },
+    "Filter — ≥50 likes & ≥5 reacties": { "main": [[{ "node": "Claude — Analyseer post-patronen", "type": "main", "index": 0 }]] },
+    "Claude — Analyseer post-patronen": { "main": [[{ "node": "Claude — Genereer 3 LinkedIn posts", "type": "main", "index": 0 }]] },
+    "Claude — Genereer 3 LinkedIn posts": { "main": [[{ "node": "Parse — Split posts", "type": "main", "index": 0 }]] },
+    "Parse — Split posts": { "main": [[{ "node": "Runvex — Sla draft op", "type": "main", "index": 0 }]] }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "_notes": "Importeer dit JSON in n8n via: Workflows → Import from file. Vergeet niet de Anthropic API credentials in te stellen en APIFY_API_KEY als environment variabele."
+}

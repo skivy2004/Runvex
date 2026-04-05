@@ -1,0 +1,56 @@
+{
+  "_comment": "Apify actor: apify/linkedin-post-search-scraper of apify/linkedin-posts-scraper",
+  "_usage": "Importeer dit als input JSON in de Apify actor UI of gebruik via API: POST https://api.apify.com/v2/acts/apify~linkedin-posts-scraper/runs?token=YOUR_TOKEN",
+
+  "searchTerms": [
+    "AI automatisering",
+    "lead generatie",
+    "MKB groei",
+    "sales automation",
+    "B2B leads Nederland",
+    "Claude AI",
+    "leadopvolging",
+    "CRM automatisering"
+  ],
+
+  "targetProfiles": [
+    "https://www.linkedin.com/in/baswouters/",
+    "https://www.linkedin.com/in/rubenrooijakkers/",
+    "https://www.linkedin.com/in/stefanrozendaal/"
+  ],
+
+  "filters": {
+    "minLikes": 50,
+    "maxAgeDays": 7,
+    "language": "nl",
+    "maxPostsPerRun": 50
+  },
+
+  "outputFields": [
+    "auteur",
+    "auteur_url",
+    "tekst",
+    "likes",
+    "reacties",
+    "shares",
+    "datum",
+    "hashtags",
+    "post_url"
+  ],
+
+  "apifyActorInput": {
+    "queries": [
+      "AI automatisering site:linkedin.com",
+      "lead generatie MKB site:linkedin.com",
+      "sales automation Nederland site:linkedin.com"
+    ],
+    "resultsPerPage": 10,
+    "maxResults": 50,
+    "proxyConfiguration": {
+      "useApifyProxy": true,
+      "apifyProxyGroups": ["RESIDENTIAL"]
+    }
+  },
+
+  "n8nNotes": "Gebruik dit als reference voor de HTTP Request node in n8n die de Apify API aanroept. Stel de API token in als environment variabele APIFY_API_KEY. De actor ID voor LinkedIn post scraping is: apify/linkedin-posts-scraper"
+}
