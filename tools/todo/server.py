@@ -191,11 +191,14 @@ def build_prompt(agent_type, instruction):
         '# TAKENBEHEER\n'
         f'Openstaande taken in het systeem:\n{task_list}\n\n'
         'Je kunt taken beheren via curl naar http://localhost:7001:\n'
-        '  Starten:   curl -s -X PUT http://localhost:7001/api/tasks/TASK_ID -H \'Content-Type: application/json\' -d \'{"status":"in_progress"}\'\n'
-        '  Afronden:  curl -s -X PUT http://localhost:7001/api/tasks/TASK_ID -H \'Content-Type: application/json\' -d \'{"status":"complete","work_log":"wat je gedaan hebt"}\'\n'
-        '  Mislukt:   curl -s -X PUT http://localhost:7001/api/tasks/TASK_ID -H \'Content-Type: application/json\' -d \'{"status":"failed","work_log":"reden"}\'\n\n'
+        '  Starten:      curl -s -X PUT http://localhost:7001/api/tasks/TASK_ID -H \'Content-Type: application/json\' -d \'{"status":"in_progress"}\'\n'
+        '  Afronden:     curl -s -X PUT http://localhost:7001/api/tasks/TASK_ID -H \'Content-Type: application/json\' -d \'{"status":"complete","work_log":"wat je gedaan hebt"}\'\n'
+        '  Mislukt:      curl -s -X PUT http://localhost:7001/api/tasks/TASK_ID -H \'Content-Type: application/json\' -d \'{"status":"failed","work_log":"reden"}\'\n'
+        '  Mens vereist: curl -s -X PUT http://localhost:7001/api/tasks/TASK_ID -H \'Content-Type: application/json\' -d \'{"status":"needs_human","work_log":"waarom Jeremy dit zelf moet doen"}\'\n\n'
+        'Gebruik "needs_human" als de taak echte credentials vereist, inloggen op externe services, '
+        'of handmatige browser-acties die buiten jouw bereik liggen.\n'
         'Als de opdracht een specifieke taak-id vermeldt: markeer die taak als in_progress zodra je begint '
-        'en als complete (of failed) zodra je klaar bent.'
+        'en als complete (of failed of needs_human) zodra je klaar bent.'
     )
 
     # 7. Memory update instruction
@@ -476,6 +479,96 @@ def run_agent_bg(job_id, agent_type, instruction, uploaded_files=None):
     log_event(f"AGENT    [{agent_type}] {AGENT_JOBS[job_id]['status']} — {instruction[:50]}")
 
 
+# ── Auto task runner ──────────────────────────────────────────────────────────
+
+AUTO_RUNNER_STATUS = {'running': False, 'current_task_id': None, 'current_task_title': None}
+
+def auto_task_runner():
+    """Background thread: auto-execute pending agent_runnable tasks, one at a time."""
+    import time
+    time.sleep(15)  # wait for server to boot
+    while True:
+        try:
+            tasks = load_tasks()
+            runnable = sorted(
+                [t for t in tasks
+                 if t.get('agent_runnable') and not t.get('human_only')
+                 and t['status'] == 'pending'],
+                key=lambda t: (t.get('priority', 3), t.get('created', ''))
+            )
+            if runnable:
+                task   = runnable[0]
+                agent  = task.get('suggested_agent', 'fullstack')
+
+                # Only run if the chosen agent is free
+                existing_id  = LATEST_JOB_BY_AGENT.get(agent)
+                existing_job = AGENT_JOBS.get(existing_id) if existing_id else None
+                if existing_job and existing_job.get('status') in ('pending', 'running'):
+                    time.sleep(30)
+                    continue
+
+                # Mark in_progress immediately so we don't double-pick
+                fresh_tasks = load_tasks()
+                for t2 in fresh_tasks:
+                    if t2['id'] == task['id']:
+                        t2['status']  = 'in_progress'
+                        t2['updated'] = now_iso()
+                        break
+                save_tasks(fresh_tasks)
+
+                AUTO_RUNNER_STATUS['running']           = True
+                AUTO_RUNNER_STATUS['current_task_id']   = task['id']
+                AUTO_RUNNER_STATUS['current_task_title'] = task['title']
+
+                instruction = (
+                    f"Voer automatisch de volgende taak uit.\n\n"
+                    f"Taak ID: {task['id']}\n"
+                    f"Prioriteit: P{task.get('priority', 3)}\n"
+                    f"Titel: {task['title']}\n"
+                    f"Beschrijving: {task.get('description', '(geen beschrijving)')}\n\n"
+                    f"Stappen:\n"
+                    f"1. Begin direct met uitvoeren — geen bevestiging nodig.\n"
+                    f"2. Als je klaar bent:\n"
+                    f"   curl -s -X PUT http://localhost:7001/api/tasks/{task['id']} "
+                    f"-H 'Content-Type: application/json' "
+                    f"-d '{{\"status\":\"complete\",\"work_log\":\"kort wat je gedaan hebt\"}}'\n"
+                    f"3. Als je het NIET kunt uitvoeren (extern systeem, browser vereist, echte credentials, "
+                    f"handmatige stappen buiten de codebase):\n"
+                    f"   curl -s -X PUT http://localhost:7001/api/tasks/{task['id']} "
+                    f"-H 'Content-Type: application/json' "
+                    f"-d '{{\"status\":\"needs_human\",\"work_log\":\"Waarom jij dit moet doen: <reden>\"}}'  "
+                    f"← gebruik dit als je écht niet verder kunt zonder externe toegang.\n\n"
+                    f"Markeer als needs_human ALLEEN als: inloggen op externe service vereist, "
+                    f"browser-actie buiten CLI, of echte API keys nodig die je niet hebt."
+                )
+
+                job_id = str(uuid.uuid4())[:8]
+                AGENT_JOBS[job_id] = {
+                    'id': job_id, 'agent': agent, 'prompt': instruction,
+                    'status': 'pending', 'output': '', 'error': '',
+                    'live_log': [], 'dispatches': [],
+                    'started': now_iso(), 'finished': None,
+                    'auto_task_id': task['id'],
+                }
+                t_thread = threading.Thread(
+                    target=run_agent_bg, args=(job_id, agent, instruction), daemon=True
+                )
+                t_thread.start()
+                log_event(f"AUTO     [{agent}] taak {task['id'][:6]}: {task['title'][:40]}")
+
+                # Wait until that job finishes before picking the next task
+                while AGENT_JOBS[job_id].get('status') in ('pending', 'running'):
+                    time.sleep(5)
+                AUTO_RUNNER_STATUS['running']           = False
+                AUTO_RUNNER_STATUS['current_task_id']   = None
+                AUTO_RUNNER_STATUS['current_task_title'] = None
+        except Exception as e:
+            AUTO_RUNNER_STATUS['running'] = False
+            log_event(f"AUTO-ERR {e}")
+
+        time.sleep(20)  # pause between checks
+
+
 # ── Health check ──────────────────────────────────────────────────────────────
 
 def check_site_health():
@@ -580,12 +673,16 @@ class Handler(BaseHTTPRequestHandler):
         elif p == '/api/stats':
             tasks = load_tasks()
             self.send_json({
-                'total': len(tasks),
-                'pending':     sum(1 for t in tasks if t['status'] == 'pending'),
-                'in_progress': sum(1 for t in tasks if t['status'] == 'in_progress'),
-                'complete':    sum(1 for t in tasks if t['status'] == 'complete'),
-                'failed':      sum(1 for t in tasks if t['status'] == 'failed'),
+                'total':        len(tasks),
+                'pending':      sum(1 for t in tasks if t['status'] == 'pending'),
+                'in_progress':  sum(1 for t in tasks if t['status'] == 'in_progress'),
+                'complete':     sum(1 for t in tasks if t['status'] == 'complete'),
+                'failed':       sum(1 for t in tasks if t['status'] == 'failed'),
+                'needs_human':  sum(1 for t in tasks if t['status'] == 'needs_human'),
             })
+
+        elif p == '/api/auto-runner':
+            self.send_json(AUTO_RUNNER_STATUS)
 
         elif p == '/api/memory':
             self.send_json(read_project_memory())
@@ -751,11 +848,15 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == '__main__':
+    # Start background threads
+    threading.Thread(target=auto_task_runner, daemon=True).start()
+
     server = HTTPServer(('localhost', PORT), Handler)
     print(f"  Runvex Dashboard  →  http://localhost:{PORT}")
     print(f"  Project memory    →  {MEMORY_DIR}")
     print(f"  Agent memory      →  {AGENT_MEMORY_DIR}")
     print(f"  Conversations     →  {CONV_DIR}")
+    print(f"  Auto-executor     →  aan (controleert elke 20s)")
     print(f"  Ctrl+C to stop\n")
     log_event(f"SERVER   started on port {PORT}")
     try:

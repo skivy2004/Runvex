@@ -155,6 +155,7 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 .task-card.selected { border-color: var(--accent); background: rgba(91,110,245,.06); }
 .task-card.status-complete { opacity: .45; }
 .task-card.status-in_progress { border-color: rgba(91,110,245,.5); }
+.task-card.status-needs_human { border-color: rgba(232,80,122,.4); background: rgba(232,80,122,.03); }
 .task-priority { flex-shrink: 0; width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
 .p1{background:rgba(232,80,122,.15);color:var(--p1)} .p2{background:rgba(236,178,46,.15);color:var(--p2)}
 .p3{background:rgba(91,110,245,.15);color:var(--p3)} .p4{background:rgba(62,207,142,.15);color:var(--p4)}
@@ -166,6 +167,7 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 .status-chip { padding: 2px 7px; border-radius: 20px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
 .chip-pending{background:rgba(138,143,168,.12);color:var(--muted)} .chip-in_progress{background:rgba(91,110,245,.15);color:var(--accent)}
 .chip-complete{background:rgba(62,207,142,.12);color:var(--green)} .chip-failed{background:rgba(232,80,122,.12);color:var(--red)}
+.chip-needs_human{background:rgba(232,80,122,.15);color:var(--red);border:1px solid rgba(232,80,122,.3)}
 .task-date { color: var(--muted2); font-size: 10px; margin-left: auto; }
 .task-actions { display: flex; gap: 5px; flex-shrink: 0; }
 .btn-icon { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; transition: all .15s; }
@@ -231,6 +233,26 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 .human-block-icon { font-size: 20px; margin-bottom: 6px; }
 .human-block-title { font-size: 12px; font-weight: 700; color: var(--amber); margin-bottom: 4px; }
 .human-block-text  { font-size: 11px; color: var(--muted); line-height: 1.6; }
+
+.needs-human-block {
+  border-radius: 10px; padding: 14px 16px;
+  background: rgba(232,80,122,.06); border: 1px solid rgba(232,80,122,.3);
+}
+.needs-human-block-icon  { font-size: 22px; margin-bottom: 6px; }
+.needs-human-block-title { font-size: 13px; font-weight: 700; color: var(--red); margin-bottom: 6px; }
+.needs-human-block-text  { font-size: 11px; color: var(--muted); line-height: 1.7; }
+
+/* ── Auto-runner status bar ── */
+.auto-runner-bar {
+  display: none; align-items: center; gap: 8px;
+  padding: 7px 12px; margin: 0 10px 6px;
+  border-radius: 8px; font-size: 11px; font-weight: 500;
+  background: rgba(91,110,245,.08); border: 1px solid rgba(91,110,245,.2);
+  color: var(--accent);
+}
+.auto-runner-bar.visible { display: flex; }
+.auto-runner-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 1.2s infinite; flex-shrink: 0; }
+.auto-runner-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .agent-block {
   border-radius: 10px; padding: 12px 14px;
@@ -763,9 +785,14 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
               <button class="filter-tab active" onclick="setFilter('all',this)">Alles</button>
               <button class="filter-tab" onclick="setFilter('pending',this)">Pending</button>
               <button class="filter-tab" onclick="setFilter('in_progress',this)">Bezig</button>
+              <button class="filter-tab" onclick="setFilter('needs_human',this)">👤 Jij</button>
               <button class="filter-tab" onclick="setFilter('complete',this)">Klaar</button>
             </div>
             <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="openAdd()">+ Taak</button>
+          </div>
+          <div class="auto-runner-bar" id="autoRunnerBar">
+            <div class="auto-runner-dot"></div>
+            <span class="auto-runner-label" id="autoRunnerLabel">Agent is bezig…</span>
           </div>
           <div class="tasks-list" id="taskList"></div>
         </div>
@@ -1018,6 +1045,21 @@ async function loadTasks() {
   } catch(e) {}
 }
 
+async function pollAutoRunner() {
+  try {
+    const r = await fetch('/api/auto-runner');
+    const s = await r.json();
+    const bar   = document.getElementById('autoRunnerBar');
+    const label = document.getElementById('autoRunnerLabel');
+    if (s.running && s.current_task_title) {
+      bar.classList.add('visible');
+      label.textContent = `🤖 Agent voert automatisch uit: ${s.current_task_title}`;
+    } else {
+      bar.classList.remove('visible');
+    }
+  } catch(e) {}
+}
+
 async function loadLog() {
   try {
     const r = await fetch('/api/log');
@@ -1046,11 +1088,12 @@ function render() {
       <div class="task-body">
         <div class="task-title">${esc(t.title)}</div>
         ${t.description ? `<div class="task-desc">${esc(t.description)}</div>` : ''}
-        ${t.work_log ? `<div class="task-desc" style="color:var(--accent);margin-top:3px">↳ ${esc(t.work_log)}</div>` : ''}
+        ${t.work_log && t.status==='needs_human' ? `<div class="task-desc" style="color:var(--red);margin-top:3px">⚠️ ${esc(t.work_log)}</div>` : ''}
+        ${t.work_log && t.status!=='needs_human' ? `<div class="task-desc" style="color:var(--accent);margin-top:3px">↳ ${esc(t.work_log)}</div>` : ''}
         <div class="task-meta">
-          <span class="status-chip chip-${t.status}">${t.status.replace('_',' ')}</span>
-          ${t.human_only ? `<span class="human-badge">👤 Jij</span>` : ''}
-          ${t.agent_runnable && !t.human_only ? `<span class="agent-badge">🤖 Agent</span>` : ''}
+          <span class="status-chip chip-${t.status}">${t.status==='needs_human'?'👤 Jij':t.status.replace('_',' ')}</span>
+          ${t.human_only && t.status!=='needs_human' ? `<span class="human-badge">👤 Handmatig</span>` : ''}
+          ${t.agent_runnable && !t.human_only && t.status==='pending' ? `<span class="agent-badge">🤖 Auto</span>` : ''}
           <span class="task-date">${fmtDate(t.created)}</span>
         </div>
       </div>
@@ -1164,8 +1207,16 @@ function openTaskDetail(id) {
       <div class="detail-work-log">${esc(t.work_log)}</div>
     </div>` : ''}
 
-    <!-- Human only block -->
-    ${isHuman ? `
+    <!-- Needs human block (AI tried but failed) -->
+    ${t.status === 'needs_human' ? `
+    <div class="needs-human-block">
+      <div class="needs-human-block-icon">🚨</div>
+      <div class="needs-human-block-title">AI kon dit niet doen — Jij moet dit uitvoeren</div>
+      <div class="needs-human-block-text">${t.work_log ? escHtml(t.work_log) : 'De agent heeft geprobeerd deze taak uit te voeren maar heeft externe toegang, inloggegevens of handmatige browser-stappen nodig die buiten zijn bereik liggen.'}</div>
+    </div>` : ''}
+
+    <!-- Human only block (pre-classified) -->
+    ${isHuman && t.status !== 'needs_human' ? `
     <div class="human-block">
       <div class="human-block-icon">👤</div>
       <div class="human-block-title">Alleen jij kunt dit doen</div>
@@ -1833,6 +1884,8 @@ setInterval(loadTasks, 10000);
 setInterval(loadLog, 5000);
 setInterval(loadOverviewStats, 15000);
 setInterval(loadRecentLog, 15000);
+setInterval(pollAutoRunner, 5000);
+pollAutoRunner();
 </script>
 </body>
 </html>
