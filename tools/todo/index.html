@@ -321,65 +321,99 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 .detail-action-btn.danger  { color: var(--red); }
 .detail-action-btn.danger:hover  { border-color: var(--red); background: rgba(232,80,122,.08); }
 
-/* ── Agents parallel grid ── */
-.agents-parallel-grid {
+/* ── Agent compact cards grid ── */
+.agents-card-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
-}
-
-.agent-panel {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  transition: border-color .2s;
-}
-.agent-panel.running { border-color: var(--accent); }
-.agent-panel.done    { border-color: rgba(62,207,142,.3); }
-.agent-panel.failed  { border-color: rgba(232,80,122,.3); }
-
-.agent-panel-header {
-  padding: 11px 14px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 10px;
 }
-.agent-panel-icon {
-  font-size: 20px;
-  flex-shrink: 0;
-  width: 36px; height: 36px;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: 9px;
-  background: rgba(255,255,255,.04);
+.agent-card[data-agent="orchestrator"] { grid-column: 1 / -1; }
+.agent-card {
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: 11px;
+  padding: 11px 13px;
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s;
+  display: flex; flex-direction: column; gap: 7px;
+  position: relative; overflow: hidden;
 }
-.agent-panel-name { font-size: 13px; font-weight: 700; flex: 1; letter-spacing: -.01em; }
-.agent-panel-desc { font-size: 11px; color: var(--muted2); margin-top: 1px; }
+.agent-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+}
+.agent-card[data-agent="frontend"]::before  { background: #3ECF8E; }
+.agent-card[data-agent="backend"]::before   { background: #5B6EF5; }
+.agent-card[data-agent="marketing"]::before { background: #ECB22E; }
+.agent-card[data-agent="review"]::before    { background: #E8507A; }
+.agent-card[data-agent="fullstack"]::before { background: #9B6EF5; }
+.agent-card:hover { border-color: var(--accent); box-shadow: 0 4px 16px rgba(91,110,245,.12); }
+.agent-card.running { border-color: rgba(236,178,46,.5); }
+.agent-card.done    { border-color: rgba(62,207,142,.3); }
+.agent-card-header  { display: flex; align-items: center; gap: 8px; }
+.agent-card-icon    { font-size: 15px; width: 26px; height: 26px; border-radius: 7px; background: rgba(255,255,255,.04); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.agent-card-name    { font-size: 12px; font-weight: 700; flex: 1; }
+.agent-card-activity {
+  font-size: 11px; color: var(--muted);
+  background: var(--bg); border-radius: 6px; padding: 5px 8px;
+  min-height: 26px; display: flex; align-items: center; gap: 5px;
+}
+.agent-card-activity-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.agent-card-last { font-size: 10px; color: var(--muted2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agent-card-open  { font-size: 10px; color: var(--accent); text-align: right; opacity: .6; margin-top: 2px; }
 
-/* Per-agent accent colors */
-.agent-panel[data-agent="frontend"]  { border-top: 2px solid #3ECF8E; }
-.agent-panel[data-agent="backend"]   { border-top: 2px solid #5B6EF5; }
-.agent-panel[data-agent="marketing"] { border-top: 2px solid #ECB22E; }
-.agent-panel[data-agent="review"]    { border-top: 2px solid #E8507A; }
-.agent-panel[data-agent="fullstack"] { border-top: 2px solid #9B6EF5; }
+/* Hidden panels — always in DOM so JS can access them */
+#agentPanelsHidden { display: none !important; }
+
+/* Per-agent accent colors (for modal panel) */
+.agent-panel { background: var(--card); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; }
+.agent-panel-header {
+  padding: 14px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.agent-panel-icon {
+  font-size: 20px; flex-shrink: 0;
+  width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+  border-radius: 9px; background: rgba(255,255,255,.04);
+}
+.agent-panel-name { font-size: 14px; font-weight: 700; flex: 1; letter-spacing: -.01em; }
+.agent-panel-desc { font-size: 11px; color: var(--muted2); margin-top: 2px; }
 .agent-status-chip {
-  font-size: 10px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 20px;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-  flex-shrink: 0;
+  font-size: 10px; font-weight: 600; padding: 2px 8px;
+  border-radius: 20px; text-transform: uppercase; letter-spacing: .04em; flex-shrink: 0;
 }
 .chip-idle    { background: rgba(138,143,168,.1); color: var(--muted2); }
 .chip-running { background: rgba(236,178,46,.15); color: var(--amber); animation: pulse 1.5s infinite; }
 .chip-done    { background: rgba(62,207,142,.12); color: var(--green); }
 .chip-failed  { background: rgba(232,80,122,.12); color: var(--red); }
+.agent-panel-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; flex: 1; }
 
-.agent-panel-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+/* ── Agent modal ── */
+.agent-modal-backdrop {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(0,0,0,.65); backdrop-filter: blur(6px);
+  display: none; align-items: center; justify-content: center; padding: 24px;
+}
+.agent-modal-backdrop.open { display: flex; }
+.agent-modal-box {
+  background: var(--card2); border: 1px solid var(--border2);
+  border-radius: 14px; width: 100%; max-width: 780px;
+  max-height: 88vh; display: flex; flex-direction: column;
+  box-shadow: 0 32px 80px rgba(0,0,0,.7);
+  overflow: hidden;
+}
+.agent-modal-topbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.agent-modal-close {
+  width: 28px; height: 28px; border-radius: 7px;
+  background: var(--bg); border: 1px solid var(--border2);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: var(--muted); font-size: 14px; transition: all .15s; flex-shrink: 0;
+}
+.agent-modal-close:hover { color: var(--text); border-color: var(--accent); }
+.agent-modal-content { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
 
 /* ── Chat input wrapper ── */
 .chat-input-wrap {
@@ -852,18 +886,8 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
     <div class="view" id="view-agents">
       <div class="scroll">
 
-        <!-- Orchestrator -->
-        <div class="orchestrator-panel" id="panel-orchestrator">
-          <div class="orchestrator-header">
-            <div style="display:flex;align-items:center;gap:10px;flex:1">
-              <span style="font-size:20px">🧠</span>
-              <div>
-                <div style="font-size:14px;font-weight:700">Hoofd Agent — Orchestrator</div>
-                <div style="font-size:11px;color:var(--muted2)">Ziet alle sub-agent memories · Kan automatisch dispatchen naar sub-agents</div>
-              </div>
-            </div>
-            <span class="agent-status-chip chip-idle" id="chip-orchestrator">idle</span>
-          </div>
+        <!-- Orchestrator full panel (hidden, shown in modal) -->
+        <div id="panel-orchestrator" style="display:none">
           <div style="padding:14px;display:flex;flex-direction:column;gap:10px">
             <div class="conv-history" id="conv-orchestrator"></div>
             <div class="live-log" id="live-orchestrator"></div>
@@ -873,19 +897,16 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
               </button>
               <input type="file" id="file-input-orchestrator" multiple style="display:none" onchange="handleFileSelect('orchestrator', this.files)">
-              <textarea
-                id="input-orchestrator"
-                rows="1"
-                placeholder="Bijv: Analyseer de site en geef de frontend agent een taak om de hero te verbeteren en de backend agent om de health check te versnellen"
+              <textarea id="input-orchestrator" rows="1"
+                placeholder="Bijv: Analyseer de site en geef de frontend agent een taak om de hero te verbeteren"
                 onkeydown="if((event.metaKey||event.ctrlKey)&&event.key==='Enter'){runAgentPanel('orchestrator')}"
-                oninput="autoResizeTextarea(this)"
-              ></textarea>
+                oninput="autoResizeTextarea(this)"></textarea>
               <button class="chat-send-btn" id="btn-orchestrator" onclick="runAgentPanel('orchestrator')" title="Run (⌘+Enter)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
               </button>
             </div>
             <div style="display:flex;gap:6px;align-items:center">
-              <span style="font-size:11px;color:var(--muted2);flex:1">⌘+Enter · DISPATCH-blok activeert sub-agents automatisch</span>
+              <span style="font-size:11px;color:var(--muted2);flex:1">⌘+Enter · DISPATCH activeert sub-agents</span>
               <button class="btn btn-ghost btn-sm" onclick="clearConversation('orchestrator')">↺ Wissen</button>
               <button class="btn btn-ghost btn-sm" onclick="showMemoryModal('orchestrator')">◎ Memory</button>
             </div>
@@ -894,16 +915,27 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
           </div>
         </div>
 
-        <div style="display:flex;align-items:center;gap:10px;margin:16px 0 12px">
-          <div style="flex:1;height:1px;background:var(--border)"></div>
-          <span style="font-size:11px;color:var(--muted2);font-weight:600;letter-spacing:.06em">SUB-AGENTS</span>
-          <div style="flex:1;height:1px;background:var(--border)"></div>
+        <div class="agents-card-grid" id="agentsGrid">
+          <!-- Compact cards — dynamisch door JS -->
         </div>
 
-        <div class="agents-parallel-grid" id="agentsGrid">
-          <!-- Dynamisch gegenereerd door JS -->
-        </div>
+      </div>
+    </div>
 
+    <!-- Hidden full panels — altijd in DOM zodat JS werkt -->
+    <div id="agentPanelsHidden"></div>
+
+    <!-- Agent modal -->
+    <div class="agent-modal-backdrop" id="agentModalBackdrop" onclick="closeAgentModal(event)">
+      <div class="agent-modal-box" onclick="event.stopPropagation()">
+        <div class="agent-modal-topbar" id="agentModalTopbar">
+          <button class="agent-modal-close" onclick="closeAgentModal()">✕</button>
+          <span id="agentModalTitle" style="font-size:13px;font-weight:700;flex:1"></span>
+          <span id="agentModalChip" class="agent-status-chip chip-idle">idle</span>
+        </div>
+        <div class="agent-modal-content" id="agentModalContent">
+          <!-- Panel body injected here on open -->
+        </div>
       </div>
     </div>
 
@@ -1478,22 +1510,48 @@ const agentFiles = {}; // type -> [{name, data (dataURL), mime}]
 
 let memModalAgent = null;
 
+const AGENT_COLORS = {
+  frontend:'#3ECF8E', backend:'#5B6EF5', marketing:'#ECB22E',
+  review:'#E8507A', fullstack:'#9B6EF5', orchestrator:'#5B6EF5'
+};
+
 function buildAgentPanels() {
+  // 1. Compact summary cards in the grid (orchestrator first, full-width)
   const grid = document.getElementById('agentsGrid');
-  grid.innerHTML = AGENTS.map(a => `
-    <div class="agent-panel ${a.fullwidth ? 'fullwidth' : ''}" id="panel-${a.type}" data-agent="${a.type}">
-      <div class="agent-panel-header">
-        <span class="agent-panel-icon">${a.icon}</span>
-        <div style="flex:1">
-          <div class="agent-panel-name">${a.name}</div>
-          <div class="agent-panel-desc">${a.desc}</div>
+  const orchCard = `
+    <div class="agent-card" id="card-orchestrator" data-agent="orchestrator"
+         onclick="openOrchestratorModal()"
+         style="flex-direction:row;align-items:center;gap:14px">
+      <span style="font-size:20px;flex-shrink:0">🧠</span>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+          <span style="font-size:13px;font-weight:700">Hoofd Agent — Orchestrator</span>
+          <span class="agent-status-chip chip-idle" id="chip-orchestrator">idle</span>
         </div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <span class="agent-status-chip chip-idle" id="chip-${a.type}">idle</span>
-          <button class="btn btn-ghost btn-sm" onclick="clearConversation('${a.type}')" title="Gesprek wissen" style="padding:2px 6px;font-size:13px">↺</button>
-          <button class="btn btn-ghost btn-sm" onclick="showMemoryModal('${a.type}')" title="Privé memory" style="padding:2px 6px;font-size:13px">◎</button>
+        <div class="agent-card-activity" id="card-activity-orchestrator">
+          <span class="agent-card-activity-text" style="color:var(--muted2)">Geen activiteit</span>
         </div>
       </div>
+      <div style="font-size:10px;color:var(--accent);flex-shrink:0">Openen →</div>
+    </div>`;
+  grid.innerHTML = orchCard + AGENTS.map(a => `
+    <div class="agent-card" id="card-${a.type}" data-agent="${a.type}" onclick="openAgentModal('${a.type}')">
+      <div class="agent-card-header">
+        <span class="agent-card-icon">${a.icon}</span>
+        <span class="agent-card-name">${a.name}</span>
+        <span class="agent-status-chip chip-idle" id="chip-${a.type}">idle</span>
+      </div>
+      <div class="agent-card-activity" id="card-activity-${a.type}">
+        <span class="agent-card-activity-text" style="color:var(--muted2)">Geen activiteit</span>
+      </div>
+      <div class="agent-card-last" id="card-last-${a.type}"></div>
+      <div class="agent-card-open">Klik om te openen →</div>
+    </div>`).join('');
+
+  // 2. Full panels in hidden container (functional DOM — JS targets these IDs)
+  const hidden = document.getElementById('agentPanelsHidden');
+  hidden.innerHTML = AGENTS.map(a => `
+    <div class="agent-panel" id="panel-${a.type}" data-agent="${a.type}">
       <div class="agent-panel-body">
         <div class="conv-history" id="conv-${a.type}"></div>
         <div class="live-log" id="live-${a.type}"></div>
@@ -1514,13 +1572,125 @@ function buildAgentPanels() {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
           </button>
         </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span style="font-size:11px;color:var(--muted2);flex:1">⌘+Enter om te versturen</span>
+          <button class="btn btn-ghost btn-sm" onclick="clearConversation('${a.type}')">↺ Wissen</button>
+          <button class="btn btn-ghost btn-sm" onclick="showMemoryModal('${a.type}')">◎ Memory</button>
+        </div>
         <div class="agent-output-area" id="out-${a.type}"></div>
         <div id="dispatch-log-${a.type}"></div>
       </div>
     </div>`).join('');
 
-  // Load existing conversations
   ALL_TYPES.forEach(loadConversationUI);
+}
+
+// ── Agent modal open/close ────────────────────────────────────────────────────
+
+let _openModalType = null;
+
+function openAgentModal(type) {
+  const a = AGENTS.find(x => x.type === type);
+  if (!a) return;
+  _openModalType = type;
+
+  // Update modal topbar
+  document.getElementById('agentModalTitle').textContent = `${a.icon}  ${a.name} — ${a.desc}`;
+  const chip = document.getElementById('chip-' + type);
+  const modalChip = document.getElementById('agentModalChip');
+  if (chip) { modalChip.className = chip.className; modalChip.textContent = chip.textContent; }
+
+  // Move panel body into modal content
+  const panel = document.getElementById('panel-' + type);
+  const content = document.getElementById('agentModalContent');
+  content.innerHTML = '';
+  content.appendChild(panel);
+
+  // Set accent border on modal box
+  const box = document.querySelector('.agent-modal-box');
+  const color = AGENT_COLORS[type] || 'var(--accent)';
+  box.style.borderTop = `2px solid ${color}`;
+
+  document.getElementById('agentModalBackdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  // Focus textarea
+  setTimeout(() => {
+    const ta = document.getElementById('input-' + type);
+    if (ta) ta.focus();
+  }, 80);
+}
+
+function closeAgentModal(e) {
+  if (e && e.target !== document.getElementById('agentModalBackdrop')) return;
+  if (!_openModalType) return;
+
+  const panel = document.getElementById('panel-' + _openModalType);
+  if (_openModalType === 'orchestrator') {
+    panel.style.display = 'none';
+    document.getElementById('view-agents').appendChild(panel);
+  } else {
+    document.getElementById('agentPanelsHidden').appendChild(panel);
+  }
+
+  document.getElementById('agentModalBackdrop').classList.remove('open');
+  document.body.style.overflow = '';
+  _openModalType = null;
+}
+
+function openOrchestratorModal() {
+  _openModalType = 'orchestrator';
+  document.getElementById('agentModalTitle').textContent = '🧠  Hoofd Agent — Orchestrator';
+  const chip = document.getElementById('chip-orchestrator');
+  const modalChip = document.getElementById('agentModalChip');
+  if (chip) { modalChip.className = chip.className; modalChip.textContent = chip.textContent; }
+
+  const panel = document.getElementById('panel-orchestrator');
+  panel.style.display = 'block';
+  const content = document.getElementById('agentModalContent');
+  content.innerHTML = '';
+  content.appendChild(panel);
+
+  const box = document.querySelector('.agent-modal-box');
+  box.style.borderTop = '2px solid #5B6EF5';
+
+  document.getElementById('agentModalBackdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => { const ta = document.getElementById('input-orchestrator'); if (ta) ta.focus(); }, 80);
+}
+
+// Update compact card activity display
+function updateAgentCard(type, status, liveLog, lastOutput) {
+  const card = document.getElementById('card-' + type);
+  if (!card) return;
+
+  card.className = 'agent-card' + (status === 'running' ? ' running' : status === 'done' ? ' done' : '');
+
+  const actEl = document.getElementById('card-activity-' + type);
+  const lastEl = document.getElementById('card-last-' + type);
+
+  if (status === 'running' && liveLog && liveLog.length) {
+    const latest = liveLog[liveLog.length - 1];
+    actEl.innerHTML = `<span style="font-size:12px">${latest.icon||'⚙️'}</span>
+      <span class="agent-card-activity-text" style="color:${latest.color||'var(--muted)'}">${escHtml(latest.tool||'')}${latest.label?' · '+escHtml(latest.label):''}</span>`;
+  } else if (status === 'running') {
+    actEl.innerHTML = `<span class="agent-card-activity-text" style="color:var(--amber)">⏳ Bezig…</span>`;
+  } else if (status === 'done') {
+    actEl.innerHTML = `<span class="agent-card-activity-text" style="color:var(--green)">✓ Klaar</span>`;
+  } else {
+    actEl.innerHTML = `<span class="agent-card-activity-text" style="color:var(--muted2)">Geen activiteit</span>`;
+  }
+
+  if (lastOutput) {
+    lastEl.textContent = lastOutput.slice(0, 80);
+  }
+
+  // Also sync chip in modal if open
+  if (_openModalType === type) {
+    const chip = document.getElementById('chip-' + type);
+    const modalChip = document.getElementById('agentModalChip');
+    if (chip && modalChip) { modalChip.className = chip.className; modalChip.textContent = chip.textContent; }
+  }
 }
 
 function autoResizeTextarea(el) {
@@ -1632,8 +1802,9 @@ function renderLiveLog(type, liveLog, running) {
     ? `<div class="live-log-spinner"><div class="spinner-dot"></div><span>bezig…</span></div>`
     : '';
   el.innerHTML = rows + spinner;
-  // Keep latest visible
   if (running) el.scrollTop = el.scrollHeight;
+  // Update compact card with latest tool activity
+  updateAgentCard(type, running ? 'running' : 'done', liveLog, null);
 }
 
 function escHtml(s) {
@@ -1680,12 +1851,8 @@ const SEND_ICON = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" s
 const MODEL_COLORS = { haiku: '#3ECF8E', sonnet: '#5B6EF5', opus: '#ECB22E' };
 
 function setAgentStatus(type, status, model) {
-  const panel = document.getElementById('panel-' + type);
   const chip  = document.getElementById('chip-' + type);
   const btn   = document.getElementById('btn-' + type);
-  if (panel) {
-    panel.className = panel.className.replace(/\b(running|done|failed)\b/g, '').trim() + (status !== 'idle' ? ' ' + status : '');
-  }
   if (chip) { chip.className = 'agent-status-chip chip-' + status; chip.textContent = status; }
   if (btn)  {
     btn.disabled = status === 'running';
@@ -1694,6 +1861,8 @@ function setAgentStatus(type, status, model) {
       : SEND_ICON;
     btn.title = status === 'running' ? 'Bezig…' : 'Run (⌘+Enter)';
   }
+  // Update compact card
+  updateAgentCard(type, status, null, null);
 
   // Model badge — show/hide next to status chip
   const headerId = `model-badge-${type}`;
@@ -1945,7 +2114,7 @@ function fmtDate(iso) {
 // ── Keyboard ──────────────────────────────────────────────────────────────────
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Escape') { closeModal(); if (_openModalType) closeAgentModal(); }
   if ((e.metaKey||e.ctrlKey) && e.key === 'Enter') {
     if (document.getElementById('overlay').classList.contains('open')) saveTask();
   }
