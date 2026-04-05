@@ -22,7 +22,6 @@ const STATUS_LABELS: Record<string, { label: string; color: string; bg: string; 
 
 const AUTH_HEADERS = {
   'Content-Type': 'application/json',
-  'x-dashboard-secret': process.env.NEXT_PUBLIC_DASHBOARD_SECRET ?? '',
 }
 
 export default function ContentClient() {

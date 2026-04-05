@@ -22,6 +22,11 @@ export function middleware(request: NextRequest) {
   requestHeaders.set('x-nonce', nonce)
   requestHeaders.set('Content-Security-Policy', csp)
 
+  // Inject dashboard secret server-side so it never reaches the client bundle
+  if (request.nextUrl.pathname.startsWith('/api/') && process.env.DASHBOARD_SECRET) {
+    requestHeaders.set('x-dashboard-secret', process.env.DASHBOARD_SECRET)
+  }
+
   const response = NextResponse.next({
     request: { headers: requestHeaders },
   })

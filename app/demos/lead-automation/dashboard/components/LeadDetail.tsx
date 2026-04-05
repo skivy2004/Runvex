@@ -6,7 +6,6 @@ import ScoreBadge from './ScoreBadge'
 
 const DASHBOARD_HEADERS = {
   'Content-Type': 'application/json',
-  'x-dashboard-secret': process.env.NEXT_PUBLIC_DASHBOARD_SECRET ?? '',
 }
 
 export default function LeadDetail({ lead, onClose }: { lead: Lead; onClose: () => void }) {
