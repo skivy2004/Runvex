@@ -66,7 +66,7 @@ function renderContent(content: string) {
           {items.map((item, idx) => (
             <li key={idx} className="flex items-start gap-3 text-sm" style={{ color: 'var(--text-2)' }}>
               <span className="mt-1 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-[#5B6EF5]" />
-              <span dangerouslySetInnerHTML={{ __html: renderInline(item) }} />
+              <span>{renderInline(item)}</span>
             </li>
           ))}
         </ul>
@@ -93,28 +93,66 @@ function renderContent(content: string) {
           key={key++}
           className="text-sm leading-relaxed"
           style={{ color: 'var(--text-2)' }}
-          dangerouslySetInnerHTML={{ __html: renderInline(line) }}
-        />
+        >
+          {renderInline(line)}
+        </p>
       )
     }
   }
   return elements
 }
 
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-}
+function renderInline(text: string): React.ReactNode[] {
+  // Split text into tokens: bold (**...**), italic (*...*), code (`...`), and plain text
+  const tokens: React.ReactNode[] = []
+  const regex = /\*\*(.+?)\*\*|\*(.+?)\*|`(.+?)`/g
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+  let key = 0
 
-function renderInline(text: string): string {
-  return escapeHtml(text)
-    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:white;font-weight:600">$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/`(.+?)`/g, '<code style="background:rgba(91,110,245,0.15);color:#5B6EF5;padding:2px 6px;border-radius:4px;font-size:0.85em">$1</code>')
+  while ((match = regex.exec(text)) !== null) {
+    // Push plain text before this match
+    if (match.index > lastIndex) {
+      tokens.push(text.slice(lastIndex, match.index))
+    }
+
+    if (match[1] !== undefined) {
+      // Bold: **text**
+      tokens.push(
+        <strong key={key++} style={{ color: 'white', fontWeight: 600 }}>
+          {match[1]}
+        </strong>
+      )
+    } else if (match[2] !== undefined) {
+      // Italic: *text*
+      tokens.push(<em key={key++}>{match[2]}</em>)
+    } else if (match[3] !== undefined) {
+      // Code: `text`
+      tokens.push(
+        <code
+          key={key++}
+          style={{
+            background: 'rgba(91,110,245,0.15)',
+            color: '#5B6EF5',
+            padding: '2px 6px',
+            borderRadius: '4px',
+            fontSize: '0.85em',
+          }}
+        >
+          {match[3]}
+        </code>
+      )
+    }
+
+    lastIndex = match.index + match[0].length
+  }
+
+  // Push remaining plain text
+  if (lastIndex < text.length) {
+    tokens.push(text.slice(lastIndex))
+  }
+
+  return tokens
 }
 
 export default async function BlogPostPage({
