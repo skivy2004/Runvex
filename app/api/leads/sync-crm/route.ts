@@ -68,9 +68,9 @@ export async function POST(req: NextRequest) {
     }
   } else if (crmType === 'pipedrive') {
     // Pipedrive Person API
-    const res = await fetch(`https://api.pipedrive.com/v1/persons?api_token=${encodeURIComponent(apiKey)}`, {
+    const res = await fetch('https://api.pipedrive.com/v1/persons', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
         name: lead.naam,
         email: [{ value: lead.email, primary: true }],
