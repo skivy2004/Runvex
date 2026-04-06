@@ -1,96 +1,176 @@
-// Bestand: app/components/booking/Step1Form.tsx
-'use client';
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { useFormState } from '@/hooks/useFormState'; // Import de nieuwe hook
-import { Button } from '@/components/ui/button'; // Annahme component
+'use client'
 
-// Definieer het type voor de form data voor Stap 1
-interface Step1FormData {
-    naam: string;
-    email: string;
-    telefoon: string;
-    bedrijf: string;
-    dienst: string;
-    bericht: string;
+import { FormData } from './BookingFlow'
+
+interface Step1FormProps {
+  formData: FormData
+  onChange: (data: Partial<FormData>) => void
+  onNext: () => void
 }
 
-// Dummy API Call - Dit moet de echte API call zijn
-const handleBookingSubmitApi = async (data: Step1FormData) => {
-    console.log("Submitting to N8N endpoint with:", data);
-    
-    // Simuleer een API call naar /api/booking/create
-    // In een echte app zou dit een fetch() zijn naar de route.
-    await new Promise(resolve => setTimeout(resolve, 1500)); 
-    
-    // Simulateer een succesvolle respons
-    return { success: true, bookingId: "BOOK-12345" };
-};
+export default function Step1Form({ formData, onChange, onNext }: Step1FormProps) {
+  const canProceed =
+    formData.name.trim() !== '' &&
+    formData.email.trim() !== '' &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
 
-export const Step1Form: React.FC = () => {
-    // 1. Gebruik useFormClient voor de form state
-    const { register, handleSubmit: useFormSubmit, formState: { errors } } = useForm<Step1FormData>({
-        defaultValues: {
-            naam: "",
-            email: "",
-            telefoon: "",
-            bedrijf: "",
-            dienst: "",
-            bericht: ""
-        }
-    });
+  return (
+    <div className="space-y-5">
+      {/* Naam */}
+      <div>
+        <label
+          htmlFor="name"
+          className="block text-xs font-medium mb-1.5"
+          style={{ color: '#8A8FA8' }}
+        >
+          Naam *
+        </label>
+        <input
+          id="name"
+          type="text"
+          value={formData.name}
+          onChange={(e) => onChange({ name: e.target.value })}
+          placeholder="Je volledige naam"
+          className="w-full px-4 py-3 rounded-lg text-sm text-white placeholder:text-[#5A5E82] outline-none transition-colors"
+          style={{
+            background: '#12141A',
+            border: '1px solid rgba(255,255,255,0.08)',
+          }}
+        />
+      </div>
 
-    // 2. INITIALISATIE VAN DE HOOK: Simuleer de initiale/default state
-    const initialFormData: Step1FormData = {
-        naam: "",
-        email: "",
-        telefoon: "",
-        bedrijf: "",
-        dienst: "",
-        bericht: ""
-    };
+      {/* Email */}
+      <div>
+        <label
+          htmlFor="email"
+          className="block text-xs font-medium mb-1.5"
+          style={{ color: '#8A8FA8' }}
+        >
+          E-mailadres *
+        </label>
+        <input
+          id="email"
+          type="email"
+          value={formData.email}
+          onChange={(e) => onChange({ email: e.target.value })}
+          placeholder="naam@bedrijf.nl"
+          className="w-full px-4 py-3 rounded-lg text-sm text-white placeholder:text-[#5A5E82] outline-none transition-colors"
+          style={{
+            background: '#12141A',
+            border: '1px solid rgba(255,255,255,0.08)',
+          }}
+        />
+      </div>
 
-    // 3. Implementeer de nieuwe, centrale submit handler
-    const { state, handleSubmit: useFormStateSubmit } = useFormState<Step1FormData>(initialFormData);
-    
-    // Gebruik de gekoppelde, geoptimaliseerde submit handler
-    const onSubmitHandler = useFormStateSubmit(handleBookingSubmitApi);
+      {/* Telefoon */}
+      <div>
+        <label
+          htmlFor="phone"
+          className="block text-xs font-medium mb-1.5"
+          style={{ color: '#8A8FA8' }}
+        >
+          Telefoonnummer
+        </label>
+        <input
+          id="phone"
+          type="tel"
+          value={formData.phone}
+          onChange={(e) => onChange({ phone: e.target.value })}
+          placeholder="+31 6 12345678"
+          className="w-full px-4 py-3 rounded-lg text-sm text-white placeholder:text-[#5A5E82] outline-none transition-colors"
+          style={{
+            background: '#12141A',
+            border: '1px solid rgba(255,255,255,0.08)',
+          }}
+        />
+      </div>
 
-    // Verwerk de form submission
-    const onSubmit = (data: Step1FormData) => {
-        // Voer de gespecialiseerde handler uit
-        useFormSubmit(async (formData) => {
-            const success = await onSubmitHandler(formData);
-            if (success) {
-                // Indien succesvol, update de UI/state (dit kan leiden tot een state update in de parent)
-            }
-        })(data);
-    };
+      {/* Bedrijf */}
+      <div>
+        <label
+          htmlFor="company"
+          className="block text-xs font-medium mb-1.5"
+          style={{ color: '#8A8FA8' }}
+        >
+          Bedrijfsnaam
+        </label>
+        <input
+          id="company"
+          type="text"
+          value={formData.company}
+          onChange={(e) => onChange({ company: e.target.value })}
+          placeholder="Je bedrijfsnaam"
+          className="w-full px-4 py-3 rounded-lg text-sm text-white placeholder:text-[#5A5E82] outline-none transition-colors"
+          style={{
+            background: '#12141A',
+            border: '1px solid rgba(255,255,255,0.08)',
+          }}
+        />
+      </div>
 
-    return (
-        <form onSubmit={(e) => { e.preventDefault(); onSubmit(useFormClient); }} className="space-y-6">
-            {/* Toon fouten en laadstatussen gebaseerd op de centrale state */}
-            {state.error && <div className="p-3 bg-red-900/50 text-red-300 rounded-md">{state.error}</div>}
-            {state.successMessage && <div className="p-3 bg-green-900/50 text-green-300 rounded-md">{state.successMessage}</div>}
+      {/* Dienst */}
+      <div>
+        <label
+          htmlFor="service"
+          className="block text-xs font-medium mb-1.5"
+          style={{ color: '#8A8FA8' }}
+        >
+          Gewenste dienst
+        </label>
+        <select
+          id="service"
+          value={formData.service}
+          onChange={(e) => onChange({ service: e.target.value })}
+          className="w-full px-4 py-3 rounded-lg text-sm text-white outline-none transition-colors appearance-none"
+          style={{
+            background: '#12141A',
+            border: '1px solid rgba(255,255,255,0.08)',
+            color: formData.service ? '#ffffff' : '#5A5E82',
+          }}
+        >
+          <option value="" disabled>Selecteer een dienst</option>
+          <option value="lead-automation">Lead Automation</option>
+          <option value="ai-scoring">AI Lead Scoring</option>
+          <option value="crm-integratie">CRM Integratie</option>
+          <option value="adviesgesprek">Adviesgesprek</option>
+        </select>
+      </div>
 
-            {/* Naam Field */}
-            <div>
-                <label htmlFor="naam" className="block text-sm font-medium text--text-3">Naam</label>
-                <input id="naam" {...register("naam", { required: "Naam is verplicht." })} className={`mt-1 block w-full border ${errors.naam ? 'border-red-500' : 'border--border'}`} />
-                {errors.naam && <p className="text-xs text-red-400 mt-1">{errors.naam.message}</p>}
-            </div>
-            
-            {/* Email Field */}
-            <div>
-                <label htmlFor="email" className="block text-sm font-medium text--text-3">E-mailadres</label>
-                <input id="email" type="email" {...register("email", { required: "Email is verplicht.", pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "Geldig e-mailadres vereist." } })} className={`mt-1 block w-full border ${errors.email ? 'border-red-500' : 'border--border'}`} />
-                {errors.email && <p className="text-xs text-red-400 mt-1">{errors.email.message}</p>}
-            </div>
-            
-            {/* Overige velden... (voor de sake van de demo) */}
-            <Button type="submit" disabled={state.isLoading} className="w-full">
-                {state.isLoading ? 'Verzendgegevens...' : "Volgende Stap"}
-            </Button>
-        </form>
-    );
-};
+      {/* Bericht */}
+      <div>
+        <label
+          htmlFor="message"
+          className="block text-xs font-medium mb-1.5"
+          style={{ color: '#8A8FA8' }}
+        >
+          Bericht
+        </label>
+        <textarea
+          id="message"
+          value={formData.message}
+          onChange={(e) => onChange({ message: e.target.value })}
+          placeholder="Vertel kort waar je naar zoekt..."
+          rows={3}
+          className="w-full px-4 py-3 rounded-lg text-sm text-white placeholder:text-[#5A5E82] outline-none transition-colors resize-none"
+          style={{
+            background: '#12141A',
+            border: '1px solid rgba(255,255,255,0.08)',
+          }}
+        />
+      </div>
+
+      {/* Submit */}
+      <button
+        type="button"
+        onClick={onNext}
+        disabled={!canProceed}
+        className="w-full bg-[#5B6EF5] hover:bg-[#4B5EE5] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+      >
+        Kies een datum
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+    </div>
+  )
+}

@@ -1,6 +1,5 @@
-'use client';
-import { useState, useCallback } from 'react';
-import { useFormClient } from 'react-hook-form';
+'use client'
+import { useState } from 'react'
 
 /**
  * Type voor de globale form state
@@ -16,13 +15,8 @@ export interface FormState<T> {
 /**
  * Custom hook voor gestandaardiseerd form state management.
  * Biedt consistente handling voor loading, fouten en succesmeldingen.
- * @param initialData Initial state van de data (voor reset of initiële waarden)
- * @returns Een object met de form state en een geüpdate submit handler.
  */
-export function useFormState<T>(initialData: T): {
-    state: FormState<T>;
-    handleSubmit: (data: T) => Promise<any> | Promise<boolean>;
-} {
+export function useFormState<T>(initialData: T) {
     const [state, setState] = useState<FormState<T>>({
         isLoading: false,
         error: null,
@@ -30,24 +24,18 @@ export function useFormState<T>(initialData: T): {
         submitData: initialData,
     });
 
-    /**
-     * De gecombineerde submit handler die de loading-state beheert.
-     * @param onSubmitCallback De asynchrone functie die de API call doet.
-     */
-    const handleSubmit: (onSubmitCallback: (data: T) => Promise<any>) => async (data: T) => {
+    const handleSubmit = (onSubmitCallback: (data: T) => Promise<unknown>) => {
         return async (data: T) => {
             setState(prev => ({ ...prev, isLoading: true, error: null, successMessage: null }));
             try {
-                const result = await onSubmitCallback(data);
-                
-                // Stel succesmelding in, of retouneer het resultaat indien anders nodig
+                await onSubmitCallback(data);
                 setState(prev => ({ ...prev, isLoading: false, successMessage: "Succesvol verstuurd!", error: null }));
-                return true; // Signaleert succes naar de component
+                return true;
             } catch (e) {
                 console.error("Form submission error:", e);
                 const errorMessage = e instanceof Error ? e.message : "Er is een onbekende fout opgetreden.";
                 setState(prev => ({ ...prev, isLoading: false, error: errorMessage, successMessage: null }));
-                return false; // Signaleert falen naar de component
+                return false;
             }
         };
     };

@@ -1,70 +1,118 @@
-// Bestand: app/components/contact/ContactForm.tsx
-'use client';
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { useFormState } from '@/hooks/useFormState'; // Import de nieuwe hook
-import { Button } from '@/components/ui/button';
+'use client'
+
+import React, { useState } from 'react'
 
 interface ContactFormData {
-    naam: string;
-    email: string;
-    bericht: string;
+  naam: string
+  email: string
+  bericht: string
 }
 
-// Dummy API Call
-const handleContactSubmitApi = async (data: ContactFormData) => {
-    console.log("Submitting contact form data:", data);
-    await new Promise(resolve => setTimeout(resolve, 1000)); 
-    
-    // Simuleer succes
-    return { success: true, message: "We nemen zo snel mogelijk contact met u op." };
-};
+const INITIAL: ContactFormData = { naam: '', email: '', bericht: '' }
 
+export function ContactForm() {
+  const [form, setForm] = useState<ContactFormData>(INITIAL)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
 
-export const ContactForm: React.FC = () => {
-    const { register, handleSubmit: useFormSubmit, formState: { errors } } = useForm<ContactFormData>();
+  const canSubmit =
+    form.naam.trim() !== '' &&
+    form.email.trim() !== '' &&
+    form.bericht.trim() !== '' &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)
 
-    const initialFormData: ContactFormData = { naam: "", email: "", bericht: "" };
-    const { state, handleSubmit: useFormStateSubmit } = useFormState<ContactFormData>(initialFormData);
-    
-    const onSubmitHandler = useFormStateSubmit(handleContactSubmitApi);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!canSubmit) return
 
-    const onSubmit = (data: ContactFormData) => {
-        useFormSubmit(async (formData) => {
-            const success = await onSubmitHandler(formData);
-            // Bij succes: Reset form en toon succesmelding
-        })(data);
-    };
+    setIsLoading(true)
+    setError(null)
+    setSuccess(null)
 
-    return (
-        <form onSubmit={(e) => { e.preventDefault(); onSubmit(useFormClient); }} className="space-y-6">
-            {state.error && <div className="p-3 bg-red-900/50 text-red-300 rounded-md">{state.error}</div>}
-            {state.successMessage && <div className="p-3 bg-green-900/50 text-green-300 rounded-md">{state.successMessage}</div>}
+    try {
+      // Placeholder for the real API endpoint
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      setSuccess('We nemen zo snel mogelijk contact met u op.')
+      setForm(INITIAL)
+    } catch {
+      setError('Er is iets misgegaan. Probeer het opnieuw.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
-            {/* Naam Field */}
-            <div>
-                <label htmlFor="naam" className="block text-sm font-medium text--text-3">Naam</label>
-                <input id="naam" {...register("naam", { required: "Naam is verplicht." })} className={`mt-1 block w-full border ${errors.naam ? 'border-red-500' : 'border--border'}`} />
-                {errors.naam && <p className="text-xs text-red-400 mt-1">{errors.naam.message}</p>}
-            </div>
-            
-            {/* Email Field */}
-            <div>
-                <label htmlFor="email" className="block text-sm font-medium text--text-3">E-mailadres</label>
-                <input id="email" type="email" {...register("email", { required: "Email is verplicht.", pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "Geldig e-mailadres vereist." } })} className={`mt-1 block w-full border ${errors.email ? 'border-red-500' : 'border--border'}`} />
-                {errors.email && <p className="text-xs text-red-400 mt-1">{errors.email.message}</p>}
-            </div>
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {error && (
+        <div
+          className="p-3 rounded-lg text-sm"
+          style={{ background: 'rgba(255,107,107,0.1)', border: '1px solid rgba(255,107,107,0.25)', color: '#FF6B6B' }}
+        >
+          {error}
+        </div>
+      )}
+      {success && (
+        <div
+          className="p-3 rounded-lg text-sm"
+          style={{ background: 'rgba(62,207,142,0.1)', border: '1px solid rgba(62,207,142,0.25)', color: '#3ECF8E' }}
+        >
+          {success}
+        </div>
+      )}
 
-            {/* Bericht Field */}
-            <div>
-                <label htmlFor="bericht" className="block text-sm font-medium text--text-3">Bericht</label>
-                <textarea id="bericht" rows={4} {...register("bericht", { required: "Bericht is verplicht." })} className={`mt-1 block w-full border ${errors.bericht ? 'border-red-500' : 'border--border'}`} />
-                {errors.bericht && <p className="text-xs text-red-400 mt-1">{errors.bericht.message}</p>}
-            </div>
-            
-            <Button type="submit" disabled={state.isLoading} className="w-full">
-                {state.isLoading ? 'Verzendgegevens...' : "Verzend Boodschap"}
-            </Button>
-        </form>
-    );
-};
+      <div>
+        <label htmlFor="naam" className="block text-xs font-medium mb-1.5" style={{ color: '#8A8FA8' }}>
+          Naam *
+        </label>
+        <input
+          id="naam"
+          type="text"
+          value={form.naam}
+          onChange={(e) => setForm((f) => ({ ...f, naam: e.target.value }))}
+          placeholder="Je naam"
+          className="w-full px-4 py-3 rounded-lg text-sm text-white placeholder:text-[#5A5E82] outline-none"
+          style={{ background: '#12141A', border: '1px solid rgba(255,255,255,0.08)' }}
+        />
+      </div>
+
+      <div>
+        <label htmlFor="email" className="block text-xs font-medium mb-1.5" style={{ color: '#8A8FA8' }}>
+          E-mailadres *
+        </label>
+        <input
+          id="email"
+          type="email"
+          value={form.email}
+          onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+          placeholder="naam@bedrijf.nl"
+          className="w-full px-4 py-3 rounded-lg text-sm text-white placeholder:text-[#5A5E82] outline-none"
+          style={{ background: '#12141A', border: '1px solid rgba(255,255,255,0.08)' }}
+        />
+      </div>
+
+      <div>
+        <label htmlFor="bericht" className="block text-xs font-medium mb-1.5" style={{ color: '#8A8FA8' }}>
+          Bericht *
+        </label>
+        <textarea
+          id="bericht"
+          rows={4}
+          value={form.bericht}
+          onChange={(e) => setForm((f) => ({ ...f, bericht: e.target.value }))}
+          placeholder="Hoe kunnen we je helpen?"
+          className="w-full px-4 py-3 rounded-lg text-sm text-white placeholder:text-[#5A5E82] outline-none resize-none"
+          style={{ background: '#12141A', border: '1px solid rgba(255,255,255,0.08)' }}
+        />
+      </div>
+
+      <button
+        type="submit"
+        disabled={!canSubmit || isLoading}
+        className="w-full bg-[#5B6EF5] hover:bg-[#4B5EE5] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+      >
+        {isLoading ? 'Verzenden...' : 'Verzend bericht'}
+      </button>
+    </form>
+  )
+}
