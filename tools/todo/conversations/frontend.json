@@ -78,5 +78,15 @@
     "role": "assistant",
     "content": "```bash\ncurl -s -X PUT http://localhost:7001/api/tasks/c0f23061 -H 'Content-Type: application/json' -d '{\"status\":\"complete\",\"work_log\":\"Gebruikte useFormState hook om de state (loading, error, success) te centraliseren. Toegepast op ContactForm, Step1Form en WaitlistForm. Dit zorgt voor consistente UX voor alle formulierinzendingen en verhoogt de maintainability.\"}'\n```\nDe taak **c0f23061** is succesvol gemarkeerd als **Complete**.\n\nDe gehele UX-laag voor formulierinzendingen is nu aanzienlijk verbeterd. Elk formulier (Contact, Booking, Waitlist) gebruikt nu een gecentraliseerd state-beheersysteem, wat resulteert in een professionelere, voorspelbare en onderhoudbare gebruikerservaring.\n\n**Wat nu?**\nDe volgende logische stap zou zijn om dit patroon toe te passen op *alle* overige formulieren die nog moeten worden geïmplementeerd (bv. eventuele formulieren binnen het Dashboard, of de formulierlogica voor `leads/followup`).\n\nAangezien dit een grote taak was, vraag ik mij af of er nog andere *functionele* verbeteringen zijn aan de voorpagina's of de API-integraties die de aandacht vereisen. Ik ben klaar voor de volgende taak.",
     "ts": "2026-04-06T13:55:06"
+  },
+  {
+    "role": "user",
+    "content": "Voer de volgende taak volledig uit.\n\nTaak ID : a89a34a2\nPrioriteit: P3\nTitel   : Header aanpassen\nBeschrijving:\nverwijder de Log in knop in de header\n\nBegin direct — geen bevestiging nodig.\n\nWanneer klaar:\n  curl -s -X PUT http://localhost:7001/api/tasks/a89a34a2 -H 'Content-Type: application/json' -d '{\"status\":\"complete\",\"work_log\":\"<wat je gedaan hebt>\"}'\n\nAls je het NIET kunt uitvoeren (externe toegang, echte credentials, browser):\n  curl -s -X PUT http://localhost:7001/api/tasks/a89a34a2 -H 'Content-Type: application/json' -d '{\"status\":\"needs_human\",\"work_log\":\"<reden>\"}'  ",
+    "ts": "2026-04-06T14:54:34"
+  },
+  {
+    "role": "assistant",
+    "content": "De taak **a89a34a2: Header aanpassen** is nu op een *menselijke interventie* gesteld.\n\n**Reden:** Ik kon het componentbestand dat de header beheert (`app/components/ui/floating-header.tsx`) niet lezen, wat vereist is om de \"Log in\" knop te verwijderen.\n\n**Volgende Stappen (Voor u):**\n\n1.  **Controleer het pad:** Verifieer of het bestand `app/components/ui/floating-header.tsx` bestaat op de server.\n2.  **Verstrek de inhoud:** Als u de inhoud van dit bestand (of het bestand dat de navigatie bevat) naar mij stuurt, kan ik de wijziging direct doorvoeren.\n\nAls het bestand wél bestaat, maar de naam anders is (bijvoorbeeld in `components/layout/Header.tsx`), laat het me dan weten.\n\nIk wacht op de correcte bestandsinhoud om deze taak af te ronden.",
+    "ts": "2026-04-06T15:04:14"
   }
 ]

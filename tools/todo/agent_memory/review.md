@@ -13,3 +13,7 @@ De geplande prioritaire taken voor Runvex Control zijn: 1. Beveiliging van `/api
 
 ## 2026-04-06 13:39
 De beveiliging van kritieke API endpoints zoals `/api/leads/behandeld` is versterkt met `x-dashboard-secret` authenticatie. De focus verschuift nu naar UX/conversie optimalisatie, beginnend met de implementatie van Enter-to-Send functionaliteit voor het chatgedeelte.
+
+## 2026-04-06 15:12
+*   **Status:** Hoog niveau van beveiliging (API Auth & Global Error Handling) en basis UX (Enter-to-Send) zijn voltooid.
+*   **Volgende Actie:** Het implementeren van algemene input sanitization voor *alle* API-ingangen is de hoogste prioriteit om de kwetsbaarheid voor XSS/data-manipulatie via input te dichten.

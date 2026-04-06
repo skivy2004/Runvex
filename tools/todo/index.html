@@ -407,7 +407,7 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 .chip-done    { background: rgba(62,207,142,.12); color: var(--green); }
 .chip-failed  { background: rgba(232,80,122,.12); color: var(--red); }
 .agent-panel-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; flex: 1; }
-.agent-panel-input { flex-shrink: 0; padding: 0 14px 14px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--border); padding-top: 10px; }
+.agent-panel-input { flex-shrink: 0; padding: 0 14px 14px; display: flex; flex-direction: column; gap: 8px; padding-top: 10px; }
 
 /* ── Agent modal ── */
 .agent-modal-backdrop {
@@ -519,14 +519,14 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
   display: none;
   flex-direction: column;
   gap: 2px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 8px 0;
+  background: transparent;
+  border: none;
+  padding: 0;
   max-height: 260px;
   overflow-y: auto;
 }
 .live-log.visible { display: flex; }
+.live-log:empty { display: none !important; }
 .live-log-row {
   display: flex;
   align-items: baseline;
@@ -574,10 +574,9 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 }
 
 .agent-output-area {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  padding: 8px 0;
   font-family: 'SF Mono', 'Fira Mono', monospace;
   font-size: 11px;
   line-height: 1.7;
@@ -586,10 +585,10 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
   word-break: break-word;
   overflow-y: auto;
   max-height: 300px;
-  min-height: 80px;
   display: none;
 }
 .agent-output-area.visible { display: block; }
+.agent-output-area:empty { display: none !important; }
 .agent-output-area.running { color: var(--amber); }
 .agent-output-area.done    { color: var(--text); }
 .agent-output-area.failed  { color: var(--red); }
@@ -622,7 +621,7 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
   gap: 6px;
   overflow-y: visible;
 }
-.conv-history:empty { display: none; }
+.conv-history:empty { display: none !important; }
 .conv-msg {
   padding: 7px 11px;
   border-radius: 8px;
@@ -867,6 +866,13 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
         </div>
 
         <div style="margin-top:20px">
+          <div class="section-title">Agent Samenvattingen</div>
+          <div id="agentSummariesPanel" style="display:grid;grid-template-columns:1fr;gap:10px">
+            <div style="color:var(--muted2);font-size:12px;padding:10px 0">Laden...</div>
+          </div>
+        </div>
+
+        <div style="margin-top:20px">
           <div class="section-title">Recente activiteit</div>
           <div id="recentLog" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;font-family:monospace;font-size:11px;line-height:1.8;color:var(--muted);max-height:180px;overflow-y:auto"></div>
         </div>
@@ -1063,7 +1069,7 @@ function showView(id, btn) {
   document.getElementById('view-' + id).classList.add('active');
   if (btn) btn.classList.add('active');
   if (id === 'agents') syncAgentStates();
-  if (id === 'overview') { loadOverviewStats(); loadActiveAgents(); }
+  if (id === 'overview') { loadOverviewStats(); loadActiveAgents(); loadAgentSummaries(); }
 
   const titles = { overview:'Overview', tasks:'Tasks', agents:'Agents', memory:'Memory', health:'Health' };
   document.getElementById('topbarTitle').textContent = titles[id] || id;
@@ -1098,6 +1104,51 @@ async function loadOverviewStats() {
     document.getElementById('pendingBadge').textContent = s.pending;
   } catch(e) {}
 }
+
+async function loadAgentSummaries() {
+  const panel = document.getElementById('agentSummariesPanel');
+  if (!panel) return;
+
+  try {
+    const r = await fetch('/api/tasks');
+    const tasks = await r.json();
+    
+    // Filter completed tasks with work logs
+    const completed = tasks
+      .filter(t => t.status === 'complete' && t.work_log)
+      .sort((a, b) => new Date(b.completed || 0) - new Date(a.completed || 0))
+      .slice(0, 5);
+
+    if (completed.length === 0) {
+      panel.innerHTML = '<div style="color:var(--muted2);font-size:12px;padding:10px 0">Nog geen afgeronde agent taken.</div>';
+      return;
+    }
+
+    panel.innerHTML = completed.map(t => {
+      const agent = t.suggested_agent || 'onbekend';
+      const icon = AGENT_ICONS[agent] || '🤖';
+      const label = AGENT_LABELS[agent] || agent;
+      const date = t.completed ? new Date(t.completed).toLocaleString('nl-NL', {hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short'}) : '';
+
+      return `
+        <div class="card" style="padding:12px;display:flex;flex-direction:column;gap:8px;border-left:3px solid var(--green)">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:14px">${icon}</span>
+              <span style="font-size:12px;font-weight:700;color:var(--text)">${label}</span>
+              <span style="font-size:11px;color:var(--muted2)">· ${t.title}</span>
+            </div>
+            <span style="font-size:10px;color:var(--muted2)">${date}</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.6;white-space:pre-wrap;background:rgba(0,0,0,0.1);padding:8px;border-radius:6px;border:1px solid var(--border)">${t.work_log}</div>
+        </div>
+      `;
+    }).join('');
+  } catch(e) {
+    panel.innerHTML = '<div style="color:var(--red);font-size:12px;padding:10px 0">Fout bij laden van samenvattingen.</div>';
+  }
+}
+
 
 const AGENT_COLORS_OV = {
   frontend:'#3ECF8E', backend:'#5B6EF5', marketing:'#ECB22E',
