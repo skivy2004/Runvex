@@ -816,6 +816,10 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
     <div class="topbar">
       <div class="topbar-title" id="topbarTitle">Overview</div>
       <div class="topbar-actions" id="topbarActions">
+        <button class="link-btn" id="gitPushBtn" onclick="openGitPushModal()" title="Push naar GitHub & Vercel" style="gap:6px;cursor:pointer;border-color:var(--border2);transition:all .15s">
+          <span style="font-size:13px">🚀</span> Push
+          <span id="gitChangeBadge" style="display:none;background:var(--amber);color:#000;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:2px"></span>
+        </button>
         <a class="link-btn" href="https://runvex.app" target="_blank">↗ runvex.app</a>
         <a class="link-btn" href="https://runvex.app/demos/lead-automation/dashboard" target="_blank">↗ Dashboard</a>
         <a class="link-btn" href="https://vercel.com" target="_blank">↗ Vercel</a>
@@ -1064,18 +1068,18 @@ function showView(id, btn) {
   const titles = { overview:'Overview', tasks:'Tasks', agents:'Agents', memory:'Memory', health:'Health' };
   document.getElementById('topbarTitle').textContent = titles[id] || id;
 
-  // Show/hide topbar actions
+  // Show/hide topbar actions — always keep git push button
   const actions = document.getElementById('topbarActions');
-  if (id === 'tasks') {
-    actions.innerHTML = '';
-  } else if (id === 'agents') {
-    actions.innerHTML = '';
+  const pushBtn = `<button class="link-btn" id="gitPushBtn" onclick="openGitPushModal()" title="Push naar GitHub & Vercel" style="gap:6px;cursor:pointer;border-color:var(--border2);transition:all .15s"><span style="font-size:13px">🚀</span> Push<span id="gitChangeBadge" style="display:none;background:var(--amber);color:#000;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:2px"></span></button>`;
+  if (id === 'tasks' || id === 'agents') {
+    actions.innerHTML = pushBtn;
   } else {
-    actions.innerHTML = `
+    actions.innerHTML = pushBtn + `
       <a class="link-btn" href="https://runvex.app" target="_blank">↗ runvex.app</a>
       <a class="link-btn" href="https://runvex.app/demos/lead-automation/dashboard" target="_blank">↗ Dashboard</a>
       <a class="link-btn" href="https://vercel.com" target="_blank">↗ Vercel</a>`;
   }
+  refreshGitBadge();
 
   if (id === 'memory') loadMemory();
   if (id === 'health') loadHealth();
@@ -2251,5 +2255,140 @@ async function pollOllamaStatus() {
 pollOllamaStatus();
 setInterval(pollOllamaStatus, 10000);
 </script>
+<!-- Git Push Modal -->
+<div class="overlay" id="gitPushOverlay" onclick="if(event.target===this)closeGitPushModal()">
+  <div class="modal" style="width:420px">
+    <div class="modal-title" style="display:flex;align-items:center;gap:8px">🚀 Push naar GitHub & Vercel</div>
+    <div id="gitPushStatus" style="font-size:12px;color:var(--muted);margin-bottom:12px"></div>
+    <div class="form-group">
+      <label>Commit message</label>
+      <input class="form-input" id="gitCommitMsg" placeholder="Beschrijf je wijzigingen..." autocomplete="off">
+    </div>
+    <div id="gitPushFiles" style="font-size:11px;color:var(--muted2);max-height:120px;overflow-y:auto;margin-bottom:12px"></div>
+    <div id="gitPushResult" style="display:none;padding:10px 12px;border-radius:8px;font-size:12px;margin-bottom:12px"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeGitPushModal()">Annuleren</button>
+      <button class="btn btn-primary btn-sm" id="gitPushSubmitBtn" onclick="doGitPush()" style="min-width:120px">Push naar GitHub</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Git Push ──────────────────────────────────────────────────────────────────
+
+async function refreshGitBadge() {
+  try {
+    const r = await fetch('/api/git-status');
+    const d = await r.json();
+    const badge = document.getElementById('gitChangeBadge');
+    if (badge) {
+      if (d.changes > 0) {
+        badge.textContent = d.changes;
+        badge.style.display = 'inline';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+  } catch(e) {}
+}
+
+async function openGitPushModal() {
+  const overlay = document.getElementById('gitPushOverlay');
+  const statusEl = document.getElementById('gitPushStatus');
+  const filesEl = document.getElementById('gitPushFiles');
+  const resultEl = document.getElementById('gitPushResult');
+  const msgInput = document.getElementById('gitCommitMsg');
+  const submitBtn = document.getElementById('gitPushSubmitBtn');
+
+  resultEl.style.display = 'none';
+  submitBtn.disabled = false;
+  submitBtn.textContent = 'Push naar GitHub';
+  msgInput.value = '';
+  statusEl.textContent = 'Laden...';
+  filesEl.innerHTML = '';
+  overlay.classList.add('open');
+
+  try {
+    const r = await fetch('/api/git-status');
+    const d = await r.json();
+    if (d.changes === 0) {
+      statusEl.innerHTML = '<span style="color:var(--green)">✓ Geen wijzigingen — alles is up-to-date.</span>';
+      if (d.last_commit) statusEl.innerHTML += `<br><span style="color:var(--muted2)">Laatste commit: ${d.last_commit}</span>`;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Niets te pushen';
+    } else {
+      statusEl.innerHTML = `<span style="color:var(--amber)">${d.changes} gewijzigde bestand${d.changes===1?'':'en'}</span>`;
+      if (d.last_commit) statusEl.innerHTML += ` · <span style="color:var(--muted2)">Laatste: ${d.last_commit}</span>`;
+      filesEl.innerHTML = d.files.map(f => `<div style="padding:2px 0;font-family:monospace;font-size:11px">${f}</div>`).join('');
+    }
+  } catch(e) {
+    statusEl.innerHTML = '<span style="color:var(--red)">Kon git status niet ophalen.</span>';
+  }
+
+  msgInput.focus();
+}
+
+function closeGitPushModal() {
+  document.getElementById('gitPushOverlay').classList.remove('open');
+}
+
+async function doGitPush() {
+  const msgInput = document.getElementById('gitCommitMsg');
+  const submitBtn = document.getElementById('gitPushSubmitBtn');
+  const resultEl = document.getElementById('gitPushResult');
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Pushen...';
+  resultEl.style.display = 'none';
+
+  try {
+    const r = await fetch('/api/git-push', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ message: msgInput.value })
+    });
+    const d = await r.json();
+    if (d.ok) {
+      resultEl.style.display = 'block';
+      resultEl.style.background = 'rgba(62,207,142,0.08)';
+      resultEl.style.border = '1px solid rgba(62,207,142,0.25)';
+      resultEl.style.color = 'var(--green)';
+      resultEl.innerHTML = `✓ ${d.files} bestand${d.files===1?'':'en'} gepusht naar GitHub!<br><span style="font-size:11px;color:var(--muted)">Vercel deploy start automatisch.</span>`;
+      submitBtn.textContent = '✓ Klaar!';
+      refreshGitBadge();
+      setTimeout(() => closeGitPushModal(), 2500);
+    } else {
+      resultEl.style.display = 'block';
+      resultEl.style.background = 'rgba(232,80,122,0.08)';
+      resultEl.style.border = '1px solid rgba(232,80,122,0.25)';
+      resultEl.style.color = 'var(--red)';
+      resultEl.textContent = d.error || 'Push mislukt.';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Opnieuw proberen';
+    }
+  } catch(e) {
+    resultEl.style.display = 'block';
+    resultEl.style.background = 'rgba(232,80,122,0.08)';
+    resultEl.style.border = '1px solid rgba(232,80,122,0.25)';
+    resultEl.style.color = 'var(--red)';
+    resultEl.textContent = 'Verbinding mislukt.';
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Opnieuw proberen';
+  }
+}
+
+// Auto-refresh git badge every 30s
+setInterval(refreshGitBadge, 30000);
+refreshGitBadge();
+
+// Allow Enter key to submit in commit message input
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey && document.getElementById('gitPushOverlay').classList.contains('open')) {
+    const btn = document.getElementById('gitPushSubmitBtn');
+    if (!btn.disabled) doGitPush();
+  }
+});
+</script>
+
 </body>
 </html>

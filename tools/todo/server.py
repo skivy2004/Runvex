@@ -1045,6 +1045,25 @@ class Handler(BaseHTTPRequestHandler):
         elif p == '/api/memory':
             self.send_json(read_project_memory())
 
+        elif p == '/api/git-status':
+            try:
+                status = subprocess.run(
+                    ['git', 'status', '--porcelain'],
+                    capture_output=True, text=True, cwd=PROJECT_ROOT, timeout=10
+                )
+                changed = [l.strip() for l in status.stdout.strip().splitlines() if l.strip()]
+                log_out = subprocess.run(
+                    ['git', 'log', '-1', '--format=%h %s'],
+                    capture_output=True, text=True, cwd=PROJECT_ROOT, timeout=10
+                )
+                self.send_json({
+                    'changes': len(changed),
+                    'files': changed[:20],
+                    'last_commit': log_out.stdout.strip(),
+                })
+            except Exception as e:
+                self.send_json({'changes': 0, 'files': [], 'last_commit': '', 'error': str(e)})
+
         elif p == '/api/site-health':
             self.send_json(check_site_health())
 
@@ -1181,6 +1200,50 @@ class Handler(BaseHTTPRequestHandler):
             agent_type = p.split('/')[-1]
             clear_conversation(agent_type)
             self.send_json({'ok': True})
+
+        # Git push to GitHub / Vercel
+        elif p == '/api/git-push':
+            data = json.loads(self.read_body())
+            msg  = data.get('message', '').strip() or f'Dashboard push — {now_iso()}'
+            try:
+                # Check if there are changes
+                status = subprocess.run(
+                    ['git', 'status', '--porcelain'],
+                    capture_output=True, text=True, cwd=PROJECT_ROOT, timeout=10
+                )
+                changed_files = [l.strip() for l in status.stdout.strip().splitlines() if l.strip()]
+                if not changed_files:
+                    self.send_json({'ok': False, 'error': 'Geen wijzigingen om te pushen.'})
+                    return
+
+                # git add -A
+                subprocess.run(['git', 'add', '-A'], cwd=PROJECT_ROOT, timeout=10, check=True)
+                # git commit
+                result_commit = subprocess.run(
+                    ['git', 'commit', '-m', msg],
+                    capture_output=True, text=True, cwd=PROJECT_ROOT, timeout=15
+                )
+                if result_commit.returncode != 0:
+                    self.send_json({'ok': False, 'error': result_commit.stderr.strip() or result_commit.stdout.strip()})
+                    return
+                # git push
+                result_push = subprocess.run(
+                    ['git', 'push', 'origin', 'main'],
+                    capture_output=True, text=True, cwd=PROJECT_ROOT, timeout=30
+                )
+                if result_push.returncode != 0:
+                    self.send_json({'ok': False, 'error': result_push.stderr.strip() or 'Push mislukt'})
+                    return
+
+                log_event(f"GIT-PUSH {len(changed_files)} bestanden — {msg[:60]}")
+                self.send_json({
+                    'ok': True,
+                    'files': len(changed_files),
+                    'message': msg,
+                    'output': (result_push.stdout + result_push.stderr).strip()[:500]
+                })
+            except Exception as e:
+                self.send_json({'ok': False, 'error': str(e)}, 500)
 
         else:
             self.send_error(404)
