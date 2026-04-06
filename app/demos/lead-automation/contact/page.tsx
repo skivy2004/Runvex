@@ -110,7 +110,7 @@ export default function ContactPage() {
           <p className="text-sm mb-2" style={{ color: '#8A8FA8' }}>De lead is nu opgeslagen in het dashboard en wordt automatisch gescoord door Claude AI.</p>
           <p className="text-sm mb-6" style={{ color: '#5A5E82' }}>Zo werkt het voor jouw klanten — volledig automatisch.</p>
           <div className="flex flex-col gap-2">
-            <Link href="/demos/lead-automation/dashboard" className="inline-block px-5 py-2.5 rounded-lg text-sm font-semibold text-white text-center" style={{ background: '#5B6EF5' }}>
+            <Link href="/demos/lead-automation/demo-dashboard" className="inline-block px-5 py-2.5 rounded-lg text-sm font-semibold text-white text-center" style={{ background: '#5B6EF5' }}>
               Bekijk in dashboard →
             </Link>
             <Link href="/" className="inline-block px-5 py-2.5 rounded-lg text-sm font-medium text-center" style={{ color: '#8A8FA8' }}>
@@ -142,7 +142,7 @@ export default function ContactPage() {
       {/* Dashboard link */}
       <div className="fixed top-4 right-4 z-50">
         <Link
-          href="/demos/lead-automation/dashboard"
+          href="/demos/lead-automation/demo-dashboard"
           className="px-4 py-2 text-white text-sm font-semibold rounded-lg"
           style={{ background: '#5B6EF5' }}
         >
