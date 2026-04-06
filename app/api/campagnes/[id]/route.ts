@@ -19,10 +19,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!checkAuth(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { id } = await params
   const body = await req.json()
+  const allowed = { naam: body.naam, stappen: body.stappen, actief: body.actief }
+  const update = Object.fromEntries(Object.entries(allowed).filter(([, v]) => v !== undefined))
   const supabase = getSupabase()
   const { data, error } = await supabase
     .from('campagnes')
-    .update(body)
+    .update(update)
     .eq('id', id)
     .select()
     .single()
