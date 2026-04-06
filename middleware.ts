@@ -1,33 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server'
-import nodeCrypto from 'crypto'
 
 const DASHBOARD_PATH = '/demos/lead-automation/dashboard'
 const LOGIN_PATH = '/demos/lead-automation/login'
 const COOKIE_NAME = 'dashboard_session'
 
-function verifyDashboardToken(token: string, secret: string): boolean {
+async function verifyDashboardToken(token: string, secret: string): Promise<boolean> {
   const parts = token.split('.')
   if (parts.length !== 2) return false
   const [payload, sig] = parts
-  const expected = nodeCrypto.createHmac('sha256', secret).update(payload).digest('hex')
-  if (sig.length !== expected.length) return false
   try {
-    if (!nodeCrypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return false
+    const encoder = new TextEncoder()
+    const key = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['verify']
+    )
+    const sigBytes = new Uint8Array(sig.match(/.{1,2}/g)!.map((b) => parseInt(b, 16)))
+    const valid = await crypto.subtle.verify('HMAC', key, sigBytes, encoder.encode(payload))
+    if (!valid) return false
+    const expires = parseInt(payload.split(':')[1], 10)
+    return Date.now() < expires
   } catch {
     return false
   }
-  const expires = parseInt(payload.split(':')[1], 10)
-  return Date.now() < expires
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Dashboard auth check — redirect to login if no valid session
   if (pathname.startsWith(DASHBOARD_PATH)) {
     const secret = process.env.DASHBOARD_SECRET
     const token = request.cookies.get(COOKIE_NAME)?.value
-    if (!secret || !token || !verifyDashboardToken(token, secret)) {
+    if (!secret || !token || !(await verifyDashboardToken(token, secret))) {
       const loginUrl = request.nextUrl.clone()
       loginUrl.pathname = LOGIN_PATH
       return NextResponse.redirect(loginUrl)
