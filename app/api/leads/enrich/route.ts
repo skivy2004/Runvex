@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
       headers: {
         Authorization: `Basic ${Buffer.from(`${apiKey}:`).toString('base64')}`,
       },
+      signal: AbortSignal.timeout(10_000),
       next: { revalidate: 0 },
     }
   )

@@ -49,6 +49,7 @@ export async function POST(req: NextRequest) {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
+      signal: AbortSignal.timeout(10_000),
       body: JSON.stringify({
         properties: {
           email: lead.email,
@@ -71,6 +72,7 @@ export async function POST(req: NextRequest) {
     const res = await fetch('https://api.pipedrive.com/v1/persons', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      signal: AbortSignal.timeout(10_000),
       body: JSON.stringify({
         name: lead.naam,
         email: [{ value: lead.email, primary: true }],
