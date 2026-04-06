@@ -13,9 +13,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'DASHBOARD_SECRET niet geconfigureerd' }, { status: 500 })
   }
 
-  const origin = req.headers.get('origin') ?? `https://${req.headers.get('host')}`
+  const host = req.headers.get('host')
+  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
+  const baseUrl = `${protocol}://${host}`
 
-  const res = await fetch(`${origin}/api/slack-alert`, {
+  const res = await fetch(`${baseUrl}/api/slack-alert`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
