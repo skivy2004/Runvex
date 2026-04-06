@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       telefoon:   typeof raw.telefoon  === 'string' ? raw.telefoon.trim().slice(0, 50)   : undefined,
       bedrijf:    typeof raw.bedrijf   === 'string' ? raw.bedrijf.trim().slice(0, 200)   : undefined,
       bericht:    typeof raw.bericht   === 'string' ? raw.bericht.trim().slice(0, 2000)  : undefined,
-      form_token: typeof raw.form_token === 'string' ? raw.form_token.slice(0, 100)      : undefined,
+      form_token: process.env.FORM_TOKEN,
     }
     const res = await fetch(process.env.N8N_BOOKING_CREATE_URL!, {
       method: 'POST',
