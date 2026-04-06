@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit, getIp, tooManyRequests } from '@/app/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,7 +30,11 @@ async function checkResend() {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const ip = getIp(req)
+  const allowed = await rateLimit(`health:${ip}`, 10, 60_000)
+  if (!allowed) return tooManyRequests()
+
   const [db, email] = await Promise.all([checkSupabase(), checkResend()])
 
   const services = [

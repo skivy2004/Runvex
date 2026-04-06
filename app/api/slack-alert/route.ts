@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { checkDashboardSecret } from '@/app/lib/auth'
+import { rateLimit, getIp, tooManyRequests } from '@/app/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,6 +20,10 @@ function checkAuth(req: NextRequest): boolean {
 // Called by n8n after lead scoring, or via test button
 // Body: { lead_id?, naam, bedrijf, ai_prioriteit, ai_score, bericht, email }
 export async function POST(req: NextRequest) {
+  const ip = getIp(req)
+  const allowed = await rateLimit(`slack-alert:${ip}`, 20, 60_000)
+  if (!allowed) return tooManyRequests()
+
   if (!checkAuth(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
