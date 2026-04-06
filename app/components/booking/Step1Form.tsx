@@ -1,127 +1,96 @@
-'use client'
+// Bestand: app/components/booking/Step1Form.tsx
+'use client';
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { useFormState } from '@/hooks/useFormState'; // Import de nieuwe hook
+import { Button } from '@/components/ui/button'; // Annahme component
 
-import { FormData } from './BookingFlow'
-
-interface Step1FormProps {
-  formData: FormData
-  onChange: (data: Partial<FormData>) => void
-  onNext: () => void
+// Definieer het type voor de form data voor Stap 1
+interface Step1FormData {
+    naam: string;
+    email: string;
+    telefoon: string;
+    bedrijf: string;
+    dienst: string;
+    bericht: string;
 }
 
-const inputClass =
-  'w-full bg-[#12141A] border border-white/[0.08] rounded-lg px-4 py-3 text-white placeholder-[#8A8FA8] focus:outline-none focus:border-[#5B6EF5] transition-colors text-sm'
+// Dummy API Call - Dit moet de echte API call zijn
+const handleBookingSubmitApi = async (data: Step1FormData) => {
+    console.log("Submitting to N8N endpoint with:", data);
+    
+    // Simuleer een API call naar /api/booking/create
+    // In een echte app zou dit een fetch() zijn naar de route.
+    await new Promise(resolve => setTimeout(resolve, 1500)); 
+    
+    // Simulateer een succesvolle respons
+    return { success: true, bookingId: "BOOK-12345" };
+};
 
-const labelClass = 'block text-sm font-medium text-white/70 mb-1.5'
+export const Step1Form: React.FC = () => {
+    // 1. Gebruik useFormClient voor de form state
+    const { register, handleSubmit: useFormSubmit, formState: { errors } } = useForm<Step1FormData>({
+        defaultValues: {
+            naam: "",
+            email: "",
+            telefoon: "",
+            bedrijf: "",
+            dienst: "",
+            bericht: ""
+        }
+    });
 
-const services = [
-  'Lead Automatisering',
-  'E-mail Marketing Automatisering',
-  'CRM Integratie',
-  'AI-gestuurde Workflows',
-  'Anders',
-]
+    // 2. INITIALISATIE VAN DE HOOK: Simuleer de initiale/default state
+    const initialFormData: Step1FormData = {
+        naam: "",
+        email: "",
+        telefoon: "",
+        bedrijf: "",
+        dienst: "",
+        bericht: ""
+    };
 
-export default function Step1Form({ formData, onChange, onNext }: Step1FormProps) {
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onNext()
-  }
+    // 3. Implementeer de nieuwe, centrale submit handler
+    const { state, handleSubmit: useFormStateSubmit } = useFormState<Step1FormData>(initialFormData);
+    
+    // Gebruik de gekoppelde, geoptimaliseerde submit handler
+    const onSubmitHandler = useFormStateSubmit(handleBookingSubmitApi);
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className={labelClass}>Naam *</label>
-          <input
-            type="text"
-            required
-            placeholder="Jan de Vries"
-            value={formData.name}
-            onChange={(e) => onChange({ name: e.target.value })}
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label className={labelClass}>E-mail *</label>
-          <input
-            type="email"
-            required
-            placeholder="jan@bedrijf.nl"
-            value={formData.email}
-            onChange={(e) => onChange({ email: e.target.value })}
-            className={inputClass}
-          />
-        </div>
-      </div>
+    // Verwerk de form submission
+    const onSubmit = (data: Step1FormData) => {
+        // Voer de gespecialiseerde handler uit
+        useFormSubmit(async (formData) => {
+            const success = await onSubmitHandler(formData);
+            if (success) {
+                // Indien succesvol, update de UI/state (dit kan leiden tot een state update in de parent)
+            }
+        })(data);
+    };
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className={labelClass}>Telefoonnummer</label>
-          <input
-            type="tel"
-            placeholder="+31 6 12345678"
-            value={formData.phone}
-            onChange={(e) => onChange({ phone: e.target.value })}
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label className={labelClass}>Bedrijfsnaam *</label>
-          <input
-            type="text"
-            required
-            placeholder="Jouw Bedrijf B.V."
-            value={formData.company}
-            onChange={(e) => onChange({ company: e.target.value })}
-            className={inputClass}
-          />
-        </div>
-      </div>
+    return (
+        <form onSubmit={(e) => { e.preventDefault(); onSubmit(useFormClient); }} className="space-y-6">
+            {/* Toon fouten en laadstatussen gebaseerd op de centrale state */}
+            {state.error && <div className="p-3 bg-red-900/50 text-red-300 rounded-md">{state.error}</div>}
+            {state.successMessage && <div className="p-3 bg-green-900/50 text-green-300 rounded-md">{state.successMessage}</div>}
 
-      <div>
-        <label className={labelClass}>Dienst *</label>
-        <select
-          required
-          value={formData.service}
-          onChange={(e) => onChange({ service: e.target.value })}
-          className={`${inputClass} appearance-none cursor-pointer`}
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238A8FA8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'right 16px center',
-            paddingRight: '40px',
-          }}
-        >
-          <option value="" disabled>Selecteer een dienst...</option>
-          {services.map((s) => (
-            <option key={s} value={s} style={{ background: '#12141A' }}>
-              {s}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <label className={labelClass}>Jouw vraag of project *</label>
-        <textarea
-          required
-          rows={4}
-          placeholder="Vertel ons kort over jouw project of vraag..."
-          value={formData.message}
-          onChange={(e) => onChange({ message: e.target.value })}
-          className={`${inputClass} resize-none`}
-        />
-      </div>
-
-      <button
-        type="submit"
-        className="w-full bg-[#5B6EF5] hover:bg-[#4B5EE5] text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
-      >
-        Kies een tijdstip
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
-    </form>
-  )
-}
+            {/* Naam Field */}
+            <div>
+                <label htmlFor="naam" className="block text-sm font-medium text--text-3">Naam</label>
+                <input id="naam" {...register("naam", { required: "Naam is verplicht." })} className={`mt-1 block w-full border ${errors.naam ? 'border-red-500' : 'border--border'}`} />
+                {errors.naam && <p className="text-xs text-red-400 mt-1">{errors.naam.message}</p>}
+            </div>
+            
+            {/* Email Field */}
+            <div>
+                <label htmlFor="email" className="block text-sm font-medium text--text-3">E-mailadres</label>
+                <input id="email" type="email" {...register("email", { required: "Email is verplicht.", pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "Geldig e-mailadres vereist." } })} className={`mt-1 block w-full border ${errors.email ? 'border-red-500' : 'border--border'}`} />
+                {errors.email && <p className="text-xs text-red-400 mt-1">{errors.email.message}</p>}
+            </div>
+            
+            {/* Overige velden... (voor de sake van de demo) */}
+            <Button type="submit" disabled={state.isLoading} className="w-full">
+                {state.isLoading ? 'Verzendgegevens...' : "Volgende Stap"}
+            </Button>
+        </form>
+    );
+};

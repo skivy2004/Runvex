@@ -1,0 +1,13 @@
+De taak f4122d76 is succesvol uitgevoerd.
+
+De volgende beveiligingschecks zijn toegevoegd aan de volgende routes, door een verplichte `X-Dashboard-Secret` header te eisen:
+- `/api/campagnes`
+- `/api/linkedin-drafts`
+- `/api/crm-settings`
+
+Alle drie de endpoints retourneren nu een `401 Unauthorized` indien de header ontbreekt of niet overeenkomt met de geconfigureerde `DASHBOARD_SECRET`.
+
+**Belangrijke Opvolging:**
+Zoals vermeld in de bijgevoegde `SECURITY_NOTES_F4122D76.md`, is het cruciaal dat je **handmatig** de `DASHBOARD_SECRET` instelt in je `.env.local` en deze wijzigingen committeert en pusht om de productiebuilds te verhelpen.
+
+De taak is gemarkeerd als voltooid.

@@ -177,6 +177,8 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 /* ── Task meta badges ── */
 .human-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; background: rgba(236,178,46,.12); color: var(--amber); border: 1px solid rgba(236,178,46,.2); }
 .agent-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; background: rgba(91,110,245,.12); color: var(--accent); border: 1px solid rgba(91,110,245,.2); }
+.task-agent-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; background: rgba(236,178,46,.1); color: var(--amber); border: 1px solid rgba(236,178,46,.25); animation: pulse-chip 2s ease-in-out infinite; }
+@keyframes pulse-chip { 0%,100%{opacity:1} 50%{opacity:.6} }
 
 /* ── Right side panel (log / detail) ── */
 .right-panel { display: flex; flex-direction: column; overflow: hidden; position: relative; }
@@ -360,12 +362,31 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 .agent-card-activity-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
 .agent-card-last { font-size: 10px; color: var(--muted2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .agent-card-open  { font-size: 10px; color: var(--accent); text-align: right; opacity: .6; margin-top: 2px; }
+.agent-card-meta  { display: flex; align-items: center; gap: 6px; margin-top: 1px; }
+.llm-badge {
+  font-size: 9px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  padding: 2px 6px; border-radius: 4px;
+  background: rgba(91,110,245,.12); color: #7B8FF5;
+  border: 1px solid rgba(91,110,245,.2);
+  white-space: nowrap;
+}
+.llm-badge.large { background: rgba(236,178,46,.1); color: #ECB22E; border-color: rgba(236,178,46,.2); }
+.ollama-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  background: var(--muted2);
+  transition: background .4s;
+}
+.ollama-dot.online  { background: var(--green); box-shadow: 0 0 5px rgba(62,207,142,.5); }
+.ollama-dot.offline { background: var(--red); }
+.ollama-label {
+  font-size: 9px; color: var(--muted2); font-weight: 500;
+}
 
 /* Hidden panels — always in DOM so JS can access them */
 #agentPanelsHidden { display: none !important; }
 
 /* Per-agent accent colors (for modal panel) */
-.agent-panel { background: var(--card); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; }
+.agent-panel { background: var(--card); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; flex: 1; }
 .agent-panel-header {
   padding: 14px 16px; border-bottom: 1px solid var(--border);
   display: flex; align-items: center; gap: 10px;
@@ -386,6 +407,7 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 .chip-done    { background: rgba(62,207,142,.12); color: var(--green); }
 .chip-failed  { background: rgba(232,80,122,.12); color: var(--red); }
 .agent-panel-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; flex: 1; }
+.agent-panel-input { flex-shrink: 0; padding: 0 14px 14px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--border); padding-top: 10px; }
 
 /* ── Agent modal ── */
 .agent-modal-backdrop {
@@ -598,8 +620,7 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
   display: flex;
   flex-direction: column;
   gap: 6px;
-  max-height: 200px;
-  overflow-y: auto;
+  overflow-y: visible;
 }
 .conv-history:empty { display: none; }
 .conv-msg {
@@ -768,6 +789,10 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
         <span class="nav-icon">✓</span> Tasks
         <span class="nav-badge" id="pendingBadge">0</span>
       </button>
+      <button class="nav-item" id="navJij" onclick="showHumanTasks(this)">
+        <span class="nav-icon">👤</span> Jij
+        <span class="nav-badge" id="humanBadge" style="background:var(--red);display:none">0</span>
+      </button>
       <button class="nav-item" onclick="showView('agents',this)">
         <span class="nav-icon">⚡</span> Agents
       </button>
@@ -887,10 +912,14 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
       <div class="scroll">
 
         <!-- Orchestrator full panel (hidden, shown in modal) -->
-        <div id="panel-orchestrator" style="display:none">
-          <div style="padding:14px;display:flex;flex-direction:column;gap:10px">
+        <div class="agent-panel" id="panel-orchestrator" style="display:none">
+          <div class="agent-panel-body">
             <div class="conv-history" id="conv-orchestrator"></div>
             <div class="live-log" id="live-orchestrator"></div>
+            <div class="agent-output-area" id="out-orchestrator"></div>
+            <div id="dispatch-log-orchestrator" style="display:none"></div>
+          </div>
+          <div class="agent-panel-input">
             <div class="file-chips" id="chips-orchestrator"></div>
             <div class="chat-input-wrap">
               <button class="attach-btn" onclick="document.getElementById('file-input-orchestrator').click()" title="Bestand bijvoegen">
@@ -910,8 +939,6 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
               <button class="btn btn-ghost btn-sm" onclick="clearConversation('orchestrator')">↺ Wissen</button>
               <button class="btn btn-ghost btn-sm" onclick="showMemoryModal('orchestrator')">◎ Memory</button>
             </div>
-            <div class="agent-output-area" id="out-orchestrator"></div>
-            <div id="dispatch-log-orchestrator" style="display:none"></div>
           </div>
         </div>
 
@@ -1022,6 +1049,7 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 let tasks = [], filter = 'all', editId = null, selPriority = 3, logLines = [], selectedTaskId = null;
 const statusOrder = { in_progress: 0, pending: 1, complete: 2, failed: 3 };
 const AGENT_LABELS = { frontend:'Frontend', backend:'Backend', marketing:'Marketing', fullstack:'Fullstack', review:'Review', orchestrator:'Orchestrator' };
+const AGENT_ICONS  = { frontend:'🎨', backend:'⚙️', marketing:'📣', fullstack:'🔧', review:'🔍', orchestrator:'🧠' };
 
 // ── Navigation ────────────────────────────────────────────────────────────────
 
@@ -1212,6 +1240,7 @@ function render() {
         ${t.work_log && t.status!=='needs_human' ? `<div class="task-desc" style="color:var(--accent);margin-top:3px">↳ ${esc(t.work_log)}</div>` : ''}
         <div class="task-meta">
           <span class="status-chip chip-${t.status}">${t.status==='needs_human'?'👤 Jij':t.status.replace('_',' ')}</span>
+          ${t.status==='in_progress' && t.suggested_agent ? `<span class="task-agent-chip">${AGENT_ICONS[t.suggested_agent]||'🤖'} ${AGENT_LABELS[t.suggested_agent]||t.suggested_agent}</span>` : ''}
           ${t.human_only && t.status!=='needs_human' ? `<span class="human-badge">👤 Handmatig</span>` : ''}
           ${t.agent_runnable && !t.human_only && t.status==='pending' ? `<span class="agent-badge">🤖 Auto</span>` : ''}
           <span class="task-date">${fmtDate(t.created)}</span>
@@ -1219,9 +1248,16 @@ function render() {
       </div>
     </div>`).join('');
 
-  // Update badge
+  // Update badges
   const pending = tasks.filter(t => t.status === 'pending').length;
   document.getElementById('pendingBadge').textContent = pending;
+
+  const humanCount = tasks.filter(t => t.status === 'needs_human').length;
+  const humanBadge = document.getElementById('humanBadge');
+  if (humanBadge) {
+    humanBadge.textContent = humanCount;
+    humanBadge.style.display = humanCount > 0 ? '' : 'none';
+  }
 }
 
 function renderLog() {
@@ -1493,6 +1529,19 @@ function setFilter(f, el) {
   render();
 }
 
+function showHumanTasks(btn) {
+  // Navigeer naar Tasks view en activeer de "Jij" filter
+  showView('tasks', btn);
+  // Activeer de needs_human filter tab
+  const jijTab = document.querySelector('.filter-tab[onclick*="needs_human"]');
+  if (jijTab) {
+    filter = 'needs_human';
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    jijTab.classList.add('active');
+    render();
+  }
+}
+
 // ── Agents (parallel + orchestrator) ─────────────────────────────────────────
 
 const AGENTS = [
@@ -1528,7 +1577,12 @@ function buildAgentPanels() {
           <span style="font-size:13px;font-weight:700">Hoofd Agent — Orchestrator</span>
           <span class="agent-status-chip chip-idle" id="chip-orchestrator">idle</span>
         </div>
-        <div class="agent-card-activity" id="card-activity-orchestrator">
+        <div class="agent-card-meta">
+          <span class="llm-badge large">Gemma 3 27B</span>
+          <span class="ollama-dot" id="ollama-dot-orchestrator"></span>
+          <span class="ollama-label" id="ollama-label-orchestrator">—</span>
+        </div>
+        <div class="agent-card-activity" id="card-activity-orchestrator" style="margin-top:5px">
           <span class="agent-card-activity-text" style="color:var(--muted2)">Geen activiteit</span>
         </div>
       </div>
@@ -1540,6 +1594,11 @@ function buildAgentPanels() {
         <span class="agent-card-icon">${a.icon}</span>
         <span class="agent-card-name">${a.name}</span>
         <span class="agent-status-chip chip-idle" id="chip-${a.type}">idle</span>
+      </div>
+      <div class="agent-card-meta">
+        <span class="llm-badge">Gemma 4 9B</span>
+        <span class="ollama-dot" id="ollama-dot-${a.type}"></span>
+        <span class="ollama-label" id="ollama-label-${a.type}">—</span>
       </div>
       <div class="agent-card-activity" id="card-activity-${a.type}">
         <span class="agent-card-activity-text" style="color:var(--muted2)">Geen activiteit</span>
@@ -1555,6 +1614,10 @@ function buildAgentPanels() {
       <div class="agent-panel-body">
         <div class="conv-history" id="conv-${a.type}"></div>
         <div class="live-log" id="live-${a.type}"></div>
+        <div class="agent-output-area" id="out-${a.type}"></div>
+        <div id="dispatch-log-${a.type}"></div>
+      </div>
+      <div class="agent-panel-input">
         <div class="file-chips" id="chips-${a.type}"></div>
         <div class="chat-input-wrap">
           <button class="attach-btn" onclick="document.getElementById('file-input-${a.type}').click()" title="Bestand bijvoegen">
@@ -1577,8 +1640,6 @@ function buildAgentPanels() {
           <button class="btn btn-ghost btn-sm" onclick="clearConversation('${a.type}')">↺ Wissen</button>
           <button class="btn btn-ghost btn-sm" onclick="showMemoryModal('${a.type}')">◎ Memory</button>
         </div>
-        <div class="agent-output-area" id="out-${a.type}"></div>
-        <div id="dispatch-log-${a.type}"></div>
       </div>
     </div>`).join('');
 
@@ -2145,6 +2206,50 @@ setInterval(pollAutoRunner, 5000);
 setInterval(loadActiveAgents, 3000);
 pollAutoRunner();
 loadActiveAgents();
+
+// ── Ollama status polling ──────────────────────────────────────────────────
+const ALL_AGENT_TYPES = ['orchestrator', 'frontend', 'backend', 'marketing', 'review', 'fullstack'];
+
+async function pollOllamaStatus() {
+  try {
+    const res  = await fetch('/api/ollama-status');
+    const data = await res.json();
+
+    ALL_AGENT_TYPES.forEach(type => {
+      const dot   = document.getElementById(`ollama-dot-${type}`);
+      const label = document.getElementById(`ollama-label-${type}`);
+      if (!dot || !label) return;
+
+      const isLarge  = type === 'orchestrator';
+      const modelOk  = isLarge ? data.large_ready : data.small_ready;
+
+      if (!data.online) {
+        dot.className   = 'ollama-dot offline';
+        label.textContent = 'offline';
+        label.style.color = 'var(--red)';
+      } else if (!modelOk) {
+        dot.className   = 'ollama-dot';
+        dot.style.background = '#ECB22E';
+        label.textContent = 'laden…';
+        label.style.color = '#ECB22E';
+      } else {
+        dot.className   = 'ollama-dot online';
+        label.textContent = 'online';
+        label.style.color = 'var(--green)';
+      }
+    });
+  } catch {
+    ALL_AGENT_TYPES.forEach(type => {
+      const dot   = document.getElementById(`ollama-dot-${type}`);
+      const label = document.getElementById(`ollama-label-${type}`);
+      if (dot)   { dot.className = 'ollama-dot offline'; }
+      if (label) { label.textContent = 'offline'; label.style.color = 'var(--red)'; }
+    });
+  }
+}
+
+pollOllamaStatus();
+setInterval(pollOllamaStatus, 10000);
 </script>
 </body>
 </html>

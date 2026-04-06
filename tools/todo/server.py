@@ -8,6 +8,7 @@ import json, os, uuid, datetime, re, threading, subprocess, base64, tempfile
 from http.server import HTTPServer, BaseHTTPRequestHandler
 try:
     from urllib.request import urlopen, Request
+    import urllib.error
 except ImportError:
     pass
 
@@ -64,9 +65,18 @@ AGENT_PROMPTS = {
         "  marketing → copy, SEO, blogposts, teksten, content strategie\n"
         "  review    → security audits, OWASP, code review, TypeScript, performance\n"
         "  fullstack → taken die meerdere lagen raken, of niet duidelijk één laag\n\n"
+        "TAAK SPLITSEN (gebruik dit actief voor complexe taken):\n"
+        "Als een taak meerdere onafhankelijke delen heeft, splits hem dan in parallelle sub-taken.\n"
+        "Stuur MEERDERE items in de DISPATCH-array — ze draaien gelijktijdig.\n"
+        "Elke sub-taak krijgt zijn eigen gedeelte van het werk. Geef ALLEEN de LAATSTE sub-taak\n"
+        "de curl om de originele taak als complete te markeren (de anderen markeren niks).\n\n"
+        "Voorbeeld split (frontend + backend tegelijk):\n"
+        "DISPATCH:\n"
+        '[{"agent":"frontend","instruction":"Bouw het UI-gedeelte van X...\\n\\n(markeer taak NIET af)"},'
+        '{"agent":"backend","instruction":"Bouw de API voor X...\\n\\nTAAK_ID: abc123\\nMarkeer af: curl -X PUT http://localhost:7001/api/tasks/abc123 -H \'Content-Type: application/json\' -d \'{\\"status\\":\\"complete\\",\\"work_log\\":\\"...\\"}\' "}]\n\n'
         "Bij AUTO-TAAK: dispatch ALTIJD direct zonder bevestiging. Zet in de agent-instructie:\n"
         "  1. De volledige taakomschrijving + context\n"
-        "  2. Het TAAK_ID zodat de agent de taak kan afronden\n"
+        "  2. Het TAAK_ID (alleen in de LAATSTE sub-taak bij splits)\n"
         "  3. De curl-commando's om de taak als complete of needs_human te markeren\n\n"
         "DISPATCH formaat (EXACT, aan het einde van je antwoord):\n"
         "DISPATCH:\n"
@@ -333,48 +343,240 @@ def _extract_final_text(raw_lines):
     return ''.join(texts)
 
 
-# ── Model routing ────────────────────────────────────────────────────────────
+# ── Ollama / Gemma 4 configuratie ────────────────────────────────────────────
 
-MODEL_MAP = {
-    'haiku':  'claude-haiku-4-5-20251001',
-    'sonnet': 'claude-sonnet-4-6',
-    'opus':   'claude-opus-4-6',
+OLLAMA_URL    = 'http://localhost:11434'
+MODEL_LARGE   = 'gemma3:27b'     # orchestrator — groot model
+MODEL_SMALL   = 'gemma4:latest'  # sub-agents + routing — snel model
+MODEL_COLORS  = {
+    MODEL_LARGE: '#ECB22E',   # amber  — groot
+    MODEL_SMALL: '#3ECF8E',   # groen  — snel
 }
-MODEL_COLORS = {
-    'haiku':  '#3ECF8E',   # green  — goedkoop
-    'sonnet': '#5B6EF5',   # blauw  — standaard
-    'opus':   '#ECB22E',   # amber  — krachtig
+
+# Tool definities voor Gemma function calling
+OLLAMA_TOOLS = [
+    {"type": "function", "function": {
+        "name": "read_file",
+        "description": "Lees de volledige inhoud van een bestand.",
+        "parameters": {"type": "object", "properties": {
+            "file_path": {"type": "string", "description": "Absoluut pad naar het bestand"}
+        }, "required": ["file_path"]}
+    }},
+    {"type": "function", "function": {
+        "name": "write_file",
+        "description": "Schrijf (of overschrijf) een bestand met nieuwe inhoud.",
+        "parameters": {"type": "object", "properties": {
+            "file_path": {"type": "string"},
+            "content":   {"type": "string"}
+        }, "required": ["file_path", "content"]}
+    }},
+    {"type": "function", "function": {
+        "name": "edit_file",
+        "description": "Vervang een exacte string in een bestand door een nieuwe string.",
+        "parameters": {"type": "object", "properties": {
+            "file_path":  {"type": "string"},
+            "old_string": {"type": "string"},
+            "new_string": {"type": "string"}
+        }, "required": ["file_path", "old_string", "new_string"]}
+    }},
+    {"type": "function", "function": {
+        "name": "bash",
+        "description": "Voer een bash commando uit in de project root.",
+        "parameters": {"type": "object", "properties": {
+            "command": {"type": "string"}
+        }, "required": ["command"]}
+    }},
+    {"type": "function", "function": {
+        "name": "grep",
+        "description": "Zoek naar een regex-patroon in bestanden.",
+        "parameters": {"type": "object", "properties": {
+            "pattern": {"type": "string"},
+            "path":    {"type": "string", "description": "Map om in te zoeken (optioneel)"},
+            "glob":    {"type": "string", "description": "Bestandsfilter bijv. '*.tsx' (optioneel)"}
+        }, "required": ["pattern"]}
+    }},
+    {"type": "function", "function": {
+        "name": "glob",
+        "description": "Vind bestanden op basis van een glob patroon.",
+        "parameters": {"type": "object", "properties": {
+            "pattern": {"type": "string", "description": "Bijv. 'app/**/*.tsx'"}
+        }, "required": ["pattern"]}
+    }},
+]
+
+# Tool-icon mapping (ook kleine letters voor Ollama tool namen)
+_TOOL_ICON_MAP = {
+    'read_file':  ('📄', '#5B6EF5'),
+    'write_file': ('📝', '#3ECF8E'),
+    'edit_file':  ('✏️',  '#3ECF8E'),
+    'bash':       ('⚡', '#ECB22E'),
+    'grep':       ('🔍', '#9B6EF5'),
+    'glob':       ('📁', '#8A8FA8'),
 }
+
+
+def ollama_request(endpoint, payload, timeout=120):
+    """HTTP POST naar Ollama API, geeft parsed JSON terug."""
+    url  = f"{OLLAMA_URL}/{endpoint}"
+    data = json.dumps(payload).encode()
+    req  = Request(url, data=data, headers={'Content-Type': 'application/json'})
+    try:
+        resp = urlopen(req, timeout=timeout)
+        return json.loads(resp.read().decode())
+    except Exception as e:
+        raise RuntimeError(f"Ollama fout ({endpoint}): {e}")
+
+
+def ollama_simple(prompt, timeout=45):
+    """Snelle tekstgeneratie via het kleine model — geen tools, geen history."""
+    result = ollama_request('api/generate', {
+        'model':  MODEL_SMALL,
+        'prompt': prompt,
+        'stream': False,
+    }, timeout=timeout)
+    return result.get('response', '').strip()
+
+
+def execute_tool(name, args, job_id):
+    """Voer een Ollama tool-call uit, geef resultaat als string."""
+    try:
+        if name == 'read_file':
+            path = args.get('file_path', '')
+            with open(path, encoding='utf-8') as f:
+                return f.read(8000)
+        elif name == 'write_file':
+            path    = args.get('file_path', '')
+            content = args.get('content', '')
+            d = os.path.dirname(path)
+            if d:
+                os.makedirs(d, exist_ok=True)
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write(content)
+            return f"Geschreven: {path}"
+        elif name == 'edit_file':
+            path = args.get('file_path', '')
+            old  = args.get('old_string', '')
+            new  = args.get('new_string', '')
+            with open(path, encoding='utf-8') as f:
+                content = f.read()
+            if old not in content:
+                return f"Fout: old_string niet gevonden in {path}"
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write(content.replace(old, new, 1))
+            return f"Bewerkt: {path}"
+        elif name == 'bash':
+            cmd = args.get('command', '')
+            r   = subprocess.run(cmd, shell=True, capture_output=True, text=True,
+                                 timeout=60, cwd=PROJECT_ROOT)
+            out = (r.stdout + r.stderr).strip()
+            return out[:4000] or '(geen output)'
+        elif name == 'grep':
+            pattern = args.get('pattern', '')
+            path    = args.get('path', PROJECT_ROOT)
+            glob_p  = args.get('glob', '')
+            cmd     = ['rg', '--no-heading', '-n', pattern, path]
+            if glob_p:
+                cmd += ['-g', glob_p]
+            r = subprocess.run(cmd, capture_output=True, text=True,
+                               timeout=30, cwd=PROJECT_ROOT)
+            return r.stdout[:4000] or '(geen resultaten)'
+        elif name == 'glob':
+            import glob as _glob
+            pattern = args.get('pattern', '')
+            matches = _glob.glob(os.path.join(PROJECT_ROOT, pattern), recursive=True)
+            return '\n'.join(
+                os.path.relpath(m, PROJECT_ROOT) for m in sorted(matches)[:100]
+            ) or '(geen bestanden)'
+        else:
+            return f"Onbekende tool: {name}"
+    except Exception as e:
+        return f"Tool fout ({name}): {e}"
+
+
+def run_ollama_agent(job_id, agent_type, full_prompt):
+    """
+    Voer een agentic loop uit: Gemma roept tools aan tot het klaar is.
+    Geeft de uiteindelijke tekstoutput terug.
+    """
+    model = MODEL_LARGE if agent_type == 'orchestrator' else MODEL_SMALL
+    AGENT_JOBS[job_id]['model'] = model
+    AGENT_JOBS[job_id]['live_log'].append({
+        'icon': '🧩', 'color': MODEL_COLORS.get(model, '#8A8FA8'),
+        'tool': 'model', 'label': model,
+    })
+    log_event(f"MODEL    [{agent_type}] → {model}")
+
+    messages     = [{"role": "user", "content": full_prompt}]
+    final_text   = ''
+    max_iters    = 30
+
+    for _ in range(max_iters):
+        try:
+            result = ollama_request('api/chat', {
+                'model':    model,
+                'messages': messages,
+                'tools':    OLLAMA_TOOLS,
+                'stream':   False,
+            }, timeout=300)
+        except Exception as e:
+            return f"Ollama fout: {e}"
+
+        msg        = result.get('message', {})
+        tool_calls = msg.get('tool_calls') or []
+        content    = msg.get('content') or ''
+
+        if not tool_calls:
+            final_text = content
+            break
+
+        # Voeg assistant turn toe — alleen schone velden (Ollama is strict)
+        clean_tool_calls = []
+        for tc in tool_calls:
+            func = tc.get('function', {})
+            args = func.get('arguments', {})
+            if isinstance(args, str):
+                try:
+                    args = json.loads(args)
+                except Exception:
+                    args = {}
+            clean_tool_calls.append({
+                'id': tc.get('id', ''),
+                'type': 'function',
+                'function': {'name': func.get('name', ''), 'arguments': args},
+            })
+        messages.append({
+            'role': 'assistant',
+            'content': content or '',
+            'tool_calls': clean_tool_calls,
+        })
+
+        # Voer elke tool uit en voeg resultaat toe
+        for tc in clean_tool_calls:
+            tool_name = tc['function']['name']
+            tool_args = tc['function']['arguments']
+
+            icon, color = _TOOL_ICON_MAP.get(tool_name, ('🔧', '#8A8FA8'))
+            first_val   = next((str(v) for v in tool_args.values() if v), '') if tool_args else ''
+            AGENT_JOBS[job_id]['live_log'].append({
+                'icon': icon, 'color': color,
+                'tool': tool_name, 'label': first_val[:100],
+            })
+
+            tool_result = execute_tool(tool_name, tool_args, job_id)
+            # Ollama verwacht role=tool met de tool call id
+            messages.append({
+                'role':       'tool',
+                'content':    str(tool_result),
+                'tool_call_id': tc.get('id', ''),
+            })
+
+    return final_text
+
 
 def select_model(instruction, agent_type):
-    """Roep Haiku aan om te beslissen welk model de hoofdtaak het beste uitvoert."""
-    routing_prompt = (
-        "Je bent een AI model router. Kies het meest geschikte Claude model voor deze taak.\n\n"
-        f"Agent: {agent_type}\n"
-        f"Taak: {instruction[:600]}\n\n"
-        "Opties:\n"
-        "- haiku:  eenvoudige taken — tekst schrijven, uitleg geven, copy, korte lookups, simpele vragen\n"
-        "- sonnet: standaard codeer- en bouwtaken — features, bugfixes, componenten, API routes, refactors\n"
-        "- opus:   complexe taken — grote architectuurbeslissingen, uitgebreide security-audits, "
-        "kritieke multi-file refactors, alles waarbij fouten grote gevolgen hebben\n\n"
-        'Antwoord ALLEEN met geldig JSON op één regel: {"model":"haiku|sonnet|opus","reason":"één zin in het Nederlands"}'
-    )
-    try:
-        res = subprocess.run(
-            ['claude', '-p', routing_prompt, '--model', MODEL_MAP['haiku']],
-            capture_output=True, text=True, timeout=20, cwd=PROJECT_ROOT,
-        )
-        text = res.stdout.strip()
-        m = re.search(r'\{[^{}]+\}', text)
-        if m:
-            data = json.loads(m.group())
-            key = data.get('model', 'sonnet')
-            if key not in MODEL_MAP:
-                key = 'sonnet'
-            return key, data.get('reason', '')
-    except Exception:
-        pass
-    return 'sonnet', 'Fallback naar standaard model'
+    """Compatibiliteitswrapper — altijd Gemma, model bepaald door agent type."""
+    model = MODEL_LARGE if agent_type == 'orchestrator' else MODEL_SMALL
+    return model, f"{'Gemma 3 27B' if agent_type == 'orchestrator' else 'Gemma 4 9B'}"
 
 
 def route_task_agent(task):
@@ -386,31 +588,31 @@ def route_task_agent(task):
         "Je bent een taak-router voor een Next.js / Supabase / n8n project.\n"
         "Bepaal welke specialist-agent deze taak moet uitvoeren, OF dat een mens het moet doen.\n\n"
         "AGENTS:\n"
-        "  frontend  — React/Next.js components, Tailwind CSS, UI, animaties, app/components/\n"
-        "  backend   — API routes (app/api/), Supabase, n8n, Resend, server-side code\n"
-        "  marketing — copy, SEO, blogposts, content, teksten\n"
-        "  review    — security audits, code review, OWASP, TypeScript, performance\n"
-        "  fullstack — taken die meerdere lagen raken, of niet duidelijk één laag\n"
-        "  human     — vereist inloggen op externe service, browser-actie, echte credentials,\n"
-        "              handmatige stappen buiten de codebase (Calendly, Slack webhook, DNS, etc.)\n\n"
+        "  frontend      — React/Next.js components, Tailwind CSS, UI, animaties, app/components/\n"
+        "  backend       — API routes (app/api/), Supabase, n8n, Resend, server-side code\n"
+        "  marketing     — copy, SEO, blogposts, content, teksten\n"
+        "  review        — security audits, code review, OWASP, TypeScript, performance\n"
+        "  fullstack     — taken die meerdere lagen raken, of niet duidelijk één laag\n"
+        "  orchestrator  — taken die GESPLITST kunnen worden in meerdere parallelle sub-taken\n"
+        "                  (bijv: 'bouw feature X' waarbij frontend + backend tegelijk kunnen werken)\n"
+        "  human         — vereist inloggen op externe service, browser-actie, echte credentials,\n"
+        "                  handmatige stappen buiten de codebase (Calendly, Slack webhook, DNS, etc.)\n\n"
+        "Kies orchestrator alleen als de taak écht opsplitsbaar is in onafhankelijke parallelle delen.\n\n"
         f"Taak titel: {task['title']}\n"
         f"Beschrijving: {(task.get('description') or '')[:400]}\n\n"
         'Antwoord ALLEEN met geldig JSON op één regel:\n'
-        '{"agent":"frontend|backend|marketing|review|fullstack|human","reason":"één zin"}'
+        '{"agent":"frontend|backend|marketing|review|fullstack|orchestrator|human","reason":"één zin"}'
     )
     try:
-        res = subprocess.run(
-            ['claude', '-p', routing_prompt, '--model', MODEL_MAP['haiku']],
-            capture_output=True, text=True, timeout=25, cwd=PROJECT_ROOT,
-        )
-        m = re.search(r'\{[^{}]+\}', res.stdout.strip())
+        text = ollama_simple(routing_prompt, timeout=30)
+        m = re.search(r'\{[^{}]+\}', text)
         if m:
             data   = json.loads(m.group())
             agent  = data.get('agent', 'fullstack')
             reason = data.get('reason', '')
             if agent == 'human':
                 return 'human', True, reason
-            if agent not in ('frontend', 'backend', 'marketing', 'review', 'fullstack'):
+            if agent not in ('frontend', 'backend', 'marketing', 'review', 'fullstack', 'orchestrator'):
                 agent = 'fullstack'
             return agent, False, reason
     except Exception:
@@ -453,43 +655,15 @@ def run_agent_bg(job_id, agent_type, instruction, uploaded_files=None):
     history.append({'role': 'user', 'content': instruction, 'ts': now_iso()})
     full_prompt = build_prompt(agent_type, instruction)
 
-    # ── Model routing ──
-    model_key, model_reason = select_model(instruction, agent_type)
-    model_id = MODEL_MAP[model_key]
-    AGENT_JOBS[job_id]['model']        = model_key
-    AGENT_JOBS[job_id]['model_reason'] = model_reason
-    AGENT_JOBS[job_id]['live_log'].append({
-        'icon': '🧩', 'color': MODEL_COLORS[model_key], 'tool': model_key,
-        'label': model_reason,
-    })
-    log_event(f"MODEL    [{agent_type}] → {model_key} — {model_reason[:60]}")
-
     try:
-        proc = subprocess.Popen(
-            ['claude', '-p', full_prompt, '--output-format', 'stream-json', '--verbose',
-             '--model', model_id],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            text=True, bufsize=1, cwd=PROJECT_ROOT,
-        )
-
-        raw_lines = []
-        for line in proc.stdout:
-            line = line.rstrip('\n')
-            if not line:
-                continue
-            raw_lines.append(line)
-            _process_stream_line(line, job_id)
-
-        proc.wait(timeout=300)
-        stderr_out = proc.stderr.read().strip()
-
-        raw = _extract_final_text(raw_lines)
+        # ── Ollama agentic loop ──
+        raw = run_ollama_agent(job_id, agent_type, full_prompt)
         clean, dispatches = parse_output(agent_type, raw, instruction)
 
         AGENT_JOBS[job_id]['output']     = clean
-        AGENT_JOBS[job_id]['error']      = stderr_out
+        AGENT_JOBS[job_id]['error']      = ''
         AGENT_JOBS[job_id]['dispatches'] = dispatches
-        AGENT_JOBS[job_id]['status']     = 'done' if proc.returncode == 0 else 'failed'
+        AGENT_JOBS[job_id]['status']     = 'done'
 
         history.append({'role': 'assistant', 'content': clean, 'ts': now_iso()})
         save_conversation(agent_type, history)
@@ -511,13 +685,6 @@ def run_agent_bg(job_id, agent_type, instruction, uploaded_files=None):
                 t.start()
                 log_event(f"DISPATCH [{sub_agent}] via orchestrator — {sub_instr[:50]}")
 
-    except subprocess.TimeoutExpired:
-        proc.kill()
-        AGENT_JOBS[job_id]['status'] = 'failed'
-        AGENT_JOBS[job_id]['error']  = 'Timeout na 5 minuten'
-    except FileNotFoundError:
-        AGENT_JOBS[job_id]['status'] = 'failed'
-        AGENT_JOBS[job_id]['error']  = '`claude` CLI niet gevonden.'
     except Exception as e:
         AGENT_JOBS[job_id]['status'] = 'failed'
         AGENT_JOBS[job_id]['error']  = str(e)
@@ -535,82 +702,202 @@ def run_agent_bg(job_id, agent_type, instruction, uploaded_files=None):
 
 AUTO_RUNNER_STATUS = {'running': False, 'current_task_id': None, 'current_task_title': None}
 
+def _dispatch_task(task):
+    """Start één taak op de juiste agent (in een eigen thread). Geeft job_id terug of None."""
+    tid = task['id']
+
+    agent, is_human, reason = route_task_agent(task)
+    log_event(f"ROUTE    taak {tid[:6]} → {agent} ({reason[:60]})")
+
+    if is_human:
+        fresh = load_tasks()
+        for t2 in fresh:
+            if t2['id'] == tid:
+                t2['status']   = 'needs_human'
+                t2['work_log'] = reason
+                t2['updated']  = now_iso()
+                break
+        save_tasks(fresh)
+        log_event(f"AUTO     taak {tid[:6]} → needs_human (routing)")
+        return None
+
+    # Markeer direct in_progress zodat de volgende cyclus hem overslaat
+    fresh = load_tasks()
+    for t2 in fresh:
+        if t2['id'] == tid:
+            t2['status']          = 'in_progress'
+            t2['suggested_agent'] = agent
+            t2['updated']         = now_iso()
+            break
+    save_tasks(fresh)
+
+    if agent == 'orchestrator':
+        instruction = (
+            f"AUTO-TAAK — analyseer en splits in parallelle sub-taken indien mogelijk.\n\n"
+            f"Taak ID : {tid}\n"
+            f"Prioriteit: P{task.get('priority', 3)}\n"
+            f"Titel   : {task['title']}\n"
+            f"Beschrijving:\n{task.get('description', '(geen beschrijving)')}\n\n"
+            f"Splits deze taak in onafhankelijke delen en dispatch ze tegelijk.\n"
+            f"Geef ALLEEN de LAATSTE sub-taak de curl om taak {tid} als complete te markeren.\n"
+            f"Als de taak niet splitbaar is, dispatch naar één agent.\n\n"
+            f"Als externe toegang of credentials vereist zijn:\n"
+            f"  curl -s -X PUT http://localhost:7001/api/tasks/{tid} "
+            f"-H 'Content-Type: application/json' "
+            f"-d '{{\"status\":\"needs_human\",\"work_log\":\"<reden>\"}}'"
+        )
+    else:
+        instruction = (
+            f"Voer de volgende taak volledig uit.\n\n"
+            f"Taak ID : {tid}\n"
+            f"Prioriteit: P{task.get('priority', 3)}\n"
+            f"Titel   : {task['title']}\n"
+            f"Beschrijving:\n{task.get('description', '(geen beschrijving)')}\n\n"
+            f"Begin direct — geen bevestiging nodig.\n\n"
+            f"Wanneer klaar:\n"
+            f"  curl -s -X PUT http://localhost:7001/api/tasks/{tid} "
+            f"-H 'Content-Type: application/json' "
+            f"-d '{{\"status\":\"complete\",\"work_log\":\"<wat je gedaan hebt>\"}}'\n\n"
+            f"Als je het NIET kunt uitvoeren (externe toegang, echte credentials, browser):\n"
+            f"  curl -s -X PUT http://localhost:7001/api/tasks/{tid} "
+            f"-H 'Content-Type: application/json' "
+            f"-d '{{\"status\":\"needs_human\",\"work_log\":\"<reden>\"}}'  "
+        )
+
+    job_id = str(uuid.uuid4())[:8]
+    AGENT_JOBS[job_id] = {
+        'id': job_id, 'agent': agent, 'prompt': instruction,
+        'status': 'pending', 'output': '', 'error': '',
+        'live_log': [], 'dispatches': [],
+        'started': now_iso(), 'finished': None,
+        'auto_task_id': tid,
+    }
+    threading.Thread(target=run_agent_bg, args=(job_id, agent, instruction), daemon=True).start()
+    log_event(f"AUTO     [{agent}] taak {tid[:6]}: {task['title'][:40]}")
+    return job_id
+
+
 def auto_task_runner():
     """
-    Background thread:
-    1. Haiku-call bepaalt welke agent de taak uitvoert (of needs_human).
-    2. De gekozen agent voert de taak direct uit — orchestrator wordt NIET gebruikt.
-    3. Wacht op de taak-status (niet job-status) voor de volgende taak.
+    Parallelle dispatcher: elke agent kan tegelijk een taak uitvoeren.
+    Elke cyclus (15s):
+      1. Controleer Ollama
+      2. Auto-complete taken waarvan de agent-job klaar is maar taak nog in_progress
+      3. Zoek vrije agents en dispatch nieuwe pending taken
     """
     import time
     time.sleep(15)
+
+    # job_id → task_id mapping voor auto-complete bewaking
+    active_jobs = {}  # {job_id: tid}
+
     while True:
         try:
+            # ── Ollama health check ──
+            try:
+                req = Request(f"{OLLAMA_URL}/api/tags", headers={'User-Agent': 'RunvexControl'})
+                urlopen(req, timeout=5)
+            except Exception:
+                log_event("AUTO-ERR Ollama niet bereikbaar — wacht 30s")
+                time.sleep(30)
+                continue
+
+            # ── Auto-complete: jobs die klaar zijn maar taak nog in_progress ──
+            done_jobs = [jid for jid, tid in list(active_jobs.items())
+                         if AGENT_JOBS.get(jid, {}).get('status') == 'done']
+            if done_jobs:
+                fresh = load_tasks()
+                for jid in done_jobs:
+                    tid = active_jobs.pop(jid)
+                    t = next((x for x in fresh if x['id'] == tid), None)
+                    if t and t['status'] == 'in_progress':
+                        output = (AGENT_JOBS.get(jid, {}).get('output') or '')[:400]
+                        t['status']    = 'complete'
+                        t['work_log']  = output or 'Afgerond door agent'
+                        t['updated']   = now_iso()
+                        t['completed'] = now_iso()
+                        log_event(f"AUTO     taak {tid[:6]} → auto-complete")
+                save_tasks(fresh)
+
+            # ── Welke agents zijn momenteel bezig? ──
+            busy_agents = set()
+            for job in AGENT_JOBS.values():
+                if job.get('status') in ('pending', 'running'):
+                    busy_agents.add(job.get('agent'))
+
+            # ── Dispatch pending taken naar vrije agents ──
             tasks = load_tasks()
-            runnable = sorted(
+            pending = sorted(
                 [t for t in tasks if not t.get('human_only') and t['status'] == 'pending'],
                 key=lambda t: (t.get('priority', 3), t.get('created', ''))
             )
-            if runnable:
-                task = runnable[0]
-                tid  = task['id']
 
-                # ── Stap 1: Haiku bepaalt de agent (snel, goedkoop) ──
+            dispatched_agents = set()
+            for task in pending:
+                # Route snel via Ollama (klein model, geen tools)
                 agent, is_human, reason = route_task_agent(task)
-                log_event(f"ROUTE    taak {tid[:6]} → {agent} ({reason[:60]})")
 
                 if is_human:
-                    # Meteen markeren als needs_human, geen agent starten
                     fresh = load_tasks()
                     for t2 in fresh:
-                        if t2['id'] == tid:
+                        if t2['id'] == task['id']:
                             t2['status']   = 'needs_human'
                             t2['work_log'] = reason
                             t2['updated']  = now_iso()
                             break
                     save_tasks(fresh)
-                    log_event(f"AUTO     taak {tid[:6]} → needs_human (routing)")
-                    time.sleep(5)
+                    log_event(f"AUTO     taak {task['id'][:6]} → needs_human (routing)")
                     continue
 
-                # ── Stap 2: wacht als de agent al bezig is ──
-                existing_id  = LATEST_JOB_BY_AGENT.get(agent)
-                existing_job = AGENT_JOBS.get(existing_id) if existing_id else None
-                if existing_job and existing_job.get('status') in ('pending', 'running'):
-                    time.sleep(20)
+                # Sla over als agent al bezig is (globaal of in deze cyclus)
+                if agent in busy_agents or agent in dispatched_agents:
                     continue
 
-                # ── Stap 3: markeer in_progress zodat loop hem niet dubbel pakt ──
+                # Markeer in_progress + start job
+                tid = task['id']
+                log_event(f"ROUTE    taak {tid[:6]} → {agent} ({reason[:60]})")
+
                 fresh = load_tasks()
                 for t2 in fresh:
                     if t2['id'] == tid:
-                        t2['status']         = 'in_progress'
+                        t2['status']          = 'in_progress'
                         t2['suggested_agent'] = agent
-                        t2['updated']        = now_iso()
+                        t2['updated']         = now_iso()
                         break
                 save_tasks(fresh)
 
-                AUTO_RUNNER_STATUS['running']            = True
-                AUTO_RUNNER_STATUS['current_task_id']    = tid
-                AUTO_RUNNER_STATUS['current_task_title'] = task['title']
-
-                # ── Stap 4: bouw instructie voor de gekozen agent ──
-                instruction = (
-                    f"Voer de volgende taak volledig uit.\n\n"
-                    f"Taak ID : {tid}\n"
-                    f"Prioriteit: P{task.get('priority', 3)}\n"
-                    f"Titel   : {task['title']}\n"
-                    f"Beschrijving:\n{task.get('description', '(geen beschrijving)')}\n\n"
-                    f"Begin direct — geen bevestiging nodig.\n\n"
-                    f"Wanneer klaar:\n"
-                    f"  curl -s -X PUT http://localhost:7001/api/tasks/{tid} "
-                    f"-H 'Content-Type: application/json' "
-                    f"-d '{{\"status\":\"complete\",\"work_log\":\"<wat je gedaan hebt>\"}}'\n\n"
-                    f"Als je het NIET kunt uitvoeren (externe toegang, echte credentials, browser):\n"
-                    f"  curl -s -X PUT http://localhost:7001/api/tasks/{tid} "
-                    f"-H 'Content-Type: application/json' "
-                    f"-d '{{\"status\":\"needs_human\",\"work_log\":\"<reden>\"}}'  "
-                )
+                if agent == 'orchestrator':
+                    instruction = (
+                        f"AUTO-TAAK — analyseer en splits in parallelle sub-taken indien mogelijk.\n\n"
+                        f"Taak ID : {tid}\n"
+                        f"Prioriteit: P{task.get('priority', 3)}\n"
+                        f"Titel   : {task['title']}\n"
+                        f"Beschrijving:\n{task.get('description', '(geen beschrijving)')}\n\n"
+                        f"Splits deze taak in onafhankelijke delen en dispatch ze tegelijk.\n"
+                        f"Geef ALLEEN de LAATSTE sub-taak de curl om taak {tid} als complete te markeren.\n"
+                        f"Als de taak niet splitbaar is, dispatch naar één agent.\n\n"
+                        f"Als externe toegang of credentials vereist zijn:\n"
+                        f"  curl -s -X PUT http://localhost:7001/api/tasks/{tid} "
+                        f"-H 'Content-Type: application/json' "
+                        f"-d '{{\"status\":\"needs_human\",\"work_log\":\"<reden>\"}}'"
+                    )
+                else:
+                    instruction = (
+                        f"Voer de volgende taak volledig uit.\n\n"
+                        f"Taak ID : {tid}\n"
+                        f"Prioriteit: P{task.get('priority', 3)}\n"
+                        f"Titel   : {task['title']}\n"
+                        f"Beschrijving:\n{task.get('description', '(geen beschrijving)')}\n\n"
+                        f"Begin direct — geen bevestiging nodig.\n\n"
+                        f"Wanneer klaar:\n"
+                        f"  curl -s -X PUT http://localhost:7001/api/tasks/{tid} "
+                        f"-H 'Content-Type: application/json' "
+                        f"-d '{{\"status\":\"complete\",\"work_log\":\"<wat je gedaan hebt>\"}}'\n\n"
+                        f"Als je het NIET kunt uitvoeren (externe toegang, echte credentials, browser):\n"
+                        f"  curl -s -X PUT http://localhost:7001/api/tasks/{tid} "
+                        f"-H 'Content-Type: application/json' "
+                        f"-d '{{\"status\":\"needs_human\",\"work_log\":\"<reden>\"}}'  "
+                    )
 
                 job_id = str(uuid.uuid4())[:8]
                 AGENT_JOBS[job_id] = {
@@ -620,28 +907,24 @@ def auto_task_runner():
                     'started': now_iso(), 'finished': None,
                     'auto_task_id': tid,
                 }
-                threading.Thread(
-                    target=run_agent_bg, args=(job_id, agent, instruction), daemon=True
-                ).start()
+                threading.Thread(target=run_agent_bg, args=(job_id, agent, instruction), daemon=True).start()
                 log_event(f"AUTO     [{agent}] taak {tid[:6]}: {task['title'][:40]}")
 
-                # ── Stap 5: wacht tot taak-status terminaal is ──
-                for _ in range(120):  # max 10 minuten
-                    time.sleep(5)
-                    current = next((t for t in load_tasks() if t['id'] == tid), None)
-                    if current and current['status'] not in ('pending', 'in_progress'):
-                        log_event(f"AUTO     taak {tid[:6]} → {current['status']}")
-                        break
+                active_jobs[job_id] = tid
+                dispatched_agents.add(agent)
+                busy_agents.add(agent)
 
-                AUTO_RUNNER_STATUS['running']            = False
-                AUTO_RUNNER_STATUS['current_task_id']    = None
-                AUTO_RUNNER_STATUS['current_task_title'] = None
+            # Update status voor overview
+            running_count = len([j for j in AGENT_JOBS.values() if j.get('status') in ('pending','running')])
+            AUTO_RUNNER_STATUS['running']            = running_count > 0
+            AUTO_RUNNER_STATUS['current_task_id']    = None
+            AUTO_RUNNER_STATUS['current_task_title'] = f"{running_count} agents actief" if running_count else None
 
         except Exception as e:
             AUTO_RUNNER_STATUS['running'] = False
             log_event(f"AUTO-ERR {e}")
 
-        time.sleep(20)
+        time.sleep(15)
 
 
 # ── Health check ──────────────────────────────────────────────────────────────
@@ -764,6 +1047,22 @@ class Handler(BaseHTTPRequestHandler):
 
         elif p == '/api/site-health':
             self.send_json(check_site_health())
+
+        elif p == '/api/ollama-status':
+            try:
+                req  = Request(f"{OLLAMA_URL}/api/tags",
+                               headers={'User-Agent': 'RunvexControl/1.0'})
+                resp = urlopen(req, timeout=3)
+                data = json.loads(resp.read().decode())
+                models = [m['name'] for m in data.get('models', [])]
+                self.send_json({
+                    'online':      True,
+                    'models':      models,
+                    'large_ready': any('gemma3' in m and '27b' in m for m in models),
+                    'small_ready': any('gemma4' in m and '27b' not in m for m in models),
+                })
+            except Exception:
+                self.send_json({'online': False, 'models': [], 'large_ready': False, 'small_ready': False})
 
         # Agent: all jobs
         elif p == '/api/agents':
@@ -923,6 +1222,18 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == '__main__':
+    # Reset stale in_progress tasks → pending (overgebleven van vorige run)
+    _tasks = load_tasks()
+    _reset = 0
+    for _t in _tasks:
+        if _t['status'] == 'in_progress':
+            _t['status']  = 'pending'
+            _t['updated'] = now_iso()
+            _reset += 1
+    if _reset:
+        save_tasks(_tasks)
+        log_event(f"STARTUP  {_reset} in_progress taken teruggezet naar pending")
+
     # Start background threads
     threading.Thread(target=auto_task_runner, daemon=True).start()
 

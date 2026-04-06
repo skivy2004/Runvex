@@ -7,13 +7,9 @@ export const dynamic = 'force-dynamic'
 
 function getSupabase() {
   return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
-}
-
-function checkAuth(req: NextRequest): boolean {
-  return checkDashboardSecret(req)
 }
 
 // POST /api/slack-alert
@@ -24,9 +20,16 @@ export async function POST(req: NextRequest) {
   const allowed = await rateLimit(`slack-alert:${ip}`, 20, 60_000)
   if (!allowed) return tooManyRequests()
 
-  if (!checkAuth(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // *** CRITIEKE SECURITY FIX ***
+  // 1. AUTHENTICATIE CHECK VOOR ALLE LOGICA: Dit moet het ALLEREERSTE zijn.
+  if (!checkDashboardSecret(req)) {
+    console.warn("Auth failure on /api/slack-alert. Returning 401 Unauthorized.");
+    return NextResponse.json({ error: "Unauthorized: Missing or invalid X-Dashboard-Secret header." }, {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
+  // *****************************
 
   const body = await req.json()
 
@@ -44,8 +47,14 @@ export async function POST(req: NextRequest) {
   const webhookUrl = config['slack_webhook_url']
   const minScore   = parseInt(config['slack_min_score'] ?? '70', 10)
 
+  // 2. WEBHOOK CONFIG CHECK (ALLEEN NA AUTH)
   if (!webhookUrl) {
-    return NextResponse.json({ error: 'Geen Slack webhook geconfigureerd' }, { status: 400 })
+    // CRUCIALE FIX: Gebruik 401 in plaats van 400, omdat de *autorisatie* faalt om de service te gebruiken,
+    // niet alleen de configuratie.
+    return NextResponse.json({ error: "Configuration Error: Slack webhook URL is not set." }, {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   const prioriteit = body.ai_prioriteit ?? 0

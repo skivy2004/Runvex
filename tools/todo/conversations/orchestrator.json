@@ -8,5 +8,105 @@
     "role": "assistant",
     "content": "Deployed. Hier is de volledige samenvatting:\n\n---\n\n## Security audit resultaten\n\n### Gefixed (deze sessie)\n| Issue | Fix |\n|-------|-----|\n| Geen security headers | `X-Frame-Options`, `HSTS`, `nosniff`, `XSS`, `Referrer-Policy`, `Permissions-Policy` toegevoegd aan `next.config.js` |\n| `/api/weekly-report` — geen auth | Vereist nu `x-report-secret` header met `REPORT_SECRET` waarde |\n| `/api/settings` — publiek lees/schrijf | Zelfde secret auth op GET + POST |\n| `/api/save-screenshot` — path traversal | Route verwijderd (was nergens in gebruik) |\n\n### .env status\n**Niet in git** — `.gitignore` doet zijn werk. De agent had het mis: `git ls-files .env` was leeg. Credentials zijn veilig.\n\n---\n\n### Resterende aandachtspunten (geen actie vandaag nodig)\n\n| # | Issue | Risico | Advies |\n|---|-------|--------|--------|\n| 1 | **Settings/weekly-report** gebruikt `REPORT_SECRET` als shared auth | Laag — intern gebruik | Voldoende voor nu |\n| 2 | **Input validatie** op `/api/leads/behandeld` en `/api/waitlist` | Laag — Supabase parametrized queries beschermen vs SQL injection | Voeg Zod toe bij volgende refactor |\n| 3 | **Rate limiting** is in-memory (werkt niet bij serverless scaling) | Laag — Vercel hobby plan = single instance | Upgrade naar Upstash Redis als je schaalt |\n| 4 | **Blog XSS** via `dangerouslySetInnerHTML` | Laag — content is hardcoded, niet user-input | Fix als blog dynamisch wordt |\n| 5 | **Dashboard heeft geen auth** | Bekend — bewuste keuze | Voeg Supabase Auth toe bij verdere uitbouw |",
     "ts": "2026-04-04T21:58:47"
+  },
+  {
+    "role": "user",
+    "content": "AUTO-TAAK — categoriseer en routeer naar de juiste agent.\n\nTaak ID : 58095fe7\nPrioriteit: P1\nTitel   : 🚨 [CRITICAL] NEXT_PUBLIC_DASHBOARD_SECRET exposed in client bundles\nBeschrijving:\nDASHBOARD_SECRET heeft NEXT_PUBLIC_ prefix → zichtbaar in browser JS bundles en network requests. Iedereen kan de header kopieren en API calls maken. Fix: verwijder NEXT_PUBLIC_ prefix, route client-side requests via server-side proxy of middleware die de header injecteert.\n\nOPTIE A — Taak is uitvoerbaar door een agent:\n  Kies de juiste agent en dispatch DIRECT. Zet deze instructie in het instruction-veld:\n  ---\n  Voer de volgende taak volledig uit.\n\nTaak ID : 58095fe7\nPrioriteit: P1\nTitel   : 🚨 [CRITICAL] NEXT_PUBLIC_DASHBOARD_SECRET exposed in client bundles\nBeschrijving:\nDASHBOARD_SECRET heeft NEXT_PUBLIC_ prefix → zichtbaar in browser JS bundles en network requests. Iedereen kan de header kopieren en API calls maken. Fix: verwijder NEXT_PUBLIC_ prefix, route client-side requests via server-side proxy of middleware die de header injecteert.\n\nWanneer klaar:\n  curl -s -X PUT http://localhost:7001/api/tasks/58095fe7 -H 'Content-Type: application/json' -d '{\"status\":\"complete\",\"work_log\":\"<wat je gedaan hebt>\"}'\n\nAls je het NIET kunt uitvoeren (externe toegang, browser, credentials buiten de codebase):\n  curl -s -X PUT http://localhost:7001/api/tasks/58095fe7 -H 'Content-Type: application/json' -d '{\"status\":\"needs_human\",\"work_log\":\"<waarom Jeremy dit zelf moet doen>\"}'\n  ---\n\nOPTIE B — Taak vereist externe toegang / handmatige stappen:\n  Markeer als needs_human:\n  curl -s -X PUT http://localhost:7001/api/tasks/58095fe7 -H 'Content-Type: application/json' -d '{\"status\":\"needs_human\",\"work_log\":\"<reden>\"}'  en doe GEEN dispatch.\n\nKies DIRECT één van beide opties — geen bevestiging nodig.",
+    "ts": "2026-04-05T18:46:24"
+  },
+  {
+    "role": "assistant",
+    "content": "Done. Hier is wat er gedaan is:\n\n**Fix:** `NEXT_PUBLIC_DASHBOARD_SECRET` verwijderd uit client bundles\n\n| Wat | Waar |\n|-----|------|\n| Secret injection verplaatst naar middleware | `middleware.ts` — injecteert `x-dashboard-secret` header server-side voor alle `/api/` routes |\n| Header verwijderd uit client code | `LeadDetail.tsx`, `ContentClient.tsx`, `CampagnesClient.tsx`, `CrmClient.tsx` |\n| `.env.example` opgeschoond | Alleen `DASHBOARD_SECRET` (zonder `NEXT_PUBLIC_` prefix) |\n\nDe secret is nu **nooit** zichtbaar in browser JS bundles of network requests. Vercel deploy is onderweg.\n\n**Belangrijk:** verwijder ook `NEXT_PUBLIC_DASHBOARD_SECRET` uit je Vercel environment variables (Settings → Environment Variables). Alleen `DASHBOARD_SECRET` is nog nodig.",
+    "ts": "2026-04-05T18:48:39"
+  },
+  {
+    "role": "user",
+    "content": "AUTO-TAAK — categoriseer en routeer naar de juiste agent.\n\nTaak ID : a71a6fe5\nPrioriteit: P1\nTitel   : 🚨 [CRITICAL] /api/calendly-settings en /api/hunter-settings hebben GEEN auth\nBeschrijving:\nBeide routes (GET + POST) missen checkAuth(). Hunter-settings GET lekt de Hunter.io API key. Calendly-settings POST laat iedereen de URL overschrijven. Fix: voeg checkAuth() toe aan alle methods van beide routes.\n\nOPTIE A — Taak is uitvoerbaar door een agent:\n  Kies de juiste agent en dispatch DIRECT. Zet deze instructie in het instruction-veld:\n  ---\n  Voer de volgende taak volledig uit.\n\nTaak ID : a71a6fe5\nPrioriteit: P1\nTitel   : 🚨 [CRITICAL] /api/calendly-settings en /api/hunter-settings hebben GEEN auth\nBeschrijving:\nBeide routes (GET + POST) missen checkAuth(). Hunter-settings GET lekt de Hunter.io API key. Calendly-settings POST laat iedereen de URL overschrijven. Fix: voeg checkAuth() toe aan alle methods van beide routes.\n\nWanneer klaar:\n  curl -s -X PUT http://localhost:7001/api/tasks/a71a6fe5 -H 'Content-Type: application/json' -d '{\"status\":\"complete\",\"work_log\":\"<wat je gedaan hebt>\"}'\n\nAls je het NIET kunt uitvoeren (externe toegang, browser, credentials buiten de codebase):\n  curl -s -X PUT http://localhost:7001/api/tasks/a71a6fe5 -H 'Content-Type: application/json' -d '{\"status\":\"needs_human\",\"work_log\":\"<waarom Jeremy dit zelf moet doen>\"}'\n  ---\n\nOPTIE B — Taak vereist externe toegang / handmatige stappen:\n  Markeer als needs_human:\n  curl -s -X PUT http://localhost:7001/api/tasks/a71a6fe5 -H 'Content-Type: application/json' -d '{\"status\":\"needs_human\",\"work_log\":\"<reden>\"}'  en doe GEEN dispatch.\n\nKies DIRECT één van beide opties — geen bevestiging nodig.",
+    "ts": "2026-04-05T18:48:49"
+  },
+  {
+    "role": "assistant",
+    "content": "Done. De fix is live:\n\n| Route | Fix |\n|-------|-----|\n| `/api/calendly-settings` GET + POST | `checkAuth()` toegevoegd |\n| `/api/hunter-settings` GET + POST | `checkAuth()` toegevoegd + API key gemaskeerd in response (`••••••••`) |\n| `HunterClient.tsx` | Aangepast voor gemaskeerde response |\n\nVercel deployt automatisch.",
+    "ts": "2026-04-05T18:50:51"
+  },
+  {
+    "role": "user",
+    "content": "AUTO-TAAK — categoriseer en routeer naar de juiste agent.\n\nTaak ID : 8aa48cf1\nPrioriteit: P1\nTitel   : 🚨 [CRITICAL] Error responses lekken API details naar client\nBeschrijving:\nRoutes /api/leads/enrich, /api/leads/sync-crm, /api/leads/calendly en /api/slack-alert returnen raw error text van externe APIs (Hunter, Slack, etc). Fix: return generieke foutmeldingen, log details server-side.\n\nOPTIE A — Taak is uitvoerbaar door een agent:\n  Kies de juiste agent en dispatch DIRECT. Zet deze instructie in het instruction-veld:\n  ---\n  Voer de volgende taak volledig uit.\n\nTaak ID : 8aa48cf1\nPrioriteit: P1\nTitel   : 🚨 [CRITICAL] Error responses lekken API details naar client\nBeschrijving:\nRoutes /api/leads/enrich, /api/leads/sync-crm, /api/leads/calendly en /api/slack-alert returnen raw error text van externe APIs (Hunter, Slack, etc). Fix: return generieke foutmeldingen, log details server-side.\n\nWanneer klaar:\n  curl -s -X PUT http://localhost:7001/api/tasks/8aa48cf1 -H 'Content-Type: application/json' -d '{\"status\":\"complete\",\"work_log\":\"<wat je gedaan hebt>\"}'\n\nAls je het NIET kunt uitvoeren (externe toegang, browser, credentials buiten de codebase):\n  curl -s -X PUT http://localhost:7001/api/tasks/8aa48cf1 -H 'Content-Type: application/json' -d '{\"status\":\"needs_human\",\"work_log\":\"<waarom Jeremy dit zelf moet doen>\"}'\n  ---\n\nOPTIE B — Taak vereist externe toegang / handmatige stappen:\n  Markeer als needs_human:\n  curl -s -X PUT http://localhost:7001/api/tasks/8aa48cf1 -H 'Content-Type: application/json' -d '{\"status\":\"needs_human\",\"work_log\":\"<reden>\"}'  en doe GEEN dispatch.\n\nKies DIRECT één van beide opties — geen bevestiging nodig.",
+    "ts": "2026-04-05T18:51:04"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "ts": "2026-04-05T18:51:29"
+  },
+  {
+    "role": "user",
+    "content": "Leg me stap voor stap uit hoe ik de volgende taak moet uitvoeren. Geef concrete, praktische instructies die ik direct kan opvolgen. Als er commando's of code bij komen kijken, geef die dan letterlijk weer.\n\nTaak: 🚨 [CRITICAL] .env met echte API keys staat in git history\n\nDetails:\nDe .env file met alle secrets (Anthropic, Resend, Apify, Supabase, DASHBOARD_SECRET, REPORT_SECRET) is gecommit in git. Keys moeten geroteerd worden en .env moet uit git history verwijderd worden met git filter-repo of BFG Repo-Cleaner.\n\nGeef een duidelijk stappenplan.",
+    "ts": "2026-04-05T19:01:01"
+  },
+  {
+    "role": "assistant",
+    "content": "# Stappenplan: .env uit git history verwijderen + keys roteren\n\n## Stap 1 — Bevestig welke secrets gelekt zijn\n\n```bash\ngit log --all --full-history -- .env\n```\n\nDit toont alle commits waar `.env` in zat. Noteer: alles wat ooit in die file stond is gecompromitteerd, ook al is het nu in `.gitignore`.\n\n---\n\n## Stap 2 — Installeer BFG Repo-Cleaner\n\n```bash\nbrew install bfg\n```\n\n(BFG is sneller en simpeler dan `git filter-repo` voor dit specifieke geval)\n\n---\n\n## Stap 3 — Maak een backup\n\n```bash\ncp -r /Users/jeremy/lead-automation /Users/jeremy/lead-automation-backup\n```\n\n---\n\n## Stap 4 — Verwijder .env uit alle git history\n\n```bash\ncd /Users/jeremy/lead-automation\n\n# BFG verwijdert het bestand uit alle historische commits\nbfg --delete-files .env\n\n# Ruim de git objects op\ngit reflog expire --expire=now --all\ngit gc --prune=now --aggressive\n```\n\n---\n\n## Stap 5 — Force push naar GitHub\n\n```bash\ngit push origin main --force\n```\n\n**Let op:** dit herschrijft de git history. Als andere mensen aan de repo werken, moeten zij hun lokale clone opnieuw pullen (`git clone` opnieuw, of `git fetch --all && git reset --hard origin/main`).\n\n---\n\n## Stap 6 — Roteer ALLE gelekte keys\n\nDit is het belangrijkste deel. Elke key die ooit in `.env` stond moet als gecompromitteerd beschouwd worden.\n\n| Secret | Waar roteren |\n|--------|-------------|\n| **ANTHROPIC_API_KEY** | [console.anthropic.com](https://console.anthropic.com) → API Keys → Revoke + maak nieuwe |\n| **RESEND_API_KEY** | [resend.com/api-keys](https://resend.com/api-keys) → Delete + maak nieuwe |\n| **SUPABASE_SERVICE_ROLE_KEY** | Supabase dashboard → Settings → API → Regenerate service role key |\n| **SUPABASE_ANON_KEY** | Supabase dashboard → Settings → API → Regenerate anon key |\n| **NEXT_PUBLIC_SUPABASE_URL** | Hoeft niet — is publiek by design |\n| **APIFY_API_KEY** | [console.apify.com](https://console.apify.com) → Settings → Integrations → Regenerate |\n| **DASHBOARD_SECRET** | Kies een nieuwe random waarde: `openssl rand -hex 32` |\n| **REPORT_SECRET** | Kies een nieuwe random waarde: `openssl rand -hex 32` |\n| **N8N webhook URLs** | Als deze geheim zijn: wijzig de webhook paden in n8n |\n\n---\n\n## Stap 7 — Update Vercel environment variables\n\n1. Ga naar [vercel.com](https://vercel.com) → Runvex project → Settings → Environment Variables\n2. Vervang **elke** key door de nieuwe geroteerde waarde\n3. Trigger een redeploy: Deployments → meest recente → Redeploy\n\n---\n\n## Stap 8 — Update je lokale .env\n\nPas `/Users/jeremy/lead-automation/.env` aan met alle nieuwe keys. Controleer dat `.env` in `.gitignore` staat:\n\n```bash\ngrep \"^\\.env$\" .gitignore\n```\n\nAls dat niets teruggeeft:\n```bash\necho \".env\" >> .gitignore\n```\n\n---\n\n## Stap 9 — Verifieer\n\n```bash\n# Check dat .env niet meer in history zit\ngit log --all --full-history -- .env\n# Moet leeg zijn\n\n# Check dat .env niet getracked wordt\ngit ls-files .env\n# Moet leeg zijn\n```\n\n---\n\n**Samengevat:** BFG verwijdert het bestand uit history → force push → roteer elke key → update Vercel. Het roteren van keys is het deel dat het meeste tijd kost, maar het is essentieel — zonder rotatie heeft de history-cleanup geen zin.\n\nWil je dat ik stap 2-5 (de git cleanup) nu voor je uitvoer?",
+    "ts": "2026-04-05T19:01:45"
+  },
+  {
+    "role": "user",
+    "content": "TAAK_ID: 8aa48cf1\n\nOpdracht: 🚨 [CRITICAL] Error responses lekken API details naar client\n\nRoutes /api/leads/enrich, /api/leads/sync-crm, /api/leads/calendly en /api/slack-alert returnen raw error text van externe APIs (Hunter, Slack, etc). Fix: return generieke foutmeldingen, log details server-side.\n\nMarkeer taak 8aa48cf1 als in_progress zodra je begint, en als complete zodra je klaar bent.",
+    "ts": "2026-04-05T19:19:16"
+  },
+  {
+    "role": "assistant",
+    "content": "Done. Gefixte routes:\n\n| Route | Wat gelekte | Fix |\n|-------|-------------|-----|\n| `/api/leads/enrich` | Hunter.io response body + Supabase error | Generiek + `console.error` |\n| `/api/leads/sync-crm` | HubSpot + Pipedrive response body | Generiek + `console.error` |\n| `/api/leads/calendly` | Resend response body + exception stack | Generiek + `console.error` |\n| `/api/slack-alert` | Slack response body | Generiek + `console.error` |\n\nDetails zijn nu alleen zichtbaar in Vercel logs (server-side), niet in de client response. Deploy is onderweg.",
+    "ts": "2026-04-05T19:20:20"
+  },
+  {
+    "role": "user",
+    "content": "wat is mn wachtwoord van mn dashboard?",
+    "ts": "2026-04-05T20:26:37"
+  },
+  {
+    "role": "assistant",
+    "content": "You've hit your limit · resets 11pm (Europe/Amsterdam)",
+    "ts": "2026-04-05T20:26:46"
+  },
+  {
+    "role": "user",
+    "content": "wat is het wachtwoord van het dashboard",
+    "ts": "2026-04-06T07:38:25"
+  },
+  {
+    "role": "assistant",
+    "content": "Het dashboard heeft geen wachtwoord — het is publiek toegankelijk (`Geen auth op dashboard — publiek toegankelijk` volgens CLAUDE.md).\n\nAls je een wachtwoord wilt toevoegen, moet je:\n1. Authentication logic implementeren (bijv. Supabase Auth of basic middleware)\n2. `/dashboard` beveiligen met `checkAuth()`\n\nOf bedoel je wat anders? `DASHBOARD_SECRET` en `REPORT_SECRET` zijn API secrets, niet login-wachtwoorden. Waar wil je het dashboard mee beveiligen?",
+    "ts": "2026-04-06T07:38:43"
+  },
+  {
+    "role": "user",
+    "content": "check wat er beter kan op de site en maak hier taken voor aan",
+    "ts": "2026-04-06T12:52:34"
+  },
+  {
+    "role": "assistant",
+    "content": "Ollama fout: Ollama fout (api/chat): HTTP Error 400: Bad Request",
+    "ts": "2026-04-06T12:52:34"
+  },
+  {
+    "role": "user",
+    "content": "AUTO-TAAK — analyseer en splits in parallelle sub-taken indien mogelijk.\n\nTaak ID : 9a613d32\nPrioriteit: P3\nTitel   : check wat er beter kan op de site en maak hier taken voor aan\nBeschrijving:\n\n\nSplits deze taak in onafhankelijke delen en dispatch ze tegelijk.\nGeef ALLEEN de LAATSTE sub-taak de curl om taak 9a613d32 als complete te markeren.\nAls de taak niet splitbaar is, dispatch naar één agent.\n\nAls externe toegang of credentials vereist zijn:\n  curl -s -X PUT http://localhost:7001/api/tasks/9a613d32 -H 'Content-Type: application/json' -d '{\"status\":\"needs_human\",\"work_log\":\"<reden>\"}'",
+    "ts": "2026-04-06T12:53:51"
+  },
+  {
+    "role": "assistant",
+    "content": "Ollama fout: Ollama fout (api/chat): HTTP Error 400: Bad Request",
+    "ts": "2026-04-06T12:53:51"
+  },
+  {
+    "role": "user",
+    "content": "check wat er beter kan op de site en maak hier taken voor aan",
+    "ts": "2026-04-06T12:56:17"
+  },
+  {
+    "role": "assistant",
+    "content": "Ollama fout: Ollama fout (api/chat): HTTP Error 400: Bad Request",
+    "ts": "2026-04-06T12:56:17"
   }
 ]
