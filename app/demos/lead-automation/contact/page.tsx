@@ -85,7 +85,6 @@ export default function ContactPage() {
           naam, email, telefoon, bedrijf,
           bron: diensten.join(', ') || 'Niet opgegeven',
           bericht,
-          form_token: process.env.NEXT_PUBLIC_FORM_TOKEN,
           timestamp: new Date().toISOString(),
         }),
       })

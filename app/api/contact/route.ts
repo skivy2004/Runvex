@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
       bedrijf: typeof bedrijf === 'string' ? bedrijf.trim().slice(0, 200) : '',
       telefoon: typeof telefoon === 'string' ? telefoon.trim().slice(0, 20) : '',
       bericht: bericht.trim().slice(0, 2000),
-      form_token: process.env.NEXT_PUBLIC_FORM_TOKEN,
+      form_token: process.env.FORM_TOKEN,
     }
 
     const response = await fetch(webhookUrl, {

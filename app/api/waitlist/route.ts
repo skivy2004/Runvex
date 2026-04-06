@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     bericht: `Waitlist aanmelding voor: ${feature}`,
     bron: 'waitlist',
     naam: 'Waitlist',
-    form_token: process.env.NEXT_PUBLIC_FORM_TOKEN,
+    form_token: process.env.FORM_TOKEN,
   })
 
   return NextResponse.json({ success: true })
