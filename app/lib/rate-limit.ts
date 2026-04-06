@@ -83,12 +83,31 @@ export async function rateLimit(key: string, limit: number, windowMs: number): P
   return inMemoryRateLimit(key, limit, windowMs)
 }
 
+// Basic pattern that matches IPv4 and IPv6 addresses (no path/port injection).
+const IP_PATTERN = /^[\d.a-fA-F:]+$/
+
+/**
+ * Extracts the client IP from the request headers.
+ *
+ * Trust assumption: this app runs behind Vercel's edge network, which
+ * overwrites x-forwarded-for with the real client IP before the request
+ * reaches the serverless function. Spoofing by end-users is therefore not
+ * possible in production. In local/non-Vercel environments the header can
+ * be forged, so we validate the value looks like an IP before using it.
+ */
 export function getIp(req: Request): string {
-  return (
-    req.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
-    req.headers.get('x-real-ip') ??
-    'unknown'
-  )
+  const candidates = [
+    req.headers.get('x-forwarded-for')?.split(',')[0].trim(),
+    req.headers.get('x-real-ip'),
+  ]
+
+  for (const candidate of candidates) {
+    if (candidate && IP_PATTERN.test(candidate)) {
+      return candidate
+    }
+  }
+
+  return 'unknown'
 }
 
 export function tooManyRequests() {
