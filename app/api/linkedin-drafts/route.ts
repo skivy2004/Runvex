@@ -19,7 +19,9 @@ function checkAuth(req: NextRequest): boolean {
 export async function GET(req: NextRequest) {
   if (!await rateLimit(`linkedin-drafts:${getIp(req)}`, 30, 60_000)) return tooManyRequests()
   if (!checkAuth(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const status = req.nextUrl.searchParams.get('status')
+  const ALLOWED_STATUSES = ['concept', 'gepland', 'gepubliceerd', 'gearchiveerd']
+  const statusParam = req.nextUrl.searchParams.get('status')
+  const status = statusParam && ALLOWED_STATUSES.includes(statusParam) ? statusParam : null
   const supabase = getSupabase()
   let query = supabase.from('linkedin_drafts').select('*').order('aangemaakt_op', { ascending: false })
   if (status) query = query.eq('status', status)
@@ -40,7 +42,7 @@ export async function POST(req: NextRequest) {
     onderwerp: typeof body.onderwerp === 'string' ? body.onderwerp.trim().slice(0, 200) : null,
     gebaseerd_op_url: typeof body.gebaseerd_op_url === 'string' ? body.gebaseerd_op_url.trim().slice(0, 2000) : null,
     gebaseerd_op_likes: typeof body.gebaseerd_op_likes === 'number' ? Math.max(0, Math.floor(body.gebaseerd_op_likes)) : null,
-    status: typeof body.status === 'string' ? body.status.trim().slice(0, 50) : 'concept',
+    status: ['concept', 'gepland', 'gepubliceerd', 'gearchiveerd'].includes(body.status) ? body.status : 'concept',
   }
   const supabase = getSupabase()
   const { data, error } = await supabase
