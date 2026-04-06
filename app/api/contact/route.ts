@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(data, { status: response.status })
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Onbekende fout'
-    return NextResponse.json({ error: 'Webhook niet bereikbaar', details: message }, { status: 502 })
+    console.error('[api/contact] webhook error:', err)
+    return NextResponse.json({ error: 'Webhook niet bereikbaar' }, { status: 502 })
   }
 }
