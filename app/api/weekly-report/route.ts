@@ -4,6 +4,16 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
+function escapeHtml(str: string | null | undefined): string {
+  if (str == null) return '—'
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 // Trigger via cron of n8n: POST /api/weekly-report
 // Optioneel: voeg een secret toe via Authorization header
 
@@ -38,10 +48,10 @@ export async function POST(req: NextRequest) {
 
   const topLeadsHtml = top3.map(l => `
     <tr>
-      <td style="padding:8px 12px;border-bottom:1px solid #1e2030;">${l.naam}</td>
-      <td style="padding:8px 12px;border-bottom:1px solid #1e2030;">${l.bedrijf || '—'}</td>
-      <td style="padding:8px 12px;border-bottom:1px solid #1e2030;color:#5B6EF5;font-weight:600;">${l.ai_prioriteit ?? '—'}/100</td>
-      <td style="padding:8px 12px;border-bottom:1px solid #1e2030;">${l.ai_sector || '—'}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #1e2030;">${escapeHtml(l.naam)}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #1e2030;">${escapeHtml(l.bedrijf)}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #1e2030;color:#5B6EF5;font-weight:600;">${l.ai_prioriteit != null ? Number(l.ai_prioriteit) : '—'}/100</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #1e2030;">${escapeHtml(l.ai_sector)}</td>
     </tr>
   `).join('')
 
